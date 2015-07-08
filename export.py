@@ -1912,7 +1912,7 @@ def export_objects(ri, rpass, scene, motion):
                     # Export this polymesh data as an archive to be referenced later on.
                     ri.ArchiveBegin(handle_name)
                     candidate_archive_handles.append((ob_name, handle_name))
-                    export_polygon_mesh(ri,scene,ob_temp,motion)
+                    export_geometry(ri, rpass, scene, ob_temp, motion)
                     ri.ArchiveEnd()
                     if ob_temp.particle_systems:
                         debug("info" , "The object has a particle system" , ob_temp)
