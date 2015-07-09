@@ -25,6 +25,7 @@
 
 import bpy
 import sys
+import os
 from bpy.types import AddonPreferences
 from bpy.props import CollectionProperty, BoolProperty, StringProperty
 from bpy.props import IntProperty, PointerProperty
@@ -40,18 +41,20 @@ class RendermanEnvVarSettings(bpy.types.PropertyGroup):
     
 	
 	if sys.platform == ("win32"):
+		outpath = os.path.join("C:", "Users" ,os.getlogin(),"Documents","PRMan")
 		out = StringProperty(
 			name="OUT (Output Root)",
 			description="Default RIB export path root",
 			subtype='DIR_PATH',
-			default='/./tmp\prman_for_blender')
+			default=outpath)
 	
 	else:
+		outpath = os.path.join(os.environ.get('HOME'), "Documents" , "PRMan")
 		out = StringProperty(
 			name="OUT (Output Root)",
 			description="Default RIB export path root",
 			subtype='DIR_PATH',
-			default='/tmp/prman_for_blender')
+			default=outpath)
 	
 	shd = StringProperty(
                 name="SHD (Shadow Maps)",
