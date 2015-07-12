@@ -330,11 +330,11 @@ class RendermanSceneSettings(bpy.types.PropertyGroup):
     min_samples = IntProperty(
                 name="Min Samples",
                 description="The minimum number of camera samples per pixel",
-                min=0, default=32)
+                min=0, default=4)
     max_samples = IntProperty(
                 name="Max Samples",
                 description="The maximum number of camera samples per pixel",
-                min=0, default=512)
+                min=0, default=8)
 
     bucket_shape = EnumProperty(
                 name="Bucket Shape",
