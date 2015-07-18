@@ -1500,3 +1500,6 @@ def register():
 
 def unregister():
     bpy.utils.unregister_module(__name__)
+
+    for cls in classes:
+        bpy.utils.unregister_class(cls)
