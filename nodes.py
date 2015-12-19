@@ -1205,23 +1205,26 @@ def get_textures_for_node(node, matName=""):
                                 textures.append(
                                     (prop, out_file_name, ['-envlatl']))
                             else:
-                                if hasattr(node, "smode"):
+                                if hasattr(node, "smode"): # Test and see if options like smode are on this node.
                                     optionsList = []
                                     for option in txmake_options.index:
                                         partsOfOption = getattr(
                                             txmake_options, option)
                                         if partsOfOption["exportType"] == "name":
                                             optionsList.append("-" + option)
-                                            optionsList.append(
-                                                getattr(node, option))
+                                            if partsOfOption["type"] == "float": # Float values need converting before they are passed to command line
+                                                optionsList.append(str(getattr(node, option)))
+                                            else:
+                                                optionsList.append(getattr(node, option))
                                         else:
-                                            optionsList.append(
-                                                "-" + getattr(node, option))
-                                    # no options for now
+                                            if partsOfOption["type"] == "float": # Float values need converting before they are passed to command line
+                                                optionsList.append(str(getattr(node, option)))
+                                            else:
+                                                optionsList.append("-"+ getattr(node, option))
                                     textures.append(
                                         (prop, out_file_name, optionsList))
                                 else:
-                                    # no options for now
+                                    # no options found add the bare minimum options for smooth export.
                                     textures.append((prop, out_file_name,
                                                      ['-smode', 'periodic',
                                                       '-tmode', 'periodic']))

@@ -59,19 +59,19 @@ class RendermanEnvVarSettings(bpy.types.PropertyGroup):
         name="SHD (Shadow Maps)",
         description="SHD environment variable",
         subtype='DIR_PATH',
-        default='$OUT/shadowmaps')
+        default=os.path.join('$OUT','shadowmaps'))
 
     ptc = StringProperty(
         name="PTC (Point Clouds)",
         description="PTC environment variable",
         subtype='DIR_PATH',
-        default='$OUT/pointclouds')
+        default=os.path.join('$OUT','pointclouds'))
 
     arc = StringProperty(
         name="ARC (Archives)",
         description="ARC environment variable",
         subtype='DIR_PATH',
-        default='$OUT/archives')
+        default=os.path.join('$OUT','archives'))
 
 
 class RendermanPreferences(AddonPreferences):

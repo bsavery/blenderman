@@ -1666,13 +1666,21 @@ def get_data_blocks_needed(ob, rpass, do_mb):
             
     # now the objects data
     if is_data_renderable(rpass.scene, ob):
-        name = data_name(ob, rpass.scene)
-        deforming = is_deforming(ob)
-        archive_filename = get_archive_filename(data_name(ob, rpass.scene), 
-                                                rpass, deforming)
-        data_blocks.append(DataBlock(name, "MESH", archive_filename, ob, 
-                                     deforming, material=ob.active_material,
-                                     do_export=file_is_dirty(rpass.scene, ob, archive_filename)))
+        if ob.renderman.geometry_source != 'BLENDER_SCENE_DATA': # Check if the object is referring to an archive to use rather then its geometry.
+            name = data_name(ob, rpass.scene)
+            deforming = is_deforming(ob)
+            archive_filename = bpy.path.abspath(ob.renderman.path_archive)
+            data_blocks.append(DataBlock(name, "MESH", archive_filename, ob,
+                                         deforming, material=ob.active_material,
+                                         do_export=False))
+        else:
+            name = data_name(ob, rpass.scene)
+            deforming = is_deforming(ob)
+            archive_filename = get_archive_filename(data_name(ob, rpass.scene), 
+                                                    rpass, deforming)
+            data_blocks.append(DataBlock(name, "MESH", archive_filename, ob, 
+                                         deforming, material=ob.active_material,
+                                         do_export=file_is_dirty(rpass.scene, ob, archive_filename)))
 
     return data_blocks
 
@@ -1723,7 +1731,6 @@ def get_deformation(data_block, subframe, scene):
 # More efficient, and avoids too many frame updates in blender.
 def cache_motion(scene, rpass):
     origframe = scene.frame_current
-    
     instances, data_blocks, motion_segs = \
         get_instances_and_blocks(scene.objects, rpass)
 
@@ -1749,6 +1756,34 @@ def cache_motion(scene, rpass):
 
     return data_blocks, instances
 
+
+def cache_motion_single_object(scene, rpass, activeObject):
+    origframe = scene.frame_current
+    objectToPass = [activeObject]
+    instances, data_blocks, motion_segs = \
+        get_instances_and_blocks(objectToPass, rpass)
+
+    
+    # the aim here is to do only a minimal number of scene updates,
+    # so we process objects in batches of equal numbers of segments
+    # and update the scene only once for each of those unique fractional
+    # frames per segment set
+    for num_segs, (instance_names, data_names) in motion_segs.items():
+        # prepare list of frames/sub-frames in advance,
+        # ordered from future to present,
+        # to prevent too many scene updates
+        # (since loop ends on current frame/subframe)
+        for sub in get_subframes(num_segs):
+            scene.frame_set(origframe, sub)
+            for name in instance_names:
+                get_transform(instances[name], sub)
+
+            for name in data_names:
+                get_deformation(data_blocks[name], sub, scene)
+        
+    scene.frame_set(origframe, 0)
+
+    return data_blocks, instances
 
 # export data_blocks
 def export_data_archives(ri, scene, rpass, data_blocks):
@@ -2475,7 +2510,6 @@ def write_rib(rpass, scene, ri):
     
     # precalculate motion blur data
     data_blocks, instances = cache_motion(scene, rpass)
-    
     # export rib archives of objects
     export_data_archives(ri, scene, rpass, data_blocks)
     
@@ -2551,7 +2585,14 @@ def write_preview_rib(rpass, scene, ri):
     ri.WorldEnd()
     ri.FrameEnd()
 
+def write_single_RIB(rpass, scene, ri, object):
+    
+    # precalculate motion blur data
+    data_blocks, instances = cache_motion_single_object(scene, rpass, object)
+    # export rib archives of objects
+    export_data_archives(ri, scene, rpass, data_blocks)
 
+    
 def anim_archive_path(filepath, frame):
     if filepath.find("#") != -1:
         ribpath = make_frame_path(filepath, fr)

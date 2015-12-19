@@ -801,6 +801,12 @@ class OBJECT_PT_renderman_object_geometry(Panel):
             # if rm.export_archive:
             #    col.prop(rm, "export_archive_path")
 
+            
+        col = layout.column()
+        col.operator("object.export_rib_archive", icon="EXPORT", text="Export Object as RIB Archive.")
+        
+        
+        
         col = layout.column()
         # col.prop(rm, "export_coordsys")
 
