@@ -815,18 +815,33 @@ class OBJECT_PT_renderman_object_geometry(Panel):
 
             
         col = layout.column()
+        col.separator()
+        
+        col = layout.column()
+        col.label("RIB Archive:")
+        
+        col = layout.column()
+        col.prop(rm, "export_archive_path")
+        
+        col = layout.column()
+        col.prop(rm, "export_mat")
+        
+        col = layout.column()
+        col.prop(rm, "export_all_frames")
+        
+        col = layout.column()
         col.operator("object.export_rib_archive", icon="EXPORT", text="Export Object as RIB Archive.")
         
         
         
-        col = layout.column()
+        #col = layout.column()
         # col.prop(rm, "export_coordsys")
 
-        row = col.row()
-        row.prop(rm, "motion_segments_override", text="")
-        sub = row.row()
-        sub.active = rm.motion_segments_override
-        sub.prop(rm, "motion_segments")
+        #row = col.row()
+        #row.prop(rm, "motion_segments_override", text="")
+        #sub = row.row()
+        #sub.active = rm.motion_segments_override
+        #sub.prop(rm, "motion_segments")
 
 
 class OBJECT_PT_renderman_object_render(CollectionPanel, Panel):
