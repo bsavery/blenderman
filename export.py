@@ -2589,17 +2589,31 @@ def write_preview_rib(rpass, scene, ri):
     ri.WorldEnd()
     ri.FrameEnd()
 
-def write_single_RIB(rpass, scene, ri, object):
+#def write_single_RIB(rpass, scene, ri, object):
     
-    # precalculate motion blur data
+    # precalculate data
+#    data_blocks, instances = cache_motion_single_object(scene, rpass, object)
+    # export rib archives of objects
+#    export_data_archives(ri, scene, rpass, data_blocks)
+    
+#    for name, db in data_blocks.items():
+#        fileName = db.archive_filename
+#    return fileName
+
+def write_single_RIB(rpass, scene, ri, object, overridePath, exportMats, exportRange):
+    sucess = 0
+    # precalculate data
     data_blocks, instances = cache_motion_single_object(scene, rpass, object)
     # export rib archives of objects
     export_data_archives(ri, scene, rpass, data_blocks)
     
     for name, db in data_blocks.items():
         fileName = db.archive_filename
-    return fileName
-
+        
+    returnList = [sucess, fileName]
+    return returnList
+    
+    
     
 def anim_archive_path(filepath, frame):
     if filepath.find("#") != -1:
@@ -2707,7 +2721,7 @@ def issue_transform_edits(rpass, ri, active, prman):
         return
 
     rpass.edit_num += 1
-
+    debug('error', "Edit Number: " + str(rpass.edit_num))
     edit_flush(ri, rpass.edit_num, prman)
     # only update lamp if shader is update or pos, seperately
     if active.type == 'LAMP':

@@ -203,15 +203,30 @@ class ExportRIBObject(bpy.types.Operator):
         rpass = RPass(context.scene, interactive=False)
         object = context.active_object
         
+        export_path = object.renderman.export_archive_path
+        export_mats = object.renderman.export_mat
+        export_range = object.renderman.export_all_frames
+        
         #rpass.convert_textures(get_texture_list(context.scene))
         rpass.ri.Option("rib", {"string asciistyle": "indented,wide"})
         
-        export_filename = write_single_RIB(rpass, context.scene, rpass.ri, object)
+        #export_filename = write_single_RIB(rpass, context.scene, rpass.ri, object)
+        export_sucess = write_single_RIB(rpass, context.scene, rpass.ri, object,
+                                         export_path, export_mats, export_range)
+
         
-        object.renderman.geometry_source = 'ARCHIVE'
-        object.renderman.path_archive = export_filename
-        object.show_bounds = True
+        print("Stuff: ", export_path, export_mats, export_range, export_sucess[0], export_sucess[1])
         
+        if(export_sucess[0] == 0):
+            self.report({'INFO'}, "Archive Exported Successfully!")
+            object.renderman.geometry_source = 'ARCHIVE'
+            object.renderman.path_archive = export_sucess[1]
+            object.show_bounds = True
+            if(export_range == True):
+                object.renderman.archive_anim_settings.animated_sequence = True
+                object.renderman.archive_anim_settings.sequence_out = context.scene.frame_end
+        else:
+            self.report({'ERROR'}, "Archive Not Exported.")
         return {'FINISHED'}
 
 ''' # Item that is not needed because of the switch.
