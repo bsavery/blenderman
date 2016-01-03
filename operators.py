@@ -47,7 +47,7 @@ from .export import export_archive
 from .export import get_texture_list
 from .engine import RPass
 from .export import debug
-from .export import write_single_RIB
+from .export import write_archive_RIB
 from . import engine
 
 from bpy_extras.io_utils import ExportHelper
@@ -211,7 +211,7 @@ class ExportRIBObject(bpy.types.Operator):
         rpass.ri.Option("rib", {"string asciistyle": "indented,wide"})
         
         #export_filename = write_single_RIB(rpass, context.scene, rpass.ri, object)
-        export_sucess = write_single_RIB(rpass, context.scene, rpass.ri, object,
+        export_sucess = write_archive_RIB(rpass, context.scene, rpass.ri, object,
                                          export_path, export_mats, export_range)
 
         

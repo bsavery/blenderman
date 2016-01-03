@@ -286,6 +286,7 @@ def get_strands(scene, ob, psys):
     width_offset = psys.settings.renderman.width_offset
     export_st = psys.settings.renderman.export_scalp_st and psys_modifier and len(ob.data.uv_layers) > 0
 
+    
     curve_sets = []
 
     points = []
@@ -295,8 +296,9 @@ def get_strands(scene, ob, psys):
     scalpT = []
     nverts = 0
     for pindex in range(total_hair_count):
-        if not psys.settings.show_guide_hairs and pindex < num_parents:
-            continue
+        #Why do we have this??
+        #if not psys.settings.show_guide_hairs and pindex < num_parents:
+        #    continue
         
         if pindex >= num_parents:
             particle = psys.particles[(pindex - num_parents) % num_parents]
@@ -350,7 +352,6 @@ def get_strands(scene, ob, psys):
         curve_sets.append((vertsArray, points, widthString, hair_width, scalpS, scalpT))
     
     psys.set_resolution(scene=scene, object=ob, resolution='PREVIEW')
-
     return curve_sets
 
 # only export particles that are alive,
@@ -2600,7 +2601,7 @@ def write_preview_rib(rpass, scene, ri):
 #        fileName = db.archive_filename
 #    return fileName
 
-def write_single_RIB(rpass, scene, ri, object, overridePath, exportMats, exportRange):
+def write_archive_RIB(rpass, scene, ri, object, overridePath, exportMats, exportRange):
     sucess = 0
     # precalculate data
     data_blocks, instances = cache_motion_single_object(scene, rpass, object)
