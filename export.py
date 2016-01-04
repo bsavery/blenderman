@@ -1791,6 +1791,7 @@ def export_data_archives(ri, scene, rpass, data_blocks):
     for name, db in data_blocks.items():
         if not db.do_export:
             continue
+        print("Exporting archive: " + db.archive_filename)
         ri.Begin(db.archive_filename)
         if db.type == "MESH":
             export_mesh_archive(ri, scene, db)
@@ -2603,13 +2604,43 @@ def write_preview_rib(rpass, scene, ri):
 
 def write_archive_RIB(rpass, scene, ri, object, overridePath, exportMats, exportRange):
     sucess = 0
+    
     # precalculate data
     data_blocks, instances = cache_motion_single_object(scene, rpass, object)
+    print("cache complete!")
+    #Override precalculated data (simpler then creating new methods)
+    for name, db in data_blocks.items():
+        fileName = db.archive_filename
+        if(overridePath != "" and os.path.exists(os.path.split(overridePath)[0])):
+            db.archive_filename = os.path.splitext(os.path.split(overridePath)[1])[0] + ".rib"
+        else:
+            db.archive_filename = os.path.splitext(os.path.split(fileName)[1])[0] + ".rib"
+
+    print("Names retreved!")
+    print("Filename: " + fileName, "\n Other path" + os.path.splitext(fileName)[0] + ".zip")
+    print("OverridePath: " + overridePath)
+    
+    #Open zip file for writing
+    if(os.path.split(overridePath)[1] != ""):
+        ri.Begin(os.path.split(overridePath)[0] + os.path.split(overridePath)[0].splitext[0] + ".zip")
+    elif(overridePath != ""):
+        ri.Begin(os.path.split(overridePath)[0] + object.name + ".zip")
+    else:
+        ri.Begin(os.path.splitext(fileName)[0] + ".zip")
+        
     # export rib archives of objects
     export_data_archives(ri, scene, rpass, data_blocks)
     
-    for name, db in data_blocks.items():
-        fileName = db.archive_filename
+    #If we need to export material do it
+    if(exportMats):
+        materialsList = object.material_slots
+        ri.Begin("materials.rib")
+        for materialSlots in materialsList:
+            export_material(ri, materialSlots.material)
+        ri.End()
+    ri.End()
+    
+    
         
     returnList = [sucess, fileName]
     return returnList
