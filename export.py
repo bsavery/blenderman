@@ -296,9 +296,9 @@ def get_strands(scene, ob, psys):
     scalpT = []
     nverts = 0
     for pindex in range(total_hair_count):
-        #Why do we have this??
-        #if not psys.settings.show_guide_hairs and pindex < num_parents:
-        #    continue
+        
+        if pindex < num_parents:    # Removed display guide hairs button
+            continue
         
         if pindex >= num_parents:
             particle = psys.particles[(pindex - num_parents) % num_parents]
