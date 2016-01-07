@@ -1261,6 +1261,11 @@ class RendermanObjectSettings(bpy.types.PropertyGroup):
         description="Export entire animation time frame",
         default=False)
     
+    material_in_archive = BoolProperty(
+        name="Material in archive",
+        description="Use material in archive if present",
+        default=False)
+    
     primitive_radius = FloatProperty(
         name="Radius",
         default=1.0)

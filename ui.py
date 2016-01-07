@@ -761,7 +761,7 @@ class OBJECT_PT_renderman_object_geometry(Panel):
 
         if rm.geometry_source in ('ARCHIVE', 'DELAYED_LOAD_ARCHIVE'):
             col.prop(rm, "path_archive")
-
+            col.prop(rm,"material_in_archive")
             col.prop(anim, "animated_sequence")
             if anim.animated_sequence:
                 col.prop(anim, "blender_start")
@@ -814,23 +814,9 @@ class OBJECT_PT_renderman_object_geometry(Panel):
             #    col.prop(rm, "export_archive_path")
 
             
-        col = layout.column()
-        col.separator()
         
         col = layout.column()
-        col.label("RIB Archive:")
-        
-        col = layout.column()
-        col.prop(rm, "export_archive_path")
-        
-        col = layout.column()
-        col.prop(rm, "export_mat")
-        
-        col = layout.column()
-        col.prop(rm, "export_all_frames")
-        
-        col = layout.column()
-        col.operator("object.export_rib_archive", icon="EXPORT", text="Export Object as RIB Archive.")
+        col.operator("export.export_rib_archive", icon="EXPORT", text="Export Object as RIB Archive.")
         
         
         

@@ -2607,29 +2607,33 @@ def write_archive_RIB(rpass, scene, ri, object, overridePath, exportMats, export
     
     # precalculate data
     data_blocks, instances = cache_motion_single_object(scene, rpass, object)
-    print("cache complete!")
+    #print("cache complete!")
     #Override precalculated data (simpler then creating new methods)
     for name, db in data_blocks.items():
         fileName = db.archive_filename
         if(overridePath != "" and os.path.exists(os.path.split(overridePath)[0])):
+            print("Path override exists!")
             db.archive_filename = os.path.splitext(os.path.split(overridePath)[1])[0] + ".rib"
         else:
             db.archive_filename = os.path.splitext(os.path.split(fileName)[1])[0] + ".rib"
 
-    print("Names retreved!")
-    print("Filename: " + fileName, "\n Other path" + os.path.splitext(fileName)[0] + ".zip")
-    print("OverridePath: " + overridePath)
+    #print("Names retreved!")
+    #print("Filename: " + fileName, "\n Other path" + os.path.splitext(fileName)[0] + ".zip")
+    #print("OverridePath: " + overridePath)
     
     #Open zip file for writing
     if(os.path.split(overridePath)[1] != ""):
-        ri.Begin(os.path.split(overridePath)[0] + os.path.split(overridePath)[0].splitext[0] + ".zip")
+        print("ZIP location and name: ",os.path.join(os.path.split(overridePath)[0] , os.path.splitext(os.path.split(overridePath)[1])[0] + ".zip"))
+        ri.Begin(os.path.join(os.path.split(overridePath)[0] , os.path.splitext(os.path.split(overridePath)[1])[0] + ".zip"))
     elif(overridePath != ""):
+        print("ZIP location and name: ", os.path.split(overridePath)[0] + "\\" + object.name + ".zip")
         ri.Begin(os.path.split(overridePath)[0] + object.name + ".zip")
     else:
+        print("ZIP location and name: ", os.path.splitext(fileName)[0] + ".zip")
         ri.Begin(os.path.splitext(fileName)[0] + ".zip")
         
     # export rib archives of objects
-    export_data_archives(ri, scene, rpass, data_blocks)
+    #export_data_archives(ri, scene, rpass, data_blocks)
     
     #If we need to export material do it
     if(exportMats):
