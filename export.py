@@ -2674,10 +2674,11 @@ def write_archive_RIB(rpass, scene, ri, object, overridePath, exportMats, export
         fileName = db.archive_filename
         if(overridePath != "" and os.path.exists(os.path.split(overridePath)[0])):
             print("Path override exists!")
-            db.archive_filename = os.path.splitext(os.path.split(overridePath)[1])[0] + ".rib"
+            db.do_export = True # Need to correct pathing to allow physics to work.
+            db.archive_filename = os.path.split(fileName)[1]
         else:
-            db.archive_filename = os.path.splitext(os.path.split(fileName)[1])[0] + ".rib"
-
+            sucess = -1
+            
     #print("Names retreved!")
     #print("Filename: " + fileName, "\n Other path" + os.path.splitext(fileName)[0] + ".zip")
     #print("OverridePath: " + overridePath)
@@ -2687,23 +2688,23 @@ def write_archive_RIB(rpass, scene, ri, object, overridePath, exportMats, export
         print("ZIP location and name: ",os.path.join(os.path.split(overridePath)[0] , os.path.splitext(os.path.split(overridePath)[1])[0] + ".zip"))
         ri.Begin(os.path.join(os.path.split(overridePath)[0] , os.path.splitext(os.path.split(overridePath)[1])[0] + ".zip"))
     elif(overridePath != ""):
-        print("ZIP location and name: ", os.path.split(overridePath)[0] + "\\" + object.name + ".zip")
-        ri.Begin(os.path.split(overridePath)[0] + object.name + ".zip")
+        print("ZIP location and name: ", os.path.join(os.path.split(overridePath)[0], object.name + ".zip"))
+        ri.Begin(os.path.join(os.path.split(overridePath)[0], object.name + ".zip"))
     else:
-        print("ZIP location and name: ", os.path.splitext(fileName)[0] + ".zip")
-        ri.Begin(os.path.splitext(fileName)[0] + ".zip")
+        sucess = -1
         
-    # export rib archives of objects
-    #export_data_archives(ri, scene, rpass, data_blocks)
+    if(sucess == 0):
+        # export rib archives of objects
+        export_data_archives(ri, scene, rpass, data_blocks)
     
-    #If we need to export material do it
-    if(exportMats):
-        materialsList = object.material_slots
-        ri.Begin("materials.rib")
-        for materialSlots in materialsList:
-            export_material(ri, materialSlots.material)
+        #If we need to export material do it
+        if(exportMats):
+            materialsList = object.material_slots
+            ri.Begin("materials.rib")
+            for materialSlots in materialsList:
+                export_material(ri, materialSlots.material)
+            ri.End()
         ri.End()
-    ri.End()
     
     
         
