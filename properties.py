@@ -1114,11 +1114,7 @@ class RendermanMeshGeometrySettings(bpy.types.PropertyGroup):
         name="Export Default Vertex Color",
         description="Export the active Vertex Color set as the default 'Cs' primitive variable",
         default=True)
-    export_smooth_normals = BoolProperty(
-        name="Export Smooth Normals",
-        description="Export smooth per-vertex normals for PointsPolygons Geometry",
-        default=False)
-
+    
     prim_vars = CollectionProperty(
         type=RendermanMeshPrimVar, name="Primitive Variables")
     prim_vars_index = IntProperty(min=-1, default=-1)
