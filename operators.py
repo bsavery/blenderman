@@ -224,8 +224,6 @@ class ExportRIBObject(bpy.types.Operator):
         export_path = self.filepath
         export_range = self.export_all_frames
         export_mats = self.export_mat
-        print(export_path)
-        print("Exporting all the RIB!!" + str(context.active_object))
         rpass = RPass(context.scene, interactive=False)
         object = context.active_object
         
@@ -234,7 +232,6 @@ class ExportRIBObject(bpy.types.Operator):
         rpass.ri.Option("rib", {"string asciistyle": "indented,wide"})
         
         #export_filename = write_single_RIB(rpass, context.scene, rpass.ri, object)
-        print("Starting export...")
         export_sucess = write_archive_RIB(rpass, context.scene, rpass.ri, object,
                                          export_path, export_mats, export_range)
 
@@ -247,10 +244,15 @@ class ExportRIBObject(bpy.types.Operator):
             object.renderman.path_archive = export_sucess[1]
             if(export_mats):
                 object.renderman.material_in_archive = True
+            else:
+                object.renderman.material_in_archive = False
             object.show_bounds = True
             if(export_range == True):
                 object.renderman.archive_anim_settings.animated_sequence = True
+                object.renderman.archive_anim_settings.sequence_in = context.scene.frame_start
                 object.renderman.archive_anim_settings.sequence_out = context.scene.frame_end
+            else:
+                object.renderman.archive_anim_settings.animated_sequence = False
         else:
             self.report({'ERROR'}, "Archive Not Exported.")
         return {'FINISHED'}
