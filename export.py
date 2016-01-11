@@ -671,7 +671,7 @@ def export_light_source(ri, lamp, shape):
         lamp.energy], "__instanceid": lamp.name}
     if lamp.type == "HEMI":
         name = "PxrStdEnvMapLight"
-        params["color envtint"] = rib(lamp.color)
+        params["color envTint"] = rib(lamp.color)
     else:
         params["color lightColor"] = rib(lamp.color)
         params["string rman__Shape"] = shape

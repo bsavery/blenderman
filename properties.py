@@ -915,6 +915,9 @@ class RendermanLightSettings(bpy.types.PropertyGroup):
             if node.renderman_node_type == 'output':
                 output = node
                 break
+        if output == None:
+            output = nt.nodes.new('RendermanOutputNode')
+
         for node in nt.nodes:
             if hasattr(node, 'typename') and node.typename == light_shader:
                 nt.links.remove(output.inputs['Light'].links[0])
@@ -924,7 +927,7 @@ class RendermanLightSettings(bpy.types.PropertyGroup):
             light = nt.nodes.new(light_shader)
             light.location = output.location
             light.location[0] -= 300
-            nt.links.remove(output.inputs['Light'].links[0])
+            #nt.links.remove(output.inputs['Light'].links[0])
             nt.links.new(light.outputs[0], output.inputs['Light'])
 
     def update_area_shape(self, context):

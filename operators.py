@@ -112,26 +112,35 @@ class SHADING_OT_add_renderman_nodetree(bpy.types.Operator):
             default.location[0] -= 300
             nt.links.new(default.outputs[0], output.inputs[0])
         else:
-
+            # we only need to set the renderman type as the update method there 
+            # handles making the nodetree
             light_type = idblock.type
-            light_shader = 'PxrStdAreaLightLightNode'
-            if light_type == 'SUN':
-                light_shader = 'PxrStdEnvDayLightLightNode'
-            elif light_type == 'HEMI':
-                light_shader = 'PxrStdEnvMapLightLightNode'
-            elif light_type == 'AREA' or light_type == 'POINT':
-                idblock.type = "AREA"
-                context.lamp.size = 1.0
-                context.lamp.size_y = 1.0
-                
+            if light_type == "SUN":
+                idblock.renderman.renderman_type = "DIST"
+            elif light_type == "HEMI":
+                idblock.renderman.renderman_type = "ENV"
             else:
-                idblock.type = "AREA"
+                idblock.renderman.renderman_type = light_type
+            # light_type = idblock.type
+            # light_shader = 'PxrStdAreaLightLightNode'
+            # if light_type == 'SUN':
+            #     context.lamp.renderman.type=
+            #     light_shader = 'PxrStdEnvDayLightLightNode'
+            # elif light_type == 'HEMI':
+            #     light_shader = 'PxrStdEnvMapLightLightNode'
+            # elif light_type == 'AREA' or light_type == 'POINT':
+            #     idblock.type = "AREA"
+            #     context.lamp.size = 1.0
+            #     context.lamp.size_y = 1.0
+                
+            # else:
+            #     idblock.type = "AREA"
 
-            output = nt.nodes.new('RendermanOutputNode')
-            default = nt.nodes.new(light_shader)
-            default.location = output.location
-            default.location[0] -= 300
-            nt.links.new(default.outputs[0], output.inputs[1])
+            # output = nt.nodes.new('RendermanOutputNode')
+            # default = nt.nodes.new(light_shader)
+            # default.location = output.location
+            # default.location[0] -= 300
+            # nt.links.new(default.outputs[0], output.inputs[1])
 
         return {'FINISHED'}
 
