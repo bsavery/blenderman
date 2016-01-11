@@ -27,6 +27,7 @@ import bpy
 import math
 import mathutils
 import os
+import sys
 import time
 from mathutils import Matrix, Vector, Quaternion
 
@@ -779,7 +780,7 @@ def export_material(ri, mat, handle=None):
         export_shader(ri, mat)
 
 
-def export_material_archive(ri, mat):
+def export_material_archive(ri, mat, zip=False):
     ri.ReadArchive('material.' + mat.name)
 
 
@@ -1871,22 +1872,39 @@ def export_instance_read_archive(ri, instance, instances, data_blocks, rpass, is
 def export_data_read_archive(ri, data_block, rpass):
     ri.AttributeBegin()
 
-    if data_block.material:
-        export_material_archive(ri, data_block.material)
+    if(data_block.object.renderman.geometry_source != ARCHIVE):
+        if data_block.material:
+            export_material_archive(ri, data_block.material)
 
-    archive_filename = relpath_archive(data_block.archive_filename, rpass)
+        archive_filename = relpath_archive(data_block.archive_filename, rpass)
 
-    # we want these relative paths of the archive
-    if data_block.type == 'MESH':
+        # we want these relative paths of the archive
+        if data_block.type == 'MESH':
+            bounds = get_bounding_box(data_block.data)
+            params = {"string filename": archive_filename,
+                    "float[6] bound": bounds}
+            ri.Procedural2(ri.Proc2DelayedReadArchive, ri.SimpleBound, params)
+        else:
+            if data_block.type != 'DUPLI':
+                ri.Transform([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1])
+            ri.ReadArchive(archive_filename)
+
+    else:
+        arvhiveInfo = data_block.object.renderman
+        #frameToExport = archiveInfo.anim_archive_path
+        if data_block.material and arvhiveInfo.material_in_archive:
+            if not arvhiveInfo.archive_anim_settings.animated_archive:
+                ri.ReadArchive(arvhiveInfo.path_archive + "!" + 'material.' + mat.name)
+            else:
+                ri.ReadArchive(arvhiveInfo.path_archive + "!" + 'material.' + mat.name)
+        
+        archive_filename = arvhiveInfo.path_archive + "!" + arvhiveInfo.object_name + "-MESH" + ".rib"
         bounds = get_bounding_box(data_block.data)
         params = {"string filename": archive_filename,
-                  "float[6] bound": bounds}
+                "float[6] bound": bounds}
         ri.Procedural2(ri.Proc2DelayedReadArchive, ri.SimpleBound, params)
-    else:
-        if data_block.type != 'DUPLI':
-            ri.Transform([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1])
-        ri.ReadArchive(archive_filename)
-
+        
+        
     ri.AttributeEnd()
 
 
@@ -2665,6 +2683,12 @@ def write_preview_rib(rpass, scene, ri):
 def write_archive_RIB(rpass, scene, ri, object, overridePath, exportMats, exportRange):
     success = 0 # Store if the export is a success or not
     
+    if(sys.platform == 'win32'):
+        fileExt = ".zip"
+    else:
+        fileExt = ".tar"
+    
+    
     # precalculate data
     data_blocks, instances = cache_motion_single_object(scene, rpass, object)
     
@@ -2682,10 +2706,10 @@ def write_archive_RIB(rpass, scene, ri, object, overridePath, exportMats, export
     
     #Open zip file for writing
     if(os.path.split(overridePath)[1] != ""):
-        archivePath = os.path.join(os.path.split(overridePath)[0] , os.path.splitext(os.path.split(overridePath)[1])[0] + ".zip")
+        archivePath = os.path.join(os.path.split(overridePath)[0] , os.path.splitext(os.path.split(overridePath)[1])[0] + fileExt)
         ri.Begin(archivePath)
     elif(overridePath != ""):
-        archivePath = os.path.join(os.path.split(overridePath)[0], object.name + ".zip")
+        archivePath = os.path.join(os.path.split(overridePath)[0], object.name + fileExt)
         ri.Begin(archivePath)
     else:
         success = -1

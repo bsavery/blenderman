@@ -251,6 +251,7 @@ class ExportRIBObject(bpy.types.Operator):
             self.report({'INFO'}, "Archive Exported Successfully!")
             object.renderman.geometry_source = 'ARCHIVE'
             object.renderman.path_archive = export_sucess[1]
+            object.renderman.object_name = object.name
             if(export_mats):
                 object.renderman.material_in_archive = True
             else:

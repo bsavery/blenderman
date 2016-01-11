@@ -757,6 +757,7 @@ class OBJECT_PT_renderman_object_geometry(Panel):
 
         if rm.geometry_source in ('ARCHIVE', 'DELAYED_LOAD_ARCHIVE'):
             col.prop(rm, "path_archive")
+            col.prop(rm, "object_name")
             col.prop(rm,"material_in_archive")
             col.prop(anim, "animated_sequence")
             if anim.animated_sequence:

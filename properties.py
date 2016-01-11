@@ -1250,6 +1250,11 @@ class RendermanObjectSettings(bpy.types.PropertyGroup):
         subtype='FILE_PATH',
         default="")
 
+    object_name = StringProperty(
+        name="Object Name",
+        description="Name of the object in the archive to use.",
+        default="")
+        
     export_mat = BoolProperty(
         name="Export Material",
         description="Do you want to export the material?",
