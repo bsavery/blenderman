@@ -1857,56 +1857,67 @@ def export_instance_read_archive(ri, instance, instances, data_blocks, rpass, is
     # now the matrix, if we're transforming do the motion here
     export_transform(ri, instance, concat=is_child)
 
-    for db_name in instance.data_block_names:
-        if db_name in data_blocks:
-            export_data_read_archive(ri, data_blocks[db_name], rpass)
+    if(instance.ob.renderman.geometry_source != 'ARCHIVE'):
+        for db_name in instance.data_block_names:
+            if db_name in data_blocks:
+                export_data_read_archive(ri, data_blocks[db_name], rpass)
 
-    # now the children
-    for child_name in instance.children:
-        if child_name in instances:
-            export_instance_read_archive(
-                ri, instances[child_name], instances, data_blocks, rpass, is_child=True)
+        # now the children
+        for child_name in instance.children:
+            if child_name in instances:
+                export_instance_read_archive(
+                    ri, instances[child_name], instances, data_blocks, rpass, is_child=True)
+                    
+                    
+    else:
+        for db_name in data_blocks:
+            if db_name in data_blocks:
+                export_data_rib_archive(ri, data_blocks[db_name], instance, rpass)
+        # This is an archive so nothing needs to be done for parented children.
+        for child_name in instance.children:
+            if child_name in instances:
+                export_instance_read_archive(
+                    ri, instances[child_name], instances, data_blocks, rpass, is_child=True)
     ri.AttributeEnd()
 
 
 def export_data_read_archive(ri, data_block, rpass):
     ri.AttributeBegin()
 
-    if(data_block.object.renderman.geometry_source != ARCHIVE):
-        if data_block.material:
-            export_material_archive(ri, data_block.material)
+    if data_block.material:
+        export_material_archive(ri, data_block.material)
 
-        archive_filename = relpath_archive(data_block.archive_filename, rpass)
+    archive_filename = relpath_archive(data_block.archive_filename, rpass)
 
-        # we want these relative paths of the archive
-        if data_block.type == 'MESH':
-            bounds = get_bounding_box(data_block.data)
-            params = {"string filename": archive_filename,
-                    "float[6] bound": bounds}
-            ri.Procedural2(ri.Proc2DelayedReadArchive, ri.SimpleBound, params)
-        else:
-            if data_block.type != 'DUPLI':
-                ri.Transform([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1])
-            ri.ReadArchive(archive_filename)
-
-    else:
-        arvhiveInfo = data_block.object.renderman
-        #frameToExport = archiveInfo.anim_archive_path
-        if data_block.material and arvhiveInfo.material_in_archive:
-            if not arvhiveInfo.archive_anim_settings.animated_archive:
-                ri.ReadArchive(arvhiveInfo.path_archive + "!" + 'material.' + mat.name)
-            else:
-                ri.ReadArchive(arvhiveInfo.path_archive + "!" + 'material.' + mat.name)
-        
-        archive_filename = arvhiveInfo.path_archive + "!" + arvhiveInfo.object_name + "-MESH" + ".rib"
+    # we want these relative paths of the archive
+    if data_block.type == 'MESH':
         bounds = get_bounding_box(data_block.data)
         params = {"string filename": archive_filename,
                 "float[6] bound": bounds}
         ri.Procedural2(ri.Proc2DelayedReadArchive, ri.SimpleBound, params)
+    else:
+        if data_block.type != 'DUPLI':
+            ri.Transform([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1])
+        ri.ReadArchive(archive_filename)
         
         
     ri.AttributeEnd()
 
+def export_data_rib_archive(ri, data_block, instance , rpass):
+    arvhiveInfo = instance.ob.renderman
+    #frameToExport = archiveInfo.anim_archive_path
+    if data_block.material and arvhiveInfo.material_in_archive:
+        if not arvhiveInfo.archive_anim_settings.animated_sequence:
+            ri.ReadArchive(arvhiveInfo.path_archive + "!" + 'material.' + data_block.material.name)
+        else:
+            ri.ReadArchive(arvhiveInfo.path_archive + "!" + 'material.' + data_block.material.name)
+        
+    archive_filename = arvhiveInfo.path_archive + "!" + arvhiveInfo.object_name + "-MESH" + ".rib"
+    bounds = get_bounding_box(data_block.data)
+    params = {"string filename": archive_filename,
+            "float[6] bound": bounds}
+    ri.Procedural2(ri.Proc2DelayedReadArchive, ri.SimpleBound, params)
+    
 
 def export_archive(*args):
     pass
