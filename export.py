@@ -1356,7 +1356,7 @@ def export_smoke(ri, ob):
         "varying float flame": smoke_data.flame_grid,
         "varying color smoke_color": color_grid
     }
-    ri.Volume("box", [-1, 1, -1, 1, -1, 1],
+    ri.Volume("box", rib_ob_bounds(ob.bound_box),
               rib(smoke_data.domain_resolution), params)
 
 
