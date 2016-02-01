@@ -33,6 +33,7 @@ import mathutils
 from mathutils import Matrix, Vector, Quaternion
 import re
 import traceback
+import glob
 
 from . import bl_info
 
@@ -56,6 +57,8 @@ from bpy.app.handlers import persistent
 from .export import write_rib, write_preview_rib, get_texture_list,\
     issue_shader_edits, get_texture_list_preview, issue_transform_edits,\
     interactive_initial_rib, update_light_link
+
+from .nodes import get_tex_file_name
 
 addon_version = bl_info['version']
 
@@ -561,11 +564,22 @@ class RPass:
         write_preview_rib(self, self.scene, self.ri)
         self.ri.End()
 
-    def convert_textures(self, texture_list):
+    def convert_textures(self, temp_texture_list):
         if not os.path.exists(self.paths['texture_output']):
             os.mkdir(self.paths['texture_output'])
 
         files_converted = []
+        texture_list = []
+
+        # for UDIM textures
+        for in_file, out_file, options in temp_texture_list:
+            if '_MAPID_' in in_file:
+                in_file = get_real_path(in_file)
+                for udim_file in glob.glob(in_file.replace('_MAPID_', '*')):
+                    texture_list.append((udim_file, get_tex_file_name(udim_file), options))
+            else:
+                texture_list.append((in_file, out_file, options))
+
         for in_file, out_file, options in texture_list:
             in_file = get_real_path(in_file)
             out_file_path = os.path.join(

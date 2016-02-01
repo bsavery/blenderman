@@ -1002,6 +1002,7 @@ def gen_params(ri, node, mat_name=None, recurse=True):
                     if 'options' in meta and meta['options'] == 'texture' or \
                         (node.renderman_node_type == 'light' and
                             'widget' in meta and meta['widget'] == 'fileInput'):
+                        
                         params['%s %s' % (meta['renderman_type'],
                                           meta['renderman_name'])] = \
                             rib(get_tex_file_name(prop),
@@ -1111,7 +1112,7 @@ def shader_node_rib(ri, node, mat_name, disp_bound=0.0, recurse=True):
 
 def get_tex_file_name(prop):
     if prop != '' and prop.rsplit('.', 1) != 'tex':
-        return os.path.basename(prop).rsplit('.', 2)[0] + '.tex'
+        return os.path.basename(prop).rsplit('.', 1)[0] + '.tex'
     else:
         return prop
 
