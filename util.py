@@ -31,10 +31,12 @@ import platform
 import sys
 import fnmatch
 import subprocess
+import zipfile
 from subprocess import Popen, PIPE
+import xml.etree.ElementTree as ET
 from extensions_framework import util as efutil
 from mathutils import Matrix, Vector
-EnableDebugging = False
+EnableDebugging = True
 
 
 class BlenderVersionError(Exception):
@@ -528,3 +530,54 @@ def init_env(rm):
         os.environ['PATH'] += pathsep + os.path.join(RMANTREE, "bin")
     else:
         os.environ['PATH'] = os.path.join(RMANTREE, "bin")
+
+
+
+#------------- RIB achive Manifest functions ---------
+
+def export_archive_manifest(pathToArchive, dataObjects, animating):
+    debug('info', "Exporting manifest!!")
+    animatedArchive = animating
+    for name, db in dataObjects.items():
+        print("Name: ", db.name)
+        print("Type: ", db.type)
+        if(db.type == 'MESH'):
+            exportObj = db.name
+            ObjMat = db.material
+    success = 0
+    print("Path: ", pathToArchive)
+    
+    #Generate xml file. The great tool that ETree is.
+    root = ET.Element("root")
+    obj = ET.SubElement(root, "obj")
+    
+    ET.SubElement(obj, "Name", name="name").text = exportObj
+    ET.SubElement(obj, "Material", name="material").text = ObjMat.name
+    
+    tree = ET.ElementTree(root)
+    tree.write("manifest.xml")
+    
+    with zipfile.ZipFile(pathToArchive, 'a') as archive:
+        archive.write('manifest.xml')
+        #archive.writestr('manifest.xml', 'some text \n and some more text')
+    archive.close()
+    os.remove('manifest.xml')
+    return success
+
+
+def import_archive_manifest(pathToArchive):
+    print("Importing manifest!!")
+    materials = {'object': "default", 'physics': [""]}
+    dataFromArchive = {'objectName': "", 'animated': False, 'physics': [""], 'materialData': materials}
+    return dataFromArchive
+
+# ------------ Texture size loader --------
+
+##def get_texture_size(texture):
+  ##  return size[texture.size[0]][texture.size[1]]
+
+# ------------ BGL util functions ---------
+##def draw_light_shape(context, modle, ):
+    
+    
+    
