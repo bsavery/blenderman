@@ -2766,7 +2766,7 @@ def write_archive_RIB(rpass, scene, ri, object, overridePath, exportMats, export
     
     
     #Export manifest file
-    success = export_archive_manifest(archivePath, data_blocks, exportRange)
+    success = export_archive_manifest(archivePath, data_blocks, exportRange, scene)
     
         
     returnList = [success, archivePath]
