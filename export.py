@@ -2695,16 +2695,6 @@ def write_preview_rib(rpass, scene, ri):
     ri.WorldEnd()
     ri.FrameEnd()
 
-#def write_single_RIB(rpass, scene, ri, object):
-    
-    # precalculate data
-#    data_blocks, instances = cache_motion_single_object(scene, rpass, object)
-    # export rib archives of objects
-#    export_data_archives(ri, scene, rpass, data_blocks)
-    
-#    for name, db in data_blocks.items():
-#        fileName = db.archive_filename
-#    return fileName
 
 def write_archive_RIB(rpass, scene, ri, object, overridePath, exportMats, exportRange):
     success = 0 # Store if the export is a success or not
