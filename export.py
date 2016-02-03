@@ -298,7 +298,6 @@ def get_strands(scene, ob, psys):
     width_offset = psys.settings.renderman.width_offset
     export_st = psys.settings.renderman.export_scalp_st and psys_modifier and len(
         ob.data.uv_layers) > 0
-
     
     curve_sets = []
 
@@ -313,10 +312,6 @@ def get_strands(scene, ob, psys):
         if pindex < num_parents:    # Removed display guide hairs button
             continue
 
-        if pindex >= num_parents:
-            particle = psys.particles[(pindex - num_parents) % num_parents]
-        else:
-            particle = psys.particles[pindex]
         strand_points = []
         # walk through each strand
         for step in range(0, steps + 1):
@@ -347,7 +342,11 @@ def get_strands(scene, ob, psys):
 
             # get the scalp S
             if export_st:
-                st = particle.uv_on_emitter(psys_modifier)
+                if pindex >= num_parents:
+                    particle = psys.particles[(pindex - num_parents) % num_parents]
+                else:
+                    particle = psys.particles[pindex]
+                st = psys.uv_on_emitter(psys_modifier, particle, pindex)
                 scalpS.append(st[0])
                 scalpT.append(st[1])
 
@@ -1700,7 +1699,7 @@ def get_data_blocks_needed(ob, rpass, do_mb):
         archive_filename = get_archive_filename(name, rpass, False)
         data_blocks.append(DataBlock(name, "DUPLI", archive_filename, ob,
                                      do_export=file_is_dirty(rpass.scene, ob, archive_filename)))
-        if ob.dupli_type == 'GROUP':
+        if ob.dupli_type == 'GROUP' and ob.dupli_group:
             for dupli_ob in ob.dupli_group.objects:
                 data_blocks.append(get_dupli_block(dupli_ob, rpass, do_mb))
 
@@ -2877,14 +2876,19 @@ def add_light(rpass, ri, active, prman):
     ri.Illuminate(lamp.name, rm.illuminates_by_default)
     ri.EditEnd()
 
+def delete_light(rpass, ri, name, prman):
+    rpass.edit_num += 1
+    edit_flush(ri, rpass.edit_num, prman)
+    ri.EditBegin('overrideilluminate')
+    ri.Illuminate(name, False)
+    ri.EditEnd()
 
 # test the active object type for edits to do then do them
-
 
 def issue_transform_edits(rpass, ri, active, prman):
     if active.type == 'LAMP' and active.name not in rpass.lights:
         add_light(rpass, ri, active, prman)
-        rpass.lights.append(active.name)
+        rpass.lights[active.name] = active.data.name
         return
 
     if active.type not in ['LAMP', 'CAMERA'] and not is_emissive(active):

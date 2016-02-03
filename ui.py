@@ -88,16 +88,15 @@ import bl_ui.properties_data_camera as properties_data_camera
 for member in dir(properties_data_camera):
     subclass = getattr(properties_data_camera, member)
     try:
-        subclass.COMPAT_ENGINES.add('PRMAN_RENDER')
+        if subclass != properties_data_camera.DATA_PT_camera_dof:
+            subclass.COMPAT_ENGINES.add('PRMAN_RENDER')
+        pass
     except:
         pass
 del properties_data_camera
 
 import bl_ui.properties_particle as properties_particle
 for member in dir(properties_particle):
-    if member == 'PARTICLE_PT_render':
-        continue
-
     subclass = getattr(properties_particle, member)
     try:
         subclass.COMPAT_ENGINES.add('PRMAN_RENDER')
@@ -623,65 +622,78 @@ class RENDER_PT_layer_passes(PRManButtonsPanel, Panel):
 
 
 class DATA_PT_renderman_camera(ShaderPanel, Panel):
-    bl_context = "data"
-    bl_label = "RenderMan Camera"
+   bl_context = "data"
+   bl_label = "RenderMan Camera"
 
-    @classmethod
-    def poll(cls, context):
-        rd = context.scene.render
-        if not context.camera:
-            return False
-        return rd.engine == 'PRMAN_RENDER'
+   @classmethod
+   def poll(cls, context):
+       rd = context.scene.render
+       if not context.camera:
+           return False
+       return rd.engine == 'PRMAN_RENDER'
 
-    def draw(self, context):
-        layout = self.layout
-        cam = context.camera
-        scene = context.scene
-        row = layout.row()
-        row.prop(scene.renderman, "depth_of_field")
-        sub = row.row()
-        sub.enabled = scene.renderman.depth_of_field
-        sub.prop(scene.renderman, "fstop")
+   def draw(self, context):
+       layout = self.layout
+       cam = context.camera
+       scene = context.scene
+       dof_options = cam.gpu_dof
 
-        row = layout.row()
-        row.label("Aperture Controls:")
-        row.prop(cam.renderman, "aperture_sides")
-        row.prop(cam.renderman, "aperture_angle")
-        row.prop(cam.renderman, "aperture_roundness")
-        row.prop(cam.renderman, "aperture_density")
+       row = layout.row()
+       row.prop(scene.renderman, "depth_of_field")
+       sub = row.row()
+       sub.enabled = scene.renderman.depth_of_field
+       sub.prop(scene.renderman, "fstop")
 
-        layout.prop(cam.renderman, "use_physical_camera")
-        if cam.renderman.use_physical_camera:
-            pxrcamera = getattr(cam.renderman, "PxrCamera_settings")
+       split = layout.split()
 
-            # for each property add it to ui
-            def draw_props(prop_names, layout):
-                for prop_name in prop_names:
-                    prop_meta = pxrcamera.prop_meta[prop_name]
-                    prop = getattr(pxrcamera, prop_name)
-                    row = layout.row()
+       col = split.column()
 
-                    if prop_meta['renderman_type'] == 'page':
-                        ui_prop = prop_name + "_ui_open"
-                        ui_open = getattr(pxrcamera, ui_prop)
-                        icon = 'TRIA_DOWN' if ui_open \
-                            else 'TRIA_RIGHT'
+       col.label(text="Focus:")
+       col.prop(cam, "dof_object", text="")
+       sub = col.column()
+       sub.active = (cam.dof_object is None)
+       sub.prop(cam, "dof_distance", text="Distance")
 
-                        split = layout.split(NODE_LAYOUT_SPLIT)
-                        row = split.row()
-                        row.prop(pxrcamera, ui_prop, icon=icon, text='',
-                                 icon_only=True, emboss=False)
-                        row.label(prop_name + ':')
+       col = split.column()
+       sub = col.column(align=True)         
+       sub.label("Aperture Controls:")
+       sub.prop(cam.renderman, "aperture_sides", text="Sides")
+       sub.prop(cam.renderman, "aperture_angle", text="Angle")
+       sub.prop(cam.renderman, "aperture_roundness", text="Roundness")
+       sub.prop(cam.renderman, "aperture_density", text="Density")
 
-                        if ui_open:
-                            draw_props(prop, layout)
+       layout.prop(cam.renderman, "use_physical_camera")
+       if cam.renderman.use_physical_camera:
+           pxrcamera = getattr(cam.renderman, "PxrCamera_settings")
 
-                    else:
-                        row.label('', icon='BLANK1')
-                        # indented_label(row, socket.name+':')
-                        row.prop(pxrcamera, prop_name)
+           # for each property add it to ui
+           def draw_props(prop_names, layout):
+               for prop_name in prop_names:
+                   prop_meta = pxrcamera.prop_meta[prop_name]
+                   prop = getattr(pxrcamera, prop_name)
+                   row = layout.row()
 
-            draw_props(pxrcamera.prop_names, layout)
+                   if prop_meta['renderman_type'] == 'page':
+                       ui_prop = prop_name + "_ui_open"
+                       ui_open = getattr(pxrcamera, ui_prop)
+                       icon = 'TRIA_DOWN' if ui_open \
+                           else 'TRIA_RIGHT'
+
+                       split = layout.split(NODE_LAYOUT_SPLIT)
+                       row = split.row()
+                       row.prop(pxrcamera, ui_prop, icon=icon, text='',
+                               icon_only=True, emboss=False)
+                       row.label(prop_name + ':')
+
+                       if ui_open:
+                           draw_props(prop, layout)
+
+                   else:
+                       row.label('', icon='BLANK1')
+                       # indented_label(row, socket.name+':')
+                       row.prop(pxrcamera, prop_name)
+
+           draw_props(pxrcamera.prop_names, layout)
 
 
 class DATA_PT_renderman_lamp(ShaderPanel, Panel):

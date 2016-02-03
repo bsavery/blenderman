@@ -273,6 +273,11 @@ def update_func(self, context):
     from . import engine
     if engine.ipr is not None and engine.ipr.is_interactive_running:
         engine.ipr.issue_shader_edits(node=self)
+    
+    if context and 'material' and hasattr(context, 'material'):
+        mat = context.material
+        if mat:
+            self.update_mat(mat)
 
 
 # map args params to props

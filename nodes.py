@@ -198,6 +198,56 @@ class RendermanPropertyGroup(bpy.types.PropertyGroup):
 class RendermanShadingNode(bpy.types.Node):
     bl_label = 'Output'
 
+    def update_mat(self, mat):
+        if self.renderman_node_type == 'bxdf' and self.outputs['Bxdf'].is_linked:
+            mat.specular_color = [1,1,1]
+            mat.diffuse_color = [1,1,1]
+            mat.use_transparency = False
+            mat.specular_intensity = 0
+            mat.diffuse_intensity = 1
+
+            if hasattr(self, "baseColor"):
+                mat.diffuse_color = self.baseColor
+            elif hasattr(self, "emitColor"):
+                mat.diffuse_color = self.emitColor
+            elif hasattr(self, "diffuseColor"):
+                mat.diffuse_color = self.diffuseColor
+            elif hasattr(self, "midColor"):
+                mat.diffuse_color = self.midColor
+            elif hasattr(self, "transmissionColor"):
+                mat.diffuse_color = self.transmissionColor
+            elif hasattr(self, "frontColor"):
+                mat.diffuse_color = self.frontColor
+            
+            #specular intensity
+            if hasattr(self, "specular"):
+                mat.specular_intensity = self.specular
+            elif hasattr(self, "SpecularGainR"):
+                mat.specular_intensity = self.specularGainR
+            elif hasattr(self, "reflectionGain"):
+                mat.specular_intensity = self.reflectionGain
+
+            # specular color 
+            if hasattr(self, "specularColor"):
+                mat.specular_color = self.specularColor
+            elif hasattr(self, "reflectionColor"):
+                mat.specular_color = self.reflectionColor
+            
+
+            if self.bl_idname in ["PxrGlassBxdfNode", "PxrLMGlassBxdfNode"]:
+                mat.use_transparency = True
+                mat.alpha = .5
+            
+            if self.bl_idname == "PxrLMMetalBxdfNode":
+                mat.diffuse_color = [0,0,0]
+                mat.specular_intensity = 1
+                mat.specular_color = self.specularColor
+                mat.mirror_color = [1,1,1]
+            
+            elif self.bl_idname == "PxrLMPlasticBxdfNode":
+                mat.specular_intensity = 1
+                
+
     # all the properties of a shader will go here, also inputs/outputs
     # on connectable props will have the same name
     # node_props = None
@@ -854,7 +904,8 @@ class Add_Node:
             else:
                 nt.links.new(newnode.outputs[self.input_type], socket)
             newnode.location = old_node.location
-
+            active_material = context.active_object.active_material
+            newnode.update_mat(active_material)
             nt.nodes.remove(old_node)
         return {'FINISHED'}
 
