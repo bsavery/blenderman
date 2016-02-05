@@ -361,6 +361,8 @@ def get_strands(scene, ob, psys):
             vertsArray = []
             if not conwidth:
                 hair_width = []
+            scalpS = []
+            scalpT = []
 
     if nverts > 0:
         curve_sets.append((vertsArray, points, widthString,
@@ -750,6 +752,43 @@ def export_light_shaders(ri, lamp, do_geometry=True):
     # now the geometry
     if do_geometry:
         shapes[lamp.type][1]()
+
+def export_world(ri, world, do_geometry=True):
+    rm = world.renderman
+    #if no shader do nothing!
+    if rm.renderman_type == 'NONE' or rm.nodetree == '':
+        return
+    params = []
+
+    ri.AttributeBegin()
+
+    if do_geometry:
+        m = Matrix.Identity(4)
+        if rm.renderman_type == 'ENV':
+            m[0] *= -1.0
+        if rm.renderman_type == 'SKY':
+            m2 = Matrix.Rotation(math.radians(180), 4, 'X')
+            m = m2 * m
+        ri.Transform(rib(m))
+        ri.ShadingRate(rm.shadingrate)
+
+    handle = world.name
+    # need this for rerendering
+    ri.Attribute('identifier', {'string name': handle})
+    # do the light only if nodetree
+    if rm.nodetree != '':
+        # make sure the shape is set on PxrStdAreaLightShape
+        export_shader_nodetree(ri, world, handle)
+        params = {}
+        if rm.renderman_type == 'SKY':
+            params['constant float[2] resolution'] = [1024, 512]
+        
+        if do_geometry:
+            ri.Geometry("envsphere", params)
+    
+    ri.AttributeEnd()
+
+    ri.Illuminate("World", rm.illuminates_by_default)
 
 
 def export_light(ri, instance):
@@ -2641,7 +2680,7 @@ def write_rib(rpass, scene, ri):
 
     # export_global_illumination_lights(ri, rpass, scene)
     # export_world_coshaders(ri, rpass, scene) # BBM addition
-
+    export_world(ri, scene.world)
     export_scene_lights(ri, instances)
 
     export_default_bxdf(ri, "default")
@@ -2910,11 +2949,17 @@ def update_light_link(rpass, ri, prman, active, link):
 # test the active object type for edits to do then do them
 def issue_shader_edits(rpass, ri, prman, nt=None, node=None):
     if node is None:
-        mat = bpy.context.object.active_material
+        mat = None
+        if bpy.context.object:
+            mat = bpy.context.object.active_material
         lamp = None
-        if mat is None and bpy.data.scenes[0].objects.active.type == 'LAMP':
+        world = bpy.context.scene.world
+        if mat is None and bpy.data.scenes[0].objects.active \
+            and bpy.data.scenes[0].objects.active.type == 'LAMP':
             lamp = bpy.data.scenes[0].objects.active
             mat = bpy.data.scenes[0].objects.active.data
+        elif mat is None and world.renderman.nodetree != '':
+            mat = world
         if mat is None:
             return
         # do an attribute full rebind
@@ -2938,13 +2983,24 @@ def issue_shader_edits(rpass, ri, prman, nt=None, node=None):
             ri.EditBegin('attribute', {'string scopename': lamp.name})
             export_light_shaders(ri, mat)
             ri.EditEnd()
+        elif world:
+            ri.EditBegin('attribute', {'string scopename': world.name})
+            export_world(ri, mat, do_geometry = False)
+            ri.EditEnd()
 
     else:
-        mat = bpy.context.object.active_material
+        world = bpy.context.scene.world
+        mat = None
+
+        if bpy.context.object:
+            mat = bpy.context.object.active_material
         # if this is a lamp use that for the mat/name
-        if mat is None and bpy.data.scenes[0].objects.active.type == 'LAMP':
+        if mat is None and bpy.data.scenes[0].objects.active \
+            and bpy.data.scenes[0].objects.active.type == 'LAMP':
             mat = bpy.data.scenes[0].objects.active.data
-        if mat is None:
+        elif mat is None and bpy.context.scene.world.renderman.nodetree != '':
+            mat = bpy.context.scene.world
+        elif mat is None:
             return
         mat_name = mat.name
 

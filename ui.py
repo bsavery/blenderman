@@ -696,6 +696,32 @@ class DATA_PT_renderman_camera(ShaderPanel, Panel):
            draw_props(pxrcamera.prop_names, layout)
 
 
+class DATA_PT_renderman_world(ShaderPanel, Panel):
+    bl_context = "world"
+    bl_label = "World"
+    shader_type = 'world'
+    param_exclude = exclude_lamp_params
+
+    def draw(self, context):
+        layout = self.layout
+        world = context.scene.world
+        if world.renderman.nodetree == '':
+            layout.operator('shading.add_renderman_nodetree').idtype = 'world'
+            return
+        else:
+            layout.prop(world.renderman, "renderman_type", expand=True)
+            if world.renderman.renderman_type == 'NONE':
+                return
+            nt = bpy.data.node_groups[world.renderman.nodetree]
+            output_node = next(
+                (n for n in nt.nodes if n.renderman_node_type == 'output'), None)
+            lamp_node = output_node.inputs['Light'].links[0].from_node
+            if lamp_node:
+                draw_node_properties_recursive(self.layout, context, nt, lamp_node)
+        
+
+
+
 class DATA_PT_renderman_lamp(ShaderPanel, Panel):
     bl_context = "data"
     bl_label = "Lamp"
