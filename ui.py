@@ -848,8 +848,8 @@ class OBJECT_PT_renderman_object_geometry(Panel):
 
             
         
-        col = layout.column()
-        col.operator("export.export_rib_archive", icon="EXPORT", text="Export Object as RIB Archive.")
+        #col = layout.column()
+        #col.operator("export.export_rib_archive", icon="EXPORT", text="Export Object as RIB Archive.")
         
         
         
