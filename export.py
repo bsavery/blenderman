@@ -309,7 +309,7 @@ def get_strands(scene, ob, psys):
     nverts = 0
     for pindex in range(total_hair_count):
         
-        if pindex < num_parents:    # Removed display guide hairs button
+        if not psys.settings.show_guide_hairs and pindex < num_parents:
             continue
 
         strand_points = []
@@ -1879,7 +1879,6 @@ def export_data_archives(ri, scene, rpass, data_blocks):
     for name, db in data_blocks.items():
         if not db.do_export:
             continue
-        print("Exporting archive: " + db.archive_filename)
         ri.Begin(db.archive_filename)
         if db.type == "MESH":
             export_mesh_archive(ri, scene, db)
