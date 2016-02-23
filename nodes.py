@@ -1007,13 +1007,11 @@ def gen_params(ri, node, mat_name=None, recurse=True):
         fileInputType = node.codetypeswitch
         
         for prop_name, meta in node.prop_meta.items():
-            #print (prop_name);
             if prop_name in txmake_options.index or prop_name == "codetypeswitch":
                 pass
             elif prop_name == "internalSearch" and fileInputType == 'INT':
                 if node.internalSearch != "":
                     script = bpy.data.texts[node.internalSearch]
-                    #print("entered INT")
                     params['%s %s' % ("string",
                             "expression")] = \
                                 rib(script.as_string(), type_hint=meta['renderman_type'])
@@ -1021,7 +1019,6 @@ def gen_params(ri, node, mat_name=None, recurse=True):
                 fileInput = user_path(getattr(node, 'shadercode'))
                 if fileInput != "":
                     outputString = ""
-                    #print("Entered EXT")
                     with open(fileInput, encoding='utf-8') as SeExprFile:
                         for line in SeExprFile:
                             outputString += line
@@ -1071,6 +1068,8 @@ def gen_params(ri, node, mat_name=None, recurse=True):
             if prop_name in txmake_options.index:
                 pass
             if node.plugin_name == 'PxrRamp' and prop_name in ['colors', 'positions']:
+                pass
+            if(prop_name == "sblur" or prop_name == "tblur"):
                 pass
             else:
                 prop = getattr(node, prop_name)

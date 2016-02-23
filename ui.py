@@ -54,6 +54,12 @@ properties_material.MATERIAL_PT_context_material.COMPAT_ENGINES.add(
 properties_material.MATERIAL_PT_custom_props.COMPAT_ENGINES.add('PRMAN_RENDER')
 del properties_material
 
+import bl_ui.properties_scene as properties_scene
+properties_scene.SCENE_PT_scene.COMPAT_ENGINES.add('PRMAN_RENDER')
+properties_scene.SCENE_PT_unit.COMPAT_ENGINES.add('PRMAN_RENDER')
+properties_scene.SCENE_PT_physics.COMPAT_ENGINES.add('PRMAN_RENDER')
+del properties_scene
+
 import bl_ui.properties_data_lamp as properties_data_lamp
 properties_data_lamp.DATA_PT_context_lamp.COMPAT_ENGINES.add('PRMAN_RENDER')
 properties_data_lamp.DATA_PT_spot.COMPAT_ENGINES.add('PRMAN_RENDER')
@@ -77,15 +83,6 @@ for member in dir(properties_object):
     except:
         pass
 del properties_object
-
-import bl_ui.properties_data_mesh as properties_data_mesh
-for member in dir(properties_data_mesh):
-    subclass = getattr(properties_data_mesh, member)
-    try:
-        subclass.COMPAT_ENGINES.add('PRMAN_RENDER')
-    except:
-        pass
-del properties_data_mesh
 
 import bl_ui.properties_data_camera as properties_data_camera
 for member in dir(properties_data_camera):
@@ -798,7 +795,6 @@ class OBJECT_PT_renderman_object_geometry(Panel):
 
         if rm.geometry_source in ('ARCHIVE', 'DELAYED_LOAD_ARCHIVE'):
             col.prop(rm, "path_archive")
-
             col.prop(anim, "animated_sequence")
             if anim.animated_sequence:
                 col.prop(anim, "blender_start")
@@ -851,19 +847,20 @@ class OBJECT_PT_renderman_object_geometry(Panel):
             #    col.prop(rm, "export_archive_path")
 
             
-        col = layout.column()
-        col.operator("object.export_rib_archive", icon="EXPORT", text="Export Object as RIB Archive.")
+        
+        #col = layout.column()
+        #col.operator("export.export_rib_archive", icon="EXPORT", text="Export Object as RIB Archive.")
         
         
         
-        col = layout.column()
+        #col = layout.column()
         # col.prop(rm, "export_coordsys")
 
-        row = col.row()
-        row.prop(rm, "motion_segments_override", text="")
-        sub = row.row()
-        sub.active = rm.motion_segments_override
-        sub.prop(rm, "motion_segments")
+        #row = col.row()
+        #row.prop(rm, "motion_segments_override", text="")
+        #sub = row.row()
+        #sub.active = rm.motion_segments_override
+        #sub.prop(rm, "motion_segments")
 
 
 class OBJECT_PT_renderman_object_render(CollectionPanel, Panel):

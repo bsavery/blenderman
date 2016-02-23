@@ -27,6 +27,7 @@ import bpy
 import math
 import mathutils
 import os
+import sys
 import time
 from mathutils import Matrix, Vector, Quaternion
 
@@ -41,6 +42,8 @@ from .util import path_list_convert, get_real_path
 from .util import get_properties, check_if_archive_dirty
 from .util import debug
 from .util import find_it_path
+from .util import export_archive_manifest
+from .util import import_archive_manifest
 from .nodes import export_shader_nodetree, get_textures
 from .nodes import shader_node_rib, get_bxdf_name
 
@@ -305,6 +308,7 @@ def get_strands(scene, ob, psys):
     scalpT = []
     nverts = 0
     for pindex in range(total_hair_count):
+        
         if not psys.settings.show_guide_hairs and pindex < num_parents:
             continue
 
@@ -365,7 +369,6 @@ def get_strands(scene, ob, psys):
                            hair_width, scalpS, scalpT))
 
     psys.set_resolution(scene=scene, object=ob, resolution='PREVIEW')
-
     return curve_sets
 
 # only export particles that are alive,
@@ -817,7 +820,7 @@ def export_material(ri, mat, handle=None):
         export_shader(ri, mat)
 
 
-def export_material_archive(ri, mat):
+def export_material_archive(ri, mat, zip=False):
     ri.ReadArchive('material.' + mat.name)
 
 
@@ -1514,7 +1517,7 @@ def get_mball_parent(mball):
         if ob.data == mball:
             return ob
 
-
+## BOOKMARK!!
 def export_geometry_data(ri, scene, ob, data=None):
     prim = ob.renderman.primitive if ob.renderman.primitive != 'AUTO' \
         else detect_primitive(ob)
@@ -1753,6 +1756,7 @@ def get_data_blocks_needed(ob, rpass, do_mb):
             data_blocks.append(DataBlock(name, "MESH", archive_filename, ob,
                                          deforming, material=ob.active_material,
                                          do_export=False))
+            debug("info","Object not scene data!   " , name, " ::: " , archive_filename)
         else:
             name = data_name(ob, rpass.scene)
             deforming = is_deforming(ob)
@@ -1761,6 +1765,7 @@ def get_data_blocks_needed(ob, rpass, do_mb):
             data_blocks.append(DataBlock(name, "MESH", archive_filename, ob,
                                          deforming, material=ob.active_material,
                                          do_export=file_is_dirty(rpass.scene, ob, archive_filename)))
+            debug("info","Object is scene data!   " , name, " ::: " , archive_filename)
 
     return data_blocks
 
@@ -1898,13 +1903,29 @@ def export_instance_read_archive(ri, instance, instances, data_blocks, rpass, is
 
     for db_name in instance.data_block_names:
         if db_name in data_blocks:
-            export_data_read_archive(ri, data_blocks[db_name], rpass)
+            if(data_blocks[db_name].data.renderman.geometry_source == 'ARCHIVE'):
+                export_data_rib_archive(ri, data_blocks[db_name], instance, rpass)
+            else:
+                export_data_read_archive(ri, data_blocks[db_name], rpass)
 
-    # now the children
+        # now the children
     for child_name in instance.children:
         if child_name in instances:
             export_instance_read_archive(
                 ri, instances[child_name], instances, data_blocks, rpass, is_child=True)
+                    
+                    
+    #else:
+    #    for db_name in data_blocks:
+    #        if db_name in data_blocks and data_blocks[db_name].type in SUPPORTED_INSTANCE_TYPES:
+    #            debug("info", "Exporting", data_blocks)
+    #            debug("info", "Type: ", data_blocks[db_name].type)
+    #            export_data_rib_archive(ri, data_blocks[db_name], instance, rpass)
+        # This is an archive so nothing needs to be done for parented children.
+        #for child_name in instance.children:
+        #    if child_name in instances:
+        #        export_instance_read_archive(
+        #            ri, instances[child_name], instances, data_blocks, rpass, is_child=True)
     ri.AttributeEnd()
 
 
@@ -1920,15 +1941,38 @@ def export_data_read_archive(ri, data_block, rpass):
     if data_block.type == 'MESH':
         bounds = get_bounding_box(data_block.data)
         params = {"string filename": archive_filename,
-                  "float[6] bound": bounds}
+                "float[6] bound": bounds}
         ri.Procedural2(ri.Proc2DelayedReadArchive, ri.SimpleBound, params)
     else:
         if data_block.type != 'DUPLI':
             ri.Transform([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1])
         ri.ReadArchive(archive_filename)
-
+        
+        
     ri.AttributeEnd()
 
+def export_data_rib_archive(ri, data_block, instance , rpass):
+    ri.AttributeBegin()
+    
+    if data_block.material:
+        export_material_archive(ri, data_block.material)
+    
+    dataFromArchive = import_archive_manifest(arvhiveInfo.path_archive)
+    
+    arvhiveInfo = instance.ob.renderman
+    #frameToExport = archiveInfo.anim_archive_path
+    if data_block.material and arvhiveInfo.material_in_archive:
+        if not arvhiveInfo.archive_anim_settings.animated_sequence:
+            ri.ReadArchive(arvhiveInfo.path_archive + "!" + 'material.' + data_block.material.name)
+        else:
+            ri.ReadArchive(arvhiveInfo.path_archive + "!" + 'material.' + data_block.material.name)
+        
+    archive_filename = arvhiveInfo.path_archive + "!" + arvhiveInfo.object_name + "-MESH" + ".rib"
+    bounds = get_bounding_box(data_block.data)
+    params = {"string filename": archive_filename,
+            "float[6] bound": bounds}
+    ri.Procedural2(ri.Proc2DelayedReadArchive, ri.SimpleBound, params)
+    ri.AttributeEnd()
 
 def export_archive(*args):
     pass
@@ -1943,6 +1987,7 @@ def get_archive_filename(name, rpass, animated, relative=False):
     path = os.path.join(path, name + ".rib")
     if relative:
         path = os.path.relpath(path, rpass.paths['archive'])
+    debug("info", "The path from get_archive_filename is: ", path)
     return path
 
 
@@ -2692,18 +2737,83 @@ def write_preview_rib(rpass, scene, ri):
     ri.FrameEnd()
 
 
-def write_single_RIB(rpass, scene, ri, object):
-
-    # precalculate motion blur data
+def write_archive_RIB(rpass, scene, ri, object, overridePath, exportMats, exportRange):
+    success = 0 # Store if the export is a success or not
+    
+    fileExt = ".zip"
+    
+    # precalculate data
     data_blocks, instances = cache_motion_single_object(scene, rpass, object)
-    # export rib archives of objects
-    export_data_archives(ri, scene, rpass, data_blocks)
-
+    
+    
+    #Override precalculated data (simpler then creating new methods)
     for name, db in data_blocks.items():
         fileName = db.archive_filename
-    return fileName
+        debug("info", "The archive name is ", fileName)
+        if(overridePath != "" and os.path.exists(os.path.split(overridePath)[0])):
+            db.do_export = True # Assume that the user always wants an export when this method is called.
+            db.archive_filename = os.path.split(fileName)[1]
+        else:
+            success = -1
+            
 
-
+    
+    #Open zip file for writing
+    if(os.path.split(overridePath)[1] != ""):
+        archivePath = os.path.join(os.path.split(overridePath)[0] , os.path.splitext(os.path.split(overridePath)[1])[0] + fileExt)
+        ri.Begin(archivePath)
+    elif(overridePath != ""):
+        archivePath = os.path.join(os.path.split(overridePath)[0], object.name + fileExt)
+        ri.Begin(archivePath)
+    else:
+        success = -1
+        
+    if(success == 0):
+        # export rib archives of objects
+        if(exportRange):
+            rangeStart = scene.frame_start
+            rangeEnd = scene.frame_end
+            rangeLength = rangeEnd - rangeStart
+            # Assume user is smart and wont pass us a negative range. Please!
+            for i in range(rangeStart, rangeEnd+1):
+                scene.frame_current = i
+                zeroFill = str(i).zfill(4)
+                data_blocks, instances = cache_motion_single_object(scene, rpass, object)
+                for name, db in data_blocks.items():
+                    fileName = db.archive_filename
+                    db.do_export = True
+                    db.archive_filename = os.path.join( zeroFill, os.path.split(fileName)[1])
+                export_data_archives(ri, scene, rpass, data_blocks)
+                if(exportMats):
+                    materialsList = object.material_slots
+                    ri.Begin(os.path.join(zeroFill ,"materials" + str(i) +".rib"))
+                    for materialSlot in materialsList:
+                        ri.ArchiveBegin('material.' + materialSlot.name)
+                        export_material(ri, materialSlot.material)
+                        ri.ArchiveEnd()
+                    ri.End()
+        else:
+            export_data_archives(ri, scene, rpass, data_blocks)
+            #If we need to export material do it
+            if(exportMats):
+                materialsList = object.material_slots
+                ri.Begin("materials.rib")
+                for materialSlot in materialsList:
+                    ri.ArchiveBegin('material.' + materialSlot.name)
+                    export_material(ri, materialSlot.material)
+                    ri.ArchiveEnd()
+                ri.End()
+        ri.End()
+    
+    
+    #Export manifest file
+    success = export_archive_manifest(archivePath, data_blocks, exportRange, scene)
+    
+        
+    returnList = [success, archivePath]
+    return returnList
+    
+    
 def anim_archive_path(filepath, frame):
     if filepath.find("#") != -1:
         ribpath = make_frame_path(filepath, fr)
@@ -2816,7 +2926,7 @@ def issue_transform_edits(rpass, ri, active, prman):
         return
 
     rpass.edit_num += 1
-
+    debug('error', "Edit Number: " + str(rpass.edit_num))
     edit_flush(ri, rpass.edit_num, prman)
     # only update lamp if shader is update or pos, seperately
     if active.type == 'LAMP':

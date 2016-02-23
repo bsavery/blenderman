@@ -31,10 +31,12 @@ import platform
 import sys
 import fnmatch
 import subprocess
+import zipfile
 from subprocess import Popen, PIPE
+import xml.etree.ElementTree as ET
 from extensions_framework import util as efutil
 from mathutils import Matrix, Vector
-EnableDebugging = False
+EnableDebugging = True
 
 
 class BlenderVersionError(Exception):
@@ -528,3 +530,70 @@ def init_env(rm):
         os.environ['PATH'] += pathsep + os.path.join(RMANTREE, "bin")
     else:
         os.environ['PATH'] = os.path.join(RMANTREE, "bin")
+
+
+
+#------------- RIB achive Manifest functions ---------
+
+def export_archive_manifest(pathToArchive, dataObjects, animating, scene):
+    debug('info', "Exporting manifest!!")
+    animatedArchive = animating
+    psysList = []
+    for name, db in dataObjects.items():
+        if(db.type == 'MESH'):
+            exportObj = db.name
+            ObjMat = db.material
+        elif(db.type == 'PSYS'):
+            psysList.append(db)
+    success = 0
+    
+    #Generate xml file. The great tool that ETree is.
+    root = ET.Element("root")
+    obj = ET.SubElement(root, "obj")
+    
+    #Object name and material
+    ET.SubElement(obj, "Name", name="name").text = exportObj
+    ET.SubElement(obj, "Material", name="material").text = ObjMat.name
+    
+    #If psys are present export them.
+    if(psysList):
+        for db in psysList:
+            psys = ET.SubElement(obj, "Psys", name=db.name)
+            ET.SubElement(psys, "PsysMat", name="material").text = db.material.name
+    
+    #If we are animating then export that information also.
+    if(animatedArchive):
+        anim = ET.SubElement(obj, "AnimateOptions", name="animateOptions")
+        ET.SubElement(anim, "Animate", name="animate").text = "True"
+        ET.SubElement(anim, "BeginFrame", name="startFrame").text = str(scene.frame_start)
+        ET.SubElement(anim, "EndFrame", name="endFrame").text = str(scene.frame_end)
+    else:
+        ET.SubElement(obj, "Animate", name="animate").text = "False"
+    
+    tree = ET.ElementTree(root)
+    tree.write("manifest.xml")
+    
+    with zipfile.ZipFile(pathToArchive, 'a') as archive:
+        archive.write('manifest.xml')
+    archive.close()
+    os.remove('manifest.xml')
+    return success
+
+
+def import_archive_manifest(pathToArchive):
+    print("Importing manifest!!")
+    #TODO: Finish import.
+    materials = {'object': "default", 'physics': [""]}
+    dataFromArchive = {'objectName': "", 'animated': False, 'physics': [""], 'materialData': materials}
+    return dataFromArchive
+
+# ------------ Texture size loader --------
+
+##def get_texture_size(texture):
+  ##  return size[texture.size[0]][texture.size[1]]
+
+# ------------ BGL util functions ---------
+##def draw_light_shape(context, modle, ):
+    
+    
+    

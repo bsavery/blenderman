@@ -1308,11 +1308,31 @@ class RendermanObjectSettings(bpy.types.PropertyGroup):
         description="At render export time, store this object as a RIB archive",
         default=False)
     export_archive_path = StringProperty(
-        name="Archive Export Path",
-        description="Path to automatically save this object as a RIB archive",
+        name="Archive Path",
+        description="Location and name to give archive.",
         subtype='FILE_PATH',
         default="")
 
+    object_name = StringProperty(
+        name="Object Name",
+        description="Name of the object in the archive to use.",
+        default="")
+        
+    export_mat = BoolProperty(
+        name="Export Material",
+        description="Do you want to export the material?",
+        default=False)
+        
+    export_all_frames = BoolProperty(
+        name="Export All Frames",
+        description="Export entire animation time frame",
+        default=False)
+    
+    material_in_archive = BoolProperty(
+        name="Material in archive",
+        description="Use material in archive if present",
+        default=False)
+    
     primitive_radius = FloatProperty(
         name="Radius",
         default=1.0)
