@@ -759,7 +759,8 @@ def export_light_shaders(ri, lamp, do_geometry=True):
         shapes[lamp.type][1]()
 
 def export_world_rib(ri, world):
-    ri.ArchiveRecord(ri.RI_VERBATIM, world.renderman.world_rib_file)
+    if world.renderman.world_rib_file != "":
+        ri.ArchiveRecord(ri.VERBATIM, world.renderman.world_rib_file)
 
 def export_world(ri, world, do_geometry=True):
     rm = world.renderman
@@ -2055,7 +2056,8 @@ def export_object_attributes(ri, scene, ob, visible_objects):
 
     #Adds external RIB to object_attributes
     rm = ob.renderman
-    ri.ArchiveRecord(ri.RI_VERBATIM, rm.object_rib_file)
+    if rm.object_rib_file != "":
+        ri.ArchiveRecord(ri.VERBATIM, rm.object_rib_file)
 
     #This is a temporary hack until multiple lpe groups are introduced in 21.0
     obj_groups_str = "*"
@@ -2497,7 +2499,8 @@ def export_header(ri):
 def export_header_rib(ri, scene):
     rm=scene.renderman
 
-    ri.ArchiveRecord(ri.RI_VERBATIM, rm.header_rib_file)
+    if rm.header_rib_file != "":
+        ri.ArchiveRecord(ri.VERBATIM, rm.header_rib_file)
 
 
 # --------------- Hopefully temporary --------------- #
@@ -2696,8 +2699,8 @@ def export_display(ri, rpass, scene):
     #main_display = os.path.relpath(main_display, rpass.paths['export_dir'])
     image_base, ext = main_display.rsplit('.', 1)
 
-    #outputs a beauty pass file if combine AOV's are not used
-    if dspy_driver == "it" or not rm.combine_aovs:
+    #outputs a beauty pass file
+    if not rm.combine_aovs or dspy_driver == 'it' or rm.output_action == 'EXPORT_RENDER':
         ri.Display(main_display, dspy_driver, "rgba", {"quantize": [0, 0, 0, 0]})
         
 
@@ -2714,14 +2717,16 @@ def export_display(ri, rpass, scene):
         if rm.include_beauty_pass:
             aov_name_list.insert(0, "Ci")
             aov_name_list.insert(1, "a")
-            ri.DisplayChannel("color Ci")
-            ri.DisplayChannel("float a")
+            if not rm.do_denoise:
+                ri.DisplayChannel("color Ci")
+                ri.DisplayChannel("float a")
+
             #exports a multilayer image with a beauty pass
-            ri.Display(image_base + '.multilayer.' + ext, dspy_driver, ','.join(aov_name_list),{"int asrgba": 1})
+            ri.Display('+' + image_base + '.multilayer.' + ext, dspy_driver, ','.join(aov_name_list),{"int asrgba": 1})
 
         #exports a multilayer image with no beauty pass    
         else:
-            ri.Display(image_base + '.multilayer.' + ext, dspy_driver, ','.join(aov_name_list))
+            ri.Display('+' + image_base + '.multilayer.' + ext, dspy_driver, ','.join(aov_name_list))
 
     #if 'combine AOVs' is not used, exports each AOV as a separate image
     else:
