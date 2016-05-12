@@ -2731,6 +2731,8 @@ def export_display(ri, rpass, scene):
     image_base, ext = main_display.rsplit('.', 1)
 
     standalone_beauty = False
+    
+    dspy_driver = display_driver
 
     if dspy_driver == 'it' or rm.output_action == 'EXPORT_RENDER' or not rm.combine_aovs:
         standalone_beauty = True
