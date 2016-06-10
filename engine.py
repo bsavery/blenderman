@@ -396,6 +396,17 @@ class RPass:
                         engine.report({"INFO"}, "PRMan: Done Rendering." +
                                       " (elapsed time: " +
                                       format_seconds_to_hhmmss(t2 - t1) + ")")
+                        
+                        #Load all output images into image editor
+                        def path_iterator(folder_path):
+                            for fp in os.listdir(folder_path):
+                                if fp.endswith(tuple(bpy.path.extensions_image)):
+                                    yield fp
+                                    
+                        for imgPath in path_iterator(images_dir):
+                            fullPath = os.path.join(images_dir, imgPath)
+                            bpy.ops.image.open(filepath=fullPath)
+                            
 
                         break
 
