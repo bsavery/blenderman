@@ -1130,9 +1130,6 @@ class OBJECT_PT_renderman_object_raytracing(CollectionPanel, Panel):
         ob = context.object
         rm = ob.renderman
 
-        self._draw_collection(context, layout, rm, "Trace sets:", "collection.add_remove",
-                              "object", "trace_set", "trace_set_index")
-
         layout.prop(
             rm, "raytrace_override", text="Override Default Ray Tracing")
 
