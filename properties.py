@@ -178,51 +178,6 @@ class LightLinking(bpy.types.PropertyGroup):
                ('ON', 'On', ''),
                ('OFF', 'Off', '')])
 
-
-class TraceSet(bpy.types.PropertyGroup):
-
-    def groups_list_items(self, context):
-        items = [('No group chosen', 'Choose a trace set', '')]
-        for grp in context.scene.renderman.grouping_membership:
-            items.append((grp.name, grp.name, ''))
-        return items
-
-    def update_name(self, context):
-        self.name = self.mode + ' ' + self.group
-
-    group = EnumProperty(name="Group",
-                         update=update_name,
-                         items=groups_list_items
-                         )
-    mode = EnumProperty(name="Include/Exclude",
-                        update=update_name,
-                        items=[('included in', 'Include', ''),
-                               ('excluded from', 'Exclude', '')]
-                        )
-
-# hmmm, re-evaluate this idea later...
-
-
-class RendermanPass(bpy.types.PropertyGroup):
-
-    name = StringProperty(name="")
-    type = EnumProperty(name="Pass Type",
-                        items=[
-                            ('SHADOW_MAPS_ALL', 'All Shadow Map',
-                             'Single shadow map'),
-                            ('SHADOW_MAP', 'Shadow Map',
-                             'Single shadow map'),
-                            ('POINTCLOUD', 'Point Cloud', '')],
-                        default='SHADOW_MAPS_ALL')
-    motion_blur = BoolProperty(name="Motion Blur")
-    surface_shaders = BoolProperty(
-        name="Surface Shaders", description="Render surface shaders")
-    displacement_shaders = BoolProperty(
-        name="Displacement Shaders", description="Render displacement shaders")
-    light_shaders = BoolProperty(
-        name="Light Shaders", description="Render light shaders")
-
-
 class RendermanAOV(bpy.types.PropertyGroup):
 
     def built_in_channel_types(self, context):
@@ -231,6 +186,7 @@ class RendermanAOV(bpy.types.PropertyGroup):
                  ("custom_aov_string",  "Custom AOV", "Custom AOV"), 
                  ("lpe:C<.D%G>[S]+<L.%LG>", "Caustics", "Caustics"),
                  ("lpe:shadows;C[<.D%G><.S%G>]<L.%LG>", "Shadows", "Shadows"),
+                 ("color lpe:nothruput;noinfinitecheck;noclamp;unoccluded;overwrite;C(U2L)|O", "Albedo", "Albedo"), 
                  ("lpe:C<RS%G>([DS]+<L.%LG>)|([DS]*O)",
                   "Reflection", "Reflection"),
                  ("lpe:C<.D%G><L.%LG>", "Diffuse", "Diffuse"),
@@ -243,11 +199,15 @@ class RendermanAOV(bpy.types.PropertyGroup):
                   "Subsurface", "Subsurface"),
                  ("lpe:(C<T[S]%G>[DS]+<L.%LG>)|(C<T[S]%G>[DS]*O)",
                   "Refraction", "Refraction"),
+                ("lpe:emission", "Emission", "Emission")
                  ]
         return items
         
     def built_in_aovs(self, context):
-        items = [("P",  "P",  "Position of the point hit by the incident ray"), 
+        items = [("a", "alpha", ""), 
+                    ("id", "id", "Returns the integer assigned via the 'identifier' attribute as the pixel value"), 
+                    ("z", "z depth", "Depth from the camera in world space"), 
+                    ("P",  "P",  "Position of the point hit by the incident ray"), 
                     ("PRadius", "PRadius", "Cross-sectional size of the ray at the hit point"), 
                     ("cpuTime", "cpuTime", "The time taken to render a pixel"), 
                     ("sampleCount", "sampleCount", "The number of samples taken for the resulting pixel"), 
@@ -339,7 +299,7 @@ class RendermanAOV(bpy.types.PropertyGroup):
 
     exclude = BoolProperty(
         name="Exclude AOV from Export",
-        description="Enabling this will restrict the AOV from being exported as a standalone file or appearing in the default multilayer.  To export it you must assign it to a custom multilayer file",
+        description="Enabling this will restrict the AOV from being exported as a standalone file.  To export it you must assign it to a custom multilayer file",
         default=False)
         
 
@@ -504,15 +464,6 @@ class RendermanSceneSettings(bpy.types.PropertyGroup):
 
     solo_light = BoolProperty(name = "Solo Light", default=False)
 
-    pixelsamples_x = IntProperty(
-        name="Pixel Samples X",
-        description="Number of AA samples to take in X dimension",
-        min=0, max=16, default=2)
-    pixelsamples_y = IntProperty(
-        name="Pixel Samples Y",
-        description="Number of AA samples to take in Y dimension",
-        min=0, max=16, default=2)
-
     pixelfilter = EnumProperty(
         name="Pixel Filter",
         description="Filter to use to combine pixel samples",
@@ -596,6 +547,7 @@ class RendermanSceneSettings(bpy.types.PropertyGroup):
         name="Motion Blur",
         description="Enable motion blur",
         default=False)
+    
     motion_segments = IntProperty(
         name="Motion Samples",
         description="Number of motion samples to take for motion blur.  Set this higher if you notice segment artifacts in blurs.",
@@ -648,14 +600,6 @@ class RendermanSceneSettings(bpy.types.PropertyGroup):
         name="Max Diffuse Depth",
         description="Maximum number of diffuse ray bounces",
         min=0, max=32, default=1)
-    max_eye_splits = IntProperty(
-        name="Max Eye Splits",
-        description="Maximum number of times a primitive crossing the eye plane is split before being discarded",
-        min=0, max=32, default=6)
-    trace_approximation = FloatProperty(
-        name="Raytrace Approximation",
-        description="Threshold for using approximated geometry during ray tracing. Higher values use more approximated geometry.",
-        min=0.0, max=1024.0, default=10.0)
     use_statistics = BoolProperty(
         name="Statistics",
         description="Print statistics to /tmp/stats.txt after render",
@@ -664,10 +608,6 @@ class RendermanSceneSettings(bpy.types.PropertyGroup):
         name="Text Editor",
         description="The editor to open RIB file in (Overrides system default!)",
         default="")
-    statistics_level = IntProperty(
-        name="Statistics Level",
-        description="Verbosity level of output statistics",
-        min=0, max=3, default=1)
 
     # RIB output properties
 
@@ -885,56 +825,12 @@ class RendermanSceneSettings(bpy.types.PropertyGroup):
 
 
     # Hider properties
-    hider = EnumProperty(
-        name="Hider",
-        description="Algorithm to use for determining hidden surfaces",
-        items=[('raytrace', 'Raytrace', 'Use ray tracing on the first hit'),
-
-               ],
-        default='raytrace')
-
-    hidden_depthfilter = EnumProperty(
-        name="Depth Filter",
-        description="Method used for determining sample depth",
-        items=[('min', 'Min',
-                'Minimum z value of all the sub samples in a given pixel'),
-               ('max', 'Max',
-                'Maximum z value of all the sub samples in a given pixel'),
-               ('average', 'Average',
-                'Average all sub samples’ z values in a given pixel'),
-               ('midpoint', 'Midpoint',
-                'For each sub sample in a pixel, the renderer takes the average z value of the two closest surfaces')],
-        default='min')
-
-    hidden_jitter = BoolProperty(
-        name="Jitter",
-        description="Use a jittered grid for sampling",
-        default=True)
-
-    hidden_samplemotion = BoolProperty(
-        name="Sample Motion",
-        description="Disabling this will not render motion blur, but still preserve motion vector information (dPdtime)",
-        default=True)
-
+    
     hidden_extrememotiondof = BoolProperty(
         name="Extreme Motion/DoF",
         description="Use a more accurate, but slower algorithm to sample motion blur and depth of field effects. This is useful to fix artifacts caused by extreme amounts of motion or DoF",
         default=False)
 
-    hidden_midpointratio = FloatProperty(
-        name="Midpoint Ratio",
-        description="Amount of blending between the z values of the first two samples when using the midpoint depth filter",
-        default=0.5)
-
-    hidden_maxvpdepth = IntProperty(
-        name="Max Visible Point Depth",
-        description="The number of visible points to be composited in the hider or included in deep shadow map creation. Putting a limit on the number of visible points can accelerate deep shadow map creation for depth-complex scenes. The default value of -1 means no limit",
-        min=-1, max=1024, default=-1)
-
-    raytrace_progressive = BoolProperty(
-        name="Progressive Rendering",
-        description="Enables progressive rendering (the entire image is refined at once).\nThis is only visible with some display drivers (such as it)",
-        default=False)
     integrator = EnumProperty(
         name="Integrator",
         description="Integrator for rendering",
@@ -1815,10 +1711,6 @@ class RendermanObjectSettings(bpy.types.PropertyGroup):
         description="Export a named coordinate system with this name",
         default="CoordSys")
 
-    # Trace Sets
-    trace_set = CollectionProperty(type=TraceSet, name='Trace Set')
-    trace_set_index = IntProperty(min=-1, default=-1)
-
 class Tab_CollectionGroup(bpy.types.PropertyGroup):
 
     #################
@@ -1884,8 +1776,6 @@ classes = [RendermanPath,
            RendermanInlineRIB,
            RendermanGroup,
            LightLinking,
-           TraceSet,
-           RendermanPass,
            RendermanMultilayerFile, 
            RendermanMultilayerFileList, 
            RendermanMeshPrimVar,

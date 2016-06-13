@@ -2284,9 +2284,11 @@ def property_group_to_params(node):
 def export_integrator(ri, rpass, scene, preview=False):
     rm = scene.renderman
     integrator = rm.integrator
-    if preview or rpass.is_interactive:
+    if preview:
         integrator = "PxrPathTracer"
-
+    if rpass.is_interactive and rm.integrator == 'PxrVCM':
+        integrator = "PxrPathTracer"
+        
     integrator_settings = getattr(rm, "%s_settings" % integrator)
     params = property_group_to_params(integrator_settings)
 
@@ -2414,23 +2416,16 @@ def export_camera(ri, scene, instances, camera_to_use=None):
         ri.CropWindow(scene.render.border_min_x, scene.render.border_max_x,
                       1.0 - scene.render.border_min_y, 1.0 - scene.render.border_max_y)
 
-    if cam.renderman.use_physical_camera:
-        # use pxr Camera
-        params = property_group_to_params(cam.renderman.PxrCamera_settings)
+    if cam.type == 'PERSP':
         lens = cam.lens
-        sensor = cam.sensor_height \
-            if cam.sensor_fit == 'VERTICAL' else cam.sensor_width
-        params['float fov'] = 360.0 * \
-            math.atan((sensor * 0.5) / lens / aspectratio) / math.pi
-        ri.Projection("PxrCamera", params)
-    elif cam.type == 'PERSP':
-        lens = cam.lens
-
-        sensor = cam.sensor_height \
-            if cam.sensor_fit == 'VERTICAL' else cam.sensor_width
-
+        sensor = cam.sensor_height if cam.sensor_fit == 'VERTICAL' else cam.sensor_width
         fov = 360.0 * math.atan((sensor * 0.5) / lens / aspectratio) / math.pi
-        ri.Projection("perspective", {"fov": fov})
+        if cam.renderman.use_physical_camera:
+            params = property_group_to_params(cam.renderman.PxrCamera_settings)
+            params['float fov'] = fov
+            ri.Projection("PxrCamera", params)
+        else:
+            ri.Projection("perspective", {"fov": fov})
     elif cam.type == 'PANO':
         ri.Projection("sphere", {"float hsweep": 360, "float vsweep": 180})
     else:
@@ -2585,6 +2580,40 @@ def export_display(ri, rpass, scene):
 
     active_layer = scene.render.layers.active
 
+    # Set bucket shape.
+    if rpass.is_interactive:
+        ri.Option("bucket", {"string order": ['spiral']})
+
+    elif rm.bucket_shape == 'SPIRAL':
+        settings = scene.render
+
+        if rm.bucket_sprial_x <= settings.resolution_x \
+                and rm.bucket_sprial_y <= settings.resolution_y:
+            if rm.bucket_sprial_x == -1 and rm.bucket_sprial_y == -1:
+                ri.Option(
+                    "bucket", {"string order": [rm.bucket_shape.lower()]})
+            elif rm.bucket_sprial_x == -1:
+                halfX = settings.resolution_x / 2
+                debug("info", halfX)
+                ri.Option("bucket", {"string order": [rm.bucket_shape.lower()],
+                                     "orderorigin": [int(halfX),
+                                                     rm.bucket_sprial_y]})
+            elif rm.bucket_sprial_y == -1:
+                halfY = settings.resolution_y / 2
+                ri.Option("bucket", {"string order": [rm.bucket_shape.lower()],
+                                     "orderorigin": [rm.bucket_sprial_y,
+                                                     int(halfY)]})
+            else:
+                ri.Option("bucket", {"string order": [rm.bucket_shape.lower()],
+                                     "orderorigin": [rm.bucket_sprial_x,
+                                                     rm.bucket_sprial_y]})
+        else:
+            debug("info", "OUTSLIDE LOOP")
+            ri.Option("bucket", {"string order": [rm.bucket_shape.lower()]})
+    else:
+        ri.Option("bucket", {"string order": [rm.bucket_shape.lower()]})
+
+
     # built in aovs
     aovs = [
         # (name, do?, declare type/name, source)
@@ -2623,39 +2652,7 @@ def export_display(ri, rpass, scene):
             custom_aovs = aov_list.custom_aovs
             break
 
-    # Set bucket shape.
-    if rpass.is_interactive:
-        ri.Option("bucket", {"string order": ['spiral']})
-
-    elif rm.bucket_shape == 'SPIRAL':
-        settings = scene.render
-
-        if rm.bucket_sprial_x <= settings.resolution_x \
-                and rm.bucket_sprial_y <= settings.resolution_y:
-            if rm.bucket_sprial_x == -1 and rm.bucket_sprial_y == -1:
-                ri.Option(
-                    "bucket", {"string order": [rm.bucket_shape.lower()]})
-            elif rm.bucket_sprial_x == -1:
-                halfX = settings.resolution_x / 2
-                debug("info", halfX)
-                ri.Option("bucket", {"string order": [rm.bucket_shape.lower()],
-                                     "orderorigin": [int(halfX),
-                                                     rm.bucket_sprial_y]})
-            elif rm.bucket_sprial_y == -1:
-                halfY = settings.resolution_y / 2
-                ri.Option("bucket", {"string order": [rm.bucket_shape.lower()],
-                                     "orderorigin": [rm.bucket_sprial_y,
-                                                     int(halfY)]})
-            else:
-                ri.Option("bucket", {"string order": [rm.bucket_shape.lower()],
-                                     "orderorigin": [rm.bucket_sprial_x,
-                                                     rm.bucket_sprial_y]})
-        else:
-            debug("info", "OUTSLIDE LOOP")
-            ri.Option("bucket", {"string order": [rm.bucket_shape.lower()]})
-    else:
-        ri.Option("bucket", {"string order": [rm.bucket_shape.lower()]})
-
+    
     # declare display channels
 
     for aov, doit, declare_type, source in aovs:
@@ -2698,7 +2695,7 @@ def export_display(ri, rpass, scene):
             source = aov.aov_channel_type
             if aov.aov_channel_type in ("PRadius", "cpuTime", "sampleCount", "VLen", "curvature", 
                                                 "incidentRaySpread", "mpSize", "u", "v", "w", "du", "dv", "dw",
-                                                "time", "id", "dufp", "dvfp", "dwfp", "outsideIOR"):
+                                                "time", "id", "dufp", "dvfp", "dwfp", "outsideIOR", "a", "z"):
                 source_type = "float"
             if aov.aov_channel_type in ("Nn",  "Ngn"):
                 source_type = "normal"
@@ -2904,9 +2901,8 @@ def export_hider(ri, rpass, scene, preview=False):
 
     if rm.do_denoise:
         hider_params['string pixelfiltermode'] = 'importance'
-
-    if rm.hider == 'raytrace':
-        ri.Hider(rm.hider, hider_params)
+        
+    ri.Hider("raytrace", hider_params)
 
 
 # I hate to make rpass global but it makes things so much easier
