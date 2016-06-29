@@ -495,13 +495,42 @@ class PresetsMenu(bpy.types.Menu):
     preset_operator = "script.execute_preset"
     draw = bpy.types.Menu.draw_preset
 
+    
+    
+#############################
+#  External Python Scripts  #
+#############################
+blenderAddonPaths = addon_utils.paths()
+externalPythonScripts = []
+pytnonNames = []
+for path in blenderAddonPaths:
+    basePath = os.path.join(path, "PRMan-for-Blender", "externalPython")
+    exists = os.path.exists(basePath)
+    if exists:
+        pytnonNames = get_Files_in_Directory(basePath)
+for name in pytnonNames:
+    class externalPython(bpy.types.Operator):
+        bl_idname = ("externalpython." + name.lower().replace('.',""))
+        bl_label = name
+        bl_description = name
+        pathToPy = os.path.join(basePath, name)
+        
+        def execute(self, context):
+            exec('import %s' % pathToPy)
+            return{'FINISHED'}
+        
+        def invoke(self, context, event):
+            print("Started python process.")
+            return {'RUNNING_MODAL'}
+        
+    externalPythonScripts.append(externalPython)
+    
 #################
 # Sample scenes menu.
 #################
 # Watch out for global list!!
 # Its name should be too long to be accedenty called but you never know. 
 
-blenderAddonPaths = addon_utils.paths()
 rendermanExampleFilesList = []
 names = []
 for path in blenderAddonPaths:

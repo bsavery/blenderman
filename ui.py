@@ -28,6 +28,7 @@ import math
 import blf
 from bpy.types import Panel
 from .nodes import NODE_LAYOUT_SPLIT
+from .operators import externalPythonScripts
 
 from . import engine
 # global dictionaries
@@ -1487,9 +1488,9 @@ def PRMan_menu_func(self, context):
                              text="PRMan Start Interactive Rendering")
 
 
-#################
-#       Tab     #
-#################
+###########################
+#       Renderman Tab     #
+###########################
 class Renderman_Light_Panel(CollectionPanel, Panel):
     #bl_idname = "renderman_light_panel"
     bl_label = "RenderMan Light Groups"
@@ -2219,6 +2220,29 @@ class Renderman_UI_Panel(bpy.types.Panel):
         layout.separator()
         layout.menu("examples", icon_value=rman_help.icon_id)
 
+###################
+#   Python Tab    #
+###################
+class Python_UI_Pannel(bpy.types.Panel):
+    bl_idname = "python_ui_panel"
+    bl_label = "Python Scripts"
+    bl_space_type = "VIEW_3D"
+    bl_region_type = "TOOLS"
+    bl_category = "Python"
+    
+    @classmethod
+    def poll(cls, context):
+        rd = context.scene.render
+        return rd.engine == 'PRMAN_RENDER'
+ 
+    def draw(self, context):
+        icons = load_icons()
+        layout = self.layout
+        scene = context.scene
+        rman_script = icons.get("reload_plugin")
+        for operator in externalPythonScripts:
+            layout.operator(operator.bl_idname, icon_value=rman_script.icon_id)
+            layout.separator()
 def register():
     bpy.utils.register_class(RENDERMAN_GROUP_UL_List)
     bpy.utils.register_class(RENDERMAN_LL_LIGHT_list)
