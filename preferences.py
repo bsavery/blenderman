@@ -30,7 +30,8 @@ from bpy.types import AddonPreferences
 from bpy.props import CollectionProperty, BoolProperty, StringProperty
 from bpy.props import IntProperty, PointerProperty, EnumProperty
 
-from .util import guess_rmantree_initial, get_installed_rendermans, rmantree_from_env
+from .util import guess_rmantree_initial, get_installed_rendermans,\
+    rmantree_from_env, guess_rmantree
 
 
 class RendermanPreferencePath(bpy.types.PropertyGroup):
@@ -178,6 +179,12 @@ class RendermanPreferences(AddonPreferences):
             layout.label(text="RMANTREE: %s " % rmantree_from_env())
         else:
             layout.prop(self, "path_rmantree")
+        try:
+            rmantree = guess_rmantree()
+            if rmantree == None:
+                layout.label("RMANTREE ERROR!!!", icon='ERROR')
+        except:
+            layout.label("RMANTREE ERROR!!!", icon='ERROR')
         #layout.label(text="After changing RenderMan Location reload addon", icon="ERROR")
         #layout.prop(self, "path_renderer")
         #layout.prop(self, "path_shader_compiler")

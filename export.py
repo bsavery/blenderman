@@ -741,7 +741,7 @@ def export_light_shaders(ri, lamp, do_geometry=True):
                 if node.renderman_node_type == 'output':
                     output = node
                     break
-            if output and output.inputs['Light'].is_linked:
+            if output and 'Light' in output.inputs and output.inputs['Light'].is_linked:
                 light_shader = output.inputs['Light'].links[0].from_node
                 if hasattr(light_shader, 'rman__Shape'):
                     if lamp.type == 'AREA':
@@ -2814,6 +2814,7 @@ def export_display(ri, rpass, scene):
                 channels = []
                 params = {"string storage": file_out.exr_storage}
                 channel_id = file_out.channel_names.split(',')
+                out_type, ext = ('openexr', 'exr')
                 if file_out.exr_format_options != 'default':
                     params["string type"] = file_out.exr_format_options
                 if file_out.exr_compression != 'default':
@@ -2821,18 +2822,19 @@ def export_display(ri, rpass, scene):
                 for aov in custom_aovs:
                     if aov.name in channel_id:
                         channels.append(aov.channel_name)
+                if file_out.use_deep:
+                    out_type, ext = ('deepexr', 'dexr')
                 if file_out.include_beauty:
                     if not beauty_channels:
                         ri.DisplayChannel("color Ci")
                         ri.DisplayChannel("float a")
                         beauty_channels = True
-                    params["int asrgba"] = 1
-                    ri.Display('+' + image_base + '.%s' % file_out.name + '.multilayer.exr',
-                               'openexr', "Ci,a," + ','.join(channels),
+                    ri.Display('+' + image_base + '.%s' % file_out.name + '.multilayer.' + ext,
+                               out_type, "Ci,a," + ','.join(channels),
                                params)
                 else:
                     ri.Display('+' + image_base + '.%s' % file_out.name +
-                               '.multilayer.exr', 'openexr', ','.join(channels), params)
+                               '.multilayer.' + ext, out_type, ','.join(channels), params)
                     
             
                      
@@ -3284,7 +3286,7 @@ def issue_shader_edits(rpass, ri, prman, nt=None, node=None):
             and bpy.data.scenes[0].objects.active.type == 'LAMP':
             lamp = bpy.data.scenes[0].objects.active
             mat = bpy.data.scenes[0].objects.active.data
-        elif mat is None and world.renderman.nodetree != '':
+        elif mat is None and nt and nt.name == 'World':
             mat = world
         if mat is None:
             return
@@ -3324,7 +3326,7 @@ def issue_shader_edits(rpass, ri, prman, nt=None, node=None):
         if mat is None and bpy.data.scenes[0].objects.active \
             and bpy.data.scenes[0].objects.active.type == 'LAMP':
             mat = bpy.data.scenes[0].objects.active.data
-        elif mat is None and bpy.context.scene.world.renderman.nodetree != '':
+        elif mat is None and nt and nt.name == 'World':
             mat = bpy.context.scene.world
         elif mat is None:
             return

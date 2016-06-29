@@ -1309,6 +1309,7 @@ class RENDER_PT_layer_multilayer_files(CollectionPanel, Panel):
         col.prop(item, "name")
         col.prop(item, "channel_names")
         col.prop(item,  "include_beauty")
+        col.prop(item, "use_deep")
         col.prop(item,  "exr_format_options")
         col.prop(item,  "exr_compression")
         col.prop(item, "exr_storage")

@@ -419,7 +419,7 @@ def set_rmantree(rmantree):
 def set_path(paths):
     for path in paths:
         if path is not None:
-            os.environ['PATH'] = os.environ['PATH'] + os.pathsep + path
+            os.environ['PATH'] = path + os.pathsep + os.environ['PATH']
 
 def check_valid_rmantree(rmantree):
     prman = 'prman.exe' if platform.system() == 'Windows' else 'prman'
@@ -468,7 +468,7 @@ def guess_rmantree():
 
     # check rmantree valid
     if not check_valid_rmantree(rmantree):  
-        print("ERROR!!! See RenderMan location in User Prefences.")
+        print("ERROR!!! See RenderMan location in User Preferences.")
         print("RenderMan Location is set to %s which does not appear valid." % rmantree)
         return None
     # check that it's > 20
@@ -476,7 +476,7 @@ def guess_rmantree():
     vf = float(vstr.strip('/\\'))
     if vf < 20.0:
         print('ERROR!!!  You need RenderMan version 20.0 or above.')
-        print('Correct in User Prefences.')
+        print('Correct in User Preferences.')
         return None
     
     return rmantree

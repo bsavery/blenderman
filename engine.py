@@ -65,12 +65,17 @@ from .nodes import get_tex_file_name
 
 addon_version = bl_info['version']
 
-# set pythonpath before importing prman
-set_rmantree(guess_rmantree())
-set_pythonpath(os.path.join(guess_rmantree(), 'bin'))
-it_dir = os.path.dirname(find_it_path()) if find_it_path() else None
-set_path([os.path.join(guess_rmantree(), 'bin'), it_dir])
-import prman
+prman_inited = False
+
+def init_prman():
+    # set pythonpath before importing prman
+    set_rmantree(guess_rmantree())
+    set_pythonpath(os.path.join(guess_rmantree(), 'bin'))
+    it_dir = os.path.dirname(find_it_path()) if find_it_path() else None
+    set_path([os.path.join(guess_rmantree(), 'bin'), it_dir])
+    global prman
+    import prman
+    prman_inited = True
 
 ipr = None
 
@@ -171,6 +176,10 @@ class RPass:
         self.is_interactive_running = False
         self.is_interactive = interactive
         self.options = []
+        # check if prman is imported
+        if not prman_inited:
+            init_prman()
+
         if interactive:
             prman.Init(['-woff', 'A57001']) #need to disable for interactive
         else:

@@ -251,7 +251,8 @@ class RendermanAOV(bpy.types.PropertyGroup):
     def built_in_aovs(self, context):
         items = [("a", "alpha", ""), 
                     ("id", "id", "Returns the integer assigned via the 'identifier' attribute as the pixel value"), 
-                    ("z", "z depth", "Depth from the camera in world space"), 
+                    ("z", "z_depth", "Depth from the camera in world space"),
+                    ("zback", "z_back", "Depth at the back of volumetric objects in world space"),
                     ("P",  "P",  "Position of the point hit by the incident ray"), 
                     ("PRadius", "PRadius", "Cross-sectional size of the ray at the hit point"), 
                     ("cpuTime", "cpuTime", "The time taken to render a pixel"), 
@@ -455,6 +456,11 @@ class RendermanMultilayerFile(bpy.types.PropertyGroup):
                 ('half',  'Half (16 bit)',  ''), 
                 ('float',  'Float (32 bit)', '')], 
                 default='default')
+                
+    use_deep = BoolProperty(
+        name="Use Deep Data", 
+        description="The output file will contain extra 'deep' information that can aid with compositing.  This can increase file sizes dramatically.", 
+        default=False)
                 
     exr_compression = EnumProperty(
         name="EXR Compression", 
