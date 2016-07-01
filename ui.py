@@ -2236,10 +2236,8 @@ class Python_UI_Pannel(bpy.types.Panel):
         return rd.engine == 'PRMAN_RENDER'
  
     def draw(self, context):
-        icons = load_icons()
         layout = self.layout
         scene = context.scene
-        rman_script = icons.get("reload_plugin")
         for operator in externalPythonScripts:
             layout.operator(operator.bl_idname)
             layout.separator()

@@ -572,9 +572,9 @@ for name in pytnonNames:
         
     externalPythonScripts.append(externalPython)
     
-#################
-# Sample scenes menu.
-#################
+######################
+# Sample scenes menu.#
+######################
 # Watch out for global list!!
 # Its name should be too long to be accedenty called but you never know. 
 

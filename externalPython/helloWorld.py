@@ -8,6 +8,6 @@ rm.render_selected_objects_only = True #Direct modification of renderman propert
 #Do be careful though as Blender will not tolerate the UI and this thread acessing the
 # same resource. You have been warned.
 
-#Just note your context or your script will terminate.
+#Note your context or your script will terminate. Operator calls to objects are not advised.
 
 time.sleep(12) #We can Have the operator going without interupting the drawing thread.
