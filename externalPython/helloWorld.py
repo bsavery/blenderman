@@ -1,14 +1,13 @@
 import time
+import bpy
+print("Hello World") #Print will show in console
 
-print("Hello World")
 
-#fileName = "C:\Users\Kidscom\Documents\test.txt"
-#target = open(fileName, 'w')
+rm = bpy.context.scene.renderman
+rm.render_selected_objects_only = True #Direct modification of renderman properties.
+#Do be careful though as Blender will not tolerate the UI and this thread acessing the
+# same resource. You have been warned.
 
-#target.truncate()
+#Just note your context or your script will terminate.
 
-#target.write("Test\n")
-#target.write("External Python\n")
-#target.close()
-
-time.sleep(15)
+time.sleep(12) #We can Have the operator going without interupting the drawing thread.
