@@ -504,7 +504,7 @@ class PresetsMenu(bpy.types.Menu):
 #############################
 blenderAddonPaths = addon_utils.paths()
 externalPythonScripts = []
-pytnonNames = []
+pythonNames = []
 vaildPythonLocation = ""
 
 class ExternalPythonThread(threading.Thread): 
@@ -539,9 +539,9 @@ for path in blenderAddonPaths:
     basePath = os.path.join(path, "PRMan-for-Blender", "externalPython")
     exists = os.path.exists(basePath)
     if exists:
-        pytnonNames = get_Files_in_Directory(basePath, True)
+        pythonNames = get_Files_in_Directory(basePath, True)
         vaildPythonLocation = basePath
-for name in pytnonNames:
+for name in pythonNames:
     class externalPython(bpy.types.Operator):
         bl_idname = ("externalpython." + name.lower().replace('.',""))
         bl_label = name
