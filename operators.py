@@ -30,6 +30,8 @@ import bgl
 import blf
 import webbrowser
 import addon_utils
+import importlib.util
+import threading
 from .icons.icons import load_icons
 from operator import attrgetter, itemgetter
 from bl_operators.presets import AddPresetBase
@@ -503,24 +505,69 @@ class PresetsMenu(bpy.types.Menu):
 blenderAddonPaths = addon_utils.paths()
 externalPythonScripts = []
 pytnonNames = []
+vaildPythonLocation = ""
+
+class ExternalPythonThread(threading.Thread): 
+    running = False
+    pathToPy = ""
+    nameWithoutExtension = ""
+    #Please note that only one thread should be run at a time.
+    def __init__(self):
+        threading.Thread.__init__(self)
+        return
+        
+    def start(self):
+        self.running = True
+        threading.Thread.start(self)
+    
+    def stop(self):
+        #Stop thread and also allow us to close thread in case Blender closes.
+        # So we do not cause the OS to fault us :)
+        self.running = False
+    
+    def run(self):
+        fileSpec = importlib.util.spec_from_file_location(self.nameWithoutExtension, self.pathToPy)
+        userModule = importlib.util.module_from_spec(fileSpec)
+        fileSpec.loader.exec_module(userModule)
+        
+        #We can assume that the user python file should only execute once.
+        # There is no protection against the thread running indefinitely and using
+        # all system resources. Thread has same user privileges as blender also.
+        return
+
 for path in blenderAddonPaths:
     basePath = os.path.join(path, "PRMan-for-Blender", "externalPython")
     exists = os.path.exists(basePath)
     if exists:
-        pytnonNames = get_Files_in_Directory(basePath)
+        pytnonNames = get_Files_in_Directory(basePath, True)
+        vaildPythonLocation = basePath
 for name in pytnonNames:
     class externalPython(bpy.types.Operator):
         bl_idname = ("externalpython." + name.lower().replace('.',""))
         bl_label = name
         bl_description = name
-        pathToPy = os.path.join(basePath, name)
-        
-        def execute(self, context):
-            exec('import %s' % pathToPy)
-            return{'FINISHED'}
+        pathToPy = os.path.join(vaildPythonLocation, name)
+        nameWithoutExtension = os.path.splitext(name)[0]
+        timer = None
+        thread = None
+        def modal(self, context, event):
+            if event.type == 'TIMER':
+                if not self.thread.isAlive():
+                    self.report({'INFO'}, "Operator: " + self.bl_label + " Done.")
+                    self.thread.join()
+                    return {'FINISHED'}
+                else:
+                    return {'PASS_THROUGH'}
+            
+            return{'PASS_THROUGH'}
         
         def invoke(self, context, event):
-            print("Started python process.")
+            self.thread = ExternalPythonThread()
+            self.thread.pathToPy = self.pathToPy
+            self.thread.nameWithoutExtension = self.nameWithoutExtension
+            self.thread.start()
+            self.timer = context.window_manager.event_timer_add(0.05, context.window)
+            context.window_manager.modal_handler_add(self)
             return {'RUNNING_MODAL'}
         
     externalPythonScripts.append(externalPython)
@@ -537,7 +584,7 @@ for path in blenderAddonPaths:
     basePath = os.path.join(path, "PRMan-for-Blender", "examples")
     exists = os.path.exists(basePath)
     if exists:
-        names = get_Files_in_Directory(basePath)
+        names = get_Files_in_Directory(basePath, False)
 for name in names:
     class examplesRenderman(bpy.types.Operator):
         bl_idname = ("rendermanexamples." + name.lower())

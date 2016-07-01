@@ -2241,7 +2241,7 @@ class Python_UI_Pannel(bpy.types.Panel):
         scene = context.scene
         rman_script = icons.get("reload_plugin")
         for operator in externalPythonScripts:
-            layout.operator(operator.bl_idname, icon_value=rman_script.icon_id)
+            layout.operator(operator.bl_idname)
             layout.separator()
 def register():
     bpy.utils.register_class(RENDERMAN_GROUP_UL_List)
