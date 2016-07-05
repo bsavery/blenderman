@@ -161,10 +161,13 @@ def get_Selected_Objects(scene):
             objectNames.append(obj.name)
     return objectNames
 
-def get_Files_in_Directory(path):
+def get_Files_in_Directory(path, onlyPyFiles):
     files = []
-    #files = [f for f in os.listdir(path) if os.path.isfile(os.path.join(path, f))]
-    files = [f for f in os.listdir(path)]
+    
+    if onlyPyFiles:
+        files = [f for f in os.listdir(path) if os.path.isfile(os.path.join(path, f)) and f.endswith(".py")]
+    else:
+        files = [f for f in os.listdir(path)]
     return files
 
 
