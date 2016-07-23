@@ -70,7 +70,7 @@ MESHLIGHT_PREFIX = "meshlight_"
 PSYS_PREFIX = "psys_"
 DUPLI_PREFIX = "dupli_"
 DUPLI_SOURCE_PREFIX = "dup_src_"
-
+IsMeshDeforming ={}
 
 def get_matrix_for_object(passedOb):
     if passedOb.parent:
@@ -207,33 +207,47 @@ def is_subdmesh(ob):
 
 # XXX do this better, perhaps by hooking into modifier type data in RNA?
 # Currently assumes too much is deforming when it isn't
-def is_deforming(ob):
+def is_deforming(ob, scene):
     deforming_modifiers = ['ARMATURE', 'CAST', 'CLOTH', 'CURVE', 'DISPLACE',
                            'HOOK', 'LATTICE', 'MESH_DEFORM', 'SHRINKWRAP',
                            'SIMPLE_DEFORM', 'SMOOTH', 'WAVE', 'SOFT_BODY',
                            'SURFACE', 'MESH_CACHE', 'FLUID_SIMULATION',
                            'DYNAMIC_PAINT']
-    if ob.modifiers:
+    try:        
+        deforming = IsMeshDeforming[ data_name(ob, scene)] 
+        debug("info", "is_deforming([%s]) returned [%s]"%ob.name,str(deforming) )
+        return deforming
+    except:
+        debug("error","ERROR in is_deforming!")
+    # Quick out if you can know it is not deformed...
+#    if(not ob.is_deform_modified() and \
+#        not (ob.data and hasattr(ob.data, 'shape_keys') and ob.data.shape_keys and ob.data.shape_keys.animation_data) \
+#        not is_deforming_fluid(ob)):
+#        return False
+    #if ob.modifiers:
         # special cases for auto subd/displace detection
-        if len(ob.modifiers) == 1 and is_subd_last(ob):
-            return False
-        if len(ob.modifiers) == 2 and is_subd_displace_last(ob):
-            return False
+    #    if len(ob.modifiers) == 1 and is_subd_last(ob):
+    #        return False
+    #    if len(ob.modifiers) == 2 and is_subd_displace_last(ob):
+    #        return False
 
-        for mod in ob.modifiers:
-            if mod.type in deforming_modifiers:
-                return True
-    if ob.data and hasattr(ob.data, 'shape_keys') and ob.data.shape_keys:
-        return True
+    #    for mod in ob.modifiers:
+    #        if mod.type in deforming_modifiers:
+    #            return True
+    
+    #if ob.data and hasattr(ob.data, 'shape_keys') and ob.data.shape_keys and ob.data.shape_keys.animation_data:
+    #    return True
 
-    return is_deforming_fluid(ob)
+    #return is_deforming_fluid(ob)
 
 
 # handle special case of fluid sim a bit differently
 def is_deforming_fluid(ob):
     if ob.modifiers:
-        mod = ob.modifiers[len(ob.modifiers) - 1]
-        return mod.type == 'SMOKE' and mod.smoke_type == 'DOMAIN'
+        for mod in ob.modifiers:
+            if(mod.type == 'SMOKE' and mod.smoke_type == 'DOMAIN'):
+                return True
+    return False
 
 
 def psys_name(ob, psys):
@@ -257,7 +271,7 @@ def data_name(ob, scene):
                               ob.is_deform_modified(scene, "RENDER") or
                               ob.renderman.primitive != 'AUTO' or
                               (ob.renderman.motion_segments_override and
-                               is_deforming(ob))):
+                               is_deforming(ob,scene))):
         return "%s.%s-MESH" % (ob.name, ob.data.name)
 
     else:
@@ -947,7 +961,7 @@ def export_particle_instances(ri, scene, rpass, psys, ob, motion_data, type='OBJ
     if type == 'OBJECT':
         master_ob = bpy.data.objects[rm.particle_instance_object]
         # first call object Begin and read in archive of the master
-        deforming = is_deforming(master_ob)
+        deforming = is_deforming(master_ob, scene)
         master_archive = get_archive_filename(data_name(master_ob, scene), rpass, deforming,
                                               relative=True)
 
@@ -1600,8 +1614,11 @@ def export_geometry_data(ri, scene, ob, data=None):
         export_points(ri, ob, data)
 
 
+#this method is weird - why does the parameter recurse indicate whether this is a recursed call? instead of used 
+# to see whether it should consider parents transformation or not. And is it really needed? When would you not want 
+# the recursive transformation?
 def is_transforming(ob, do_mb, recurse=False):
-    transforming = (do_mb and ob.animation_data is not None)
+    transforming = do_mb and ( (ob.animation_data is not None or (ob.rigid_body is not None and ob.rigid_body.kinematic == False)) or len(ob.constraints.values()) )
     if not transforming and ob.parent:
         transforming = is_transforming(ob.parent, do_mb, recurse=True)
     return transforming
@@ -1684,7 +1701,9 @@ def get_instances_and_blocks(obs, rpass):
             ob_mb_segs = ob.renderman.motion_segments if ob.renderman.motion_segments_override else mb_segs
 
             # add the instance to the motion segs list if transforming
-            if inst.transforming:
+            #check transformations for all objects
+            #if inst.transforming:
+            if mb_on:
                 if ob_mb_segs not in motion_segs:
                     motion_segs[ob_mb_segs] = ([], [])
                 motion_segs[ob_mb_segs][0].append(inst.name)
@@ -1756,7 +1775,7 @@ def get_dupli_block(ob, rpass, do_mb):
 
     else:
         name = data_name(ob, rpass.scene)
-        deforming = is_deforming(ob)
+        deforming = is_deforming(ob,rpass.scene)
         archive_filename = get_archive_filename(data_name(ob, rpass.scene),
                                                 rpass, deforming)
 
@@ -1766,6 +1785,15 @@ def get_dupli_block(ob, rpass, do_mb):
                               rpass.scene, ob, archive_filename),
                           dupli_data=True)]
 
+# returns bool - guessing what could be deforming and returns whether to run brute force control on this mesh or not.
+# XXX It should be possible to force is deforming to return true or false, possibly options could be:
+# AUTO (ie screening phase first, then brute force on those assumed to be deforming), FORCE_BRUTE_FORCE, FORCE_DEFORMING, FORCE_NOT_DEFORMING
+# could be improved to see if the animation data on the shape keys are within this time frame or not.
+# could also be improved to make a better first screening (like checking target objects of target based deformers for animation 
+# in time frame etc) if it would turn out that the brute force comparisons are too slow.
+def guess_could_be_deforming(ob, scene):
+ return ob.is_deform_modified(scene,'RENDER') or \
+       (ob.type==bpy.types.Mesh and ob.data.shape_keys is not None and  ob.data.shape_keys.animation_data is not None) #is_deforming(ob) # TW_XXX
 
 # get the data blocks needed for an object
 def get_data_blocks_needed(ob, rpass, do_mb):
@@ -1806,7 +1834,7 @@ def get_data_blocks_needed(ob, rpass, do_mb):
                                      1].material] if psys.settings.material and len(ob.material_slots) else []
             data_blocks.append(DataBlock(name, type, archive_filename, data,
                                          is_psys_animating(ob, psys, do_mb), material=mat,
-                                         do_export=file_is_dirty(rpass.scene, ob, archive_filename)))
+                                         do_export=file_is_dirty(rpass.scene, ob, archive_filename))) 
 
     if hasattr(ob, 'dupli_type') and ob.dupli_type in SUPPORTED_DUPLI_TYPES and not dupli_emitted:
         name = ob.name + '-DUPLI'
@@ -1824,7 +1852,7 @@ def get_data_blocks_needed(ob, rpass, do_mb):
         # geometry.
         if ob.renderman.geometry_source != 'BLENDER_SCENE_DATA':
             name = data_name(ob, rpass.scene)
-            deforming = is_deforming(ob)
+            deforming = guess_could_be_deforming(ob, rpass.scene)
             archive_filename = bpy.path.abspath(ob.renderman.path_archive)
             data_blocks.append(DataBlock(name, "MESH", archive_filename, ob,
                                          deforming, material=get_used_materials(
@@ -1832,7 +1860,7 @@ def get_data_blocks_needed(ob, rpass, do_mb):
                                          do_export=False))
         else:
             name = data_name(ob, rpass.scene)
-            deforming = is_deforming(ob)
+            deforming = guess_could_be_deforming(ob, rpass.scene)
             archive_filename = get_archive_filename(data_name(ob, rpass.scene),
                                                     rpass, deforming)
             data_blocks.append(DataBlock(name, "MESH", archive_filename, ob,
@@ -1859,15 +1887,17 @@ def file_is_dirty(scene, ob, archive_filename):
 
 
 def get_transform(instance, subframe):
-    if not instance.transforming:
-        return
+    # Do not depend on transforming - it's guessing. Brute forcing this will be cheap,
+    # guessing in is_transforming is kept for the sake of is_psys_animating
+    #if not instance.transforming:
+    #    return
+    #else:
+    ob = instance.ob
+    if ob.parent and ob.parent_type == "object":
+        mat = ob.matrix_local
     else:
-        ob = instance.ob
-        if ob.parent and ob.parent_type == "object":
-            mat = ob.matrix_local
-        else:
-            mat = ob.matrix_world
-        instance.motion_data.append((subframe, mat.copy()))
+        mat = ob.matrix_world
+    instance.motion_data.append((subframe, mat.copy()))
 
 
 def get_deformation(data_block, subframe, scene):
@@ -1890,6 +1920,32 @@ def get_deformation(data_block, subframe, scene):
                 hairs = get_strands(scene, ob, psys)
                 data_block.motion_data.append((subframe, hairs))
 
+
+def is_transforming_recursive_brute_force(instance, instances):
+    if(instance is None):
+        return False
+    if(instance.transforming):
+        return True
+    elif instance.ob.parent is not None:
+        if(instances is None):
+            debug("debug","is_transforming_recursive_brute_force got None instances")
+            return False
+        return is_transforming_recursive_brute_force( instances[ instance.ob.parent.name ] )
+    else:
+        return False
+
+
+def vertices_equal(v1,v2):
+    return v1.co == v2.co
+# only compares vertices
+def meshes_are_equal(mesh1, mesh2):
+    if( len(mesh1.vertices) != len (mesh2.vertices) ):
+        return False
+    for i in range (0, len(mesh1.vertices) ):
+        if( not vertices_equal( mesh1.vertices[i], mesh2.vertices[i] )):
+            return False
+    return True
+
 # Create two lists, one of data blocks to export and one of instances to export
 # Collect and store motion blur transformation data in a pre-process.
 # More efficient, and avoids too many frame updates in blender.
@@ -1906,6 +1962,11 @@ def cache_motion(scene, rpass, objects=None):
     # so we process objects in batches of equal numbers of segments
     # and update the scene only once for each of those unique fractional
     # frames per segment set
+    start = time.perf_counter()
+    num_segs=1
+    instance_names=[]
+    data_names=[]
+
     for num_segs, (instance_names, data_names) in motion_segs.items():
         # prepare list of frames/sub-frames in advance,
         # ordered from future to present,
@@ -1916,7 +1977,7 @@ def cache_motion(scene, rpass, objects=None):
                 scene.frame_set(origframe - 1, 1.0 + seg)
             else:
                 scene.frame_set(origframe, seg)
-
+            
             for name in instance_names:
                 get_transform(instances[name], seg)
 
@@ -1924,8 +1985,78 @@ def cache_motion(scene, rpass, objects=None):
                 get_deformation(data_blocks[name], seg, scene)
 
     scene.frame_set(origframe, 0)
+    elapsed = time.perf_counter() - start
+    debug("debug", "...caching transformations and deformations took [%f]"%elapsed)
+    
+    try:
+
+        # set transforming property of instances correctly
+        debug("debug", "Checking for transformations")
+        start = time.perf_counter()
+        if(instance_names is not None and len(instance_names)>0):
+            for instance_name in instance_names:
+                instance = instances[instance_name]
+                last_matrix = None
+                instance.transforming = False
+                for subframe, matrix in instance.motion_data:
+                        if(last_matrix is None):
+                            last_matrix=matrix
+                        elif(last_matrix!=matrix):
+                            instance.transforming = True
+                            break
+                        last_matrix = matrix
+            
+            for instance_name in instance_names:
+                instance = instances[instance_name]
+                if(not instance.transforming):
+                    instance.transforming = is_transforming_recursive_brute_force(instance, instances)
+                if(instance.transforming):
+                    debug("debug", "Object [%s] is transforming." % instance.name)
+                else:
+                    instance.motion_data.clear()
+                    debug("debug", "Object [%s] is not transforming." % instance.name)
+        # endif 
+        elapsed = time.perf_counter() - start
+        debug("debug", "...checking transformations took [%f]"%elapsed)
+        # cache whether a mesh is deforming or not
+        debug("debug", "Checking for deformation")
+        IsMeshDeforming.clear()
+        start = time.perf_counter()
+        if(data_names is not None):
+            for data_block_name in data_names:
+                data_block = data_blocks[data_block_name]
+                last_mesh = None
+                if(not data_block.do_export):
+                    debug("debug", "Deformations for mesh [%s] is not checked as file was not dirty and no need to make a new export."% data_block.name)                
+                elif(data_block.deforming):
+                    if(data_block.type=='MESH'):
+                        data_block.deforming= False
+                        for subframe, mesh in data_block.motion_data:
+                            if(last_mesh is None):
+                                last_mesh = mesh
+                            elif len( mesh.vertices )!= len( last_mesh.vertices):
+                                # Deformation motion blur with changing vertexcounts is not supported.
+                                data_block.deforming = False
+                            else:
+                                if( not meshes_are_equal( mesh, last_mesh) ):
+                                    data_block.deforming = True
+                                    break
+                    if(data_block.deforming):
+                        debug("debug", "Mesh [%s] is deforming"% data_block.name)
+                    else:
+                        debug("debug", "Mesh [%s] is not deforming"% data_block.name)
+                        data_block.motion_data.clear()
+                IsMeshDeforming[data_block.name]= data_block.deforming
+            elapsed = time.perf_counter() - start
+            debug("debug", "...checking deformations took [%f]"%elapsed)
+        #endif
+    except:
+        print ("Unexpected error: [%s]" % sys.exc_info()[1] )
+        raise
+        
 
     return data_blocks, instances
+
 
 
 def get_valid_empties(scene, rpass):
@@ -2279,7 +2410,7 @@ def export_dupli_archive(ri, scene, rpass, data_block, data_blocks):
             if mat:
                 export_material_archive(ri, mat)
             source_data_name = data_name(dupob.object, scene)
-            deforming = is_deforming(dupob.object)
+            deforming = is_deforming(dupob.object, scene)
             ri.ReadArchive(get_archive_filename(source_data_name, rpass,
                                                 deforming, True))
             ri.AttributeEnd()
@@ -2297,7 +2428,7 @@ def export_dupli_archive(ri, scene, rpass, data_block, data_blocks):
             ri.Transform(rib(Matrix.Identity(4)))
             ri.CoordinateSystem(dupob.object.name)
             source_data_name = data_name(dupob.object, scene)
-            deforming = is_deforming(dupob.object)
+            deforming = is_deforming(dupob.object, scene)
 
             ri.ReadArchive(get_archive_filename(source_data_name, rpass,
                                                 deforming, True))
@@ -2985,7 +3116,7 @@ def write_rib(rpass, scene, ri, visible_objects=None, engine=None):
 
     # precalculate motion blur data
     data_blocks, instances = cache_motion(scene, rpass)
-
+    
     # get a list of empties to check if they contain a RIB archive.
     # this should be the only time empties are evaluated.
     emptiesToExport = get_valid_empties(scene, rpass)
