@@ -2903,7 +2903,7 @@ def export_display(ri, rpass, scene):
                                    aov.channel_name, params)
                         rpass.output_files.append(dspy_name)
 
-    if (rm.do_denoise and not rpass.external_render or rm.external_denoise and rpass.external_render) and not rpass.is_interactive:
+    if (rm.do_denoise and not rpass.external_render or rm.external_denoise and rm.output_action == 'EXPORT') and not rpass.is_interactive:
         # add display channels for denoising
         denoise_aovs = [
             # (name, declare type/name, source, statistics, filter)
