@@ -243,7 +243,12 @@ class RPass:
                                              scene=self.scene)
         self.paths['render_output'] = user_path(self.scene.renderman.path_display_driver_image,
                                                 scene=self.scene, display_driver=self.display_driver)
-        
+        temp_archive_name = self.scene.renderman.path_object_archive_animated
+        frame_archive_dir = os.path.dirname(user_path(temp_archive_name,
+                                                      scene=self.scene))
+        self.paths['frame_archives'] = frame_archive_dir
+        if not os.path.exists(self.paths['frame_archives']):
+            os.makedirs(self.paths['frame_archives'])
 
     def preview_render(self, engine):
         render_output = self.paths['render_output']
@@ -680,8 +685,7 @@ class RPass:
         if engine:
             engine.report({"INFO"}, "Texture generation took %s" %
                           format_seconds_to_hhmmss(time.time() - time_start))
-        else:
-            self.scene.frame_set(self.scene.frame_current)
+        self.scene.frame_set(self.scene.frame_current)
         time_start = time.time()
         self.ri.Begin(self.paths['rib_output'])
         self.ri.Option("rib", {"string asciistyle": "indented,wide"})

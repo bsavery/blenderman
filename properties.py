@@ -826,11 +826,10 @@ class RendermanSceneSettings(bpy.types.PropertyGroup):
     external_action = EnumProperty(
         name="Action",
         description="Action for rendering externally.",
-        items=[('render', 'Local render', 'Render to the Display Driver choosen'),
-               ('ribgen', 'Generate RIB only',
+        items=[('ribgen', 'Generate RIB only',
                 'Only Generate RIB and job file (no render)'),
                ('spool', 'Spool Job', 'Spool Job to queuing system')],
-        default='render')
+        default='spool')
 
     queuing_system = EnumProperty(
         name="Spool to",

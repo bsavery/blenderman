@@ -277,57 +277,24 @@ class ExternalRender(bpy.types.Operator):
             if rm.external_denoise:
                 denoise_files.append(rpass.get_denoise_names())
 
-        # if render locally launch prman (externally)
-        if rm.external_action == 'render':
-            render_output = rpass.paths['render_output']
-            images_dir = os.path.split(render_output)[0]
-            if not os.path.exists(images_dir):
-                os.makedirs(images_dir)
-            # create command and start process
-            options = ["-t:%d" % rpass.rm.threads]
-            if rm.enable_checkpoint:
-                if rm.render_limit == 0:
-                    options = options + ["-checkpoint", "%d%s" %
-                                         (rm.checkpoint_interval, rm.checkpoint_type)]
-                else:
-                    options = options + ['-checkpoint', '%d%s,%d%s' % (
-                        rm.checkpoint_interval, rm.checkpoint_type, rm.render_limit, rm.checkpoint_type)]
-            prman_executable = os.path.join(rpass.paths['rmantree'], 'bin',
-                                            rpass.paths['rman_binary'])
-            cmd = [prman_executable] + options + rib_names
-            cdir = os.path.dirname(rib_names[0])
-            environ = os.environ.copy()
-            environ['RMANTREE'] = rpass.paths['rmantree']
+        
+        # gen spool job
+        
+        denoise = rm.external_denoise
+        rm_version = rm.path_rmantree.split('-')[-1]
+        if denoise:
+            denoise = 'crossframe' if rm.crossframe_denoise else 'frame'
+        frame_begin = scene.frame_start if rm.external_animation else scene.frame_current
+        frame_end = scene.frame_end if rm.external_animation else scene.frame_current
+        alf_file = spool_render(
+            str(rm_version), rib_names, denoise_files, frame_begin, frame_end=frame_end, denoise=denoise, context=context)
 
-            # Launch the command to begin rendering.
+        # if spooling send job to queuing
+        if rm.external_action == 'spool':
+            exe = find_tractor_spool() if rm.queuing_system == 'tractor' else find_local_queue()
             self.report(
-                {'INFO'}, 'RenderMan External Rendering rendering ribs ' + str(rib_names))
-            try:
-                process = subprocess.Popen(cmd, cwd=cdir, stdout=subprocess.PIPE,
-                                           stderr=subprocess.PIPE, env=environ)
-            except:
-                self.report({'ERROR'}, 'Error launching prman')
-
-            self.report(
-                {'INFO'}, 'RenderMan External Rendering done rendering.')
-
-        # else gen spool job
-        else:
-            denoise = rm.external_denoise
-            rm_version = rm.path_rmantree.split('-')[-1]
-            if denoise:
-                denoise = 'crossframe' if rm.crossframe_denoise else 'frame'
-            frame_begin = scene.frame_start if rm.external_animation else scene.frame_current
-            frame_end = scene.frame_end if rm.external_animation else scene.frame_current
-            alf_file = spool_render(
-                str(rm_version), rib_names, denoise_files, frame_begin, frame_end=frame_end, denoise=denoise, context=context)
-
-            # if spooling send job to queuing
-            if rm.external_action == 'spool':
-                exe = find_tractor_spool() if rm.queuing_system == 'tractor' else find_local_queue()
-                self.report(
-                    {'INFO'}, 'RenderMan External Rendering spooling to %s.' % rm.queuing_system)
-                subprocess.Popen([exe, alf_file])
+                {'INFO'}, 'RenderMan External Rendering spooling to %s.' % rm.queuing_system)
+            subprocess.Popen([exe, alf_file])
 
         rpass = None
         return {'FINISHED'}

@@ -1686,7 +1686,7 @@ def has_emissive_material(db):
 # NB:  we ALWAYS need the animating psys if the emitter is transforming,
 # not just if MB is on
 def is_psys_animating(ob, psys, do_mb):
-    return (psys.settings.animation_data is not None) or is_transforming(ob, True, recurse=True)
+    return (psys.settings.frame_start != psys.settings.frame_end) or is_transforming(ob, True, recurse=True)
 
 # constructs a list of instances and data blocks based on objects in a scene
 # only the needed for rendering data blocks and instances are cached
