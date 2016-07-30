@@ -1662,7 +1662,7 @@ class DataBlock:
 # NB:  we ALWAYS need the animating psys if the emitter is transforming,
 # not just if MB is on
 def is_psys_animating(ob, psys, do_mb):
-    return (psys.settings.animation_data is not None) or is_transforming(ob, True, recurse=True)
+    return (psys.settings.frame_start != psys.settings.frame_end) or is_transforming(ob, True, recurse=True)
 
 # constructs a list of instances and data blocks based on objects in a scene
 # only the needed for rendering data blocks and instances are cached
@@ -2698,7 +2698,7 @@ def export_display(ri, rpass, scene):
     display_driver = rpass.display_driver
     rpass.output_files = []
     main_display = user_path(
-        rm.path_display_driver_image, scene=scene, rpass=rpass)
+        rm.path_display_driver_image, scene=scene, display_driver=rpass.display_driver)
     debug("info", "Main_display: " + main_display)
     image_base, ext = main_display.rsplit('.', 1)
 
