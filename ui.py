@@ -257,17 +257,18 @@ class RENDER_PT_renderman_spooling(PRManButtonsPanel, Panel):
 
         layout.separator()
 
-        row = layout.row()
-        split = row.split(percentage=0.33)
-        col = split.column()
-        col.prop(rm, "external_denoise")
-        sub_row = col.row()
-        sub_row.enabled = rm.external_denoise
-        sub_row.prop(rm, "crossframe_denoise")
+#        row = layout.row()
+#        split = row.split(percentage=0.33)
+#        col = split.column()
+#        col.prop(rm, "external_denoise")
+#        sub_row = col.row()
+#        sub_row.enabled = rm.external_denoise
+#        sub_row.prop(rm, "crossframe_denoise")
 
         # display driver
-        split = split.split()
-        col = split.column()
+#        split = split.split()
+#        col = split.column()
+        col = layout.column()
         col.prop(rm, "display_driver", text='Render To')
 
 #        sub_row = col.row()
@@ -305,6 +306,8 @@ class RENDER_PT_renderman_spooling(PRManButtonsPanel, Panel):
         col.enabled = rm.external_action != 'render'
         col.prop(rm, 'recover')
         col.prop(rm, 'custom_cmd')
+        col.prop(rm, 'external_denoise', text='Denoise')
+        col.prop(rm, 'crossframe_denoise')
         row =col.row()
         row.enabled = rm.external_denoise
         row.prop(rm, 'denoise_cmd')
@@ -1520,7 +1523,7 @@ class PARTICLE_PT_renderman_particle(ParticleButtonsPanel, Panel):
             row.prop(psys.settings.cycles, "tip_width", 'Tip Width')
             row = col.row()
             row.prop(psys.settings.cycles, "radius_scale", 'Width Multiplier')
-
+            col.prop(psys.settings, "render_step", "Render Steps")
             col.prop(rm, 'export_scalp_st')
             col.prop(rm, 'round_hair')
 
