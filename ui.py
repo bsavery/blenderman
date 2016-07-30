@@ -303,7 +303,6 @@ class RENDER_PT_renderman_spooling(PRManButtonsPanel, Panel):
         col = layout.column()
         col.label('Spooling Options:')
         col = layout.column()
-        col.enabled = rm.external_action != 'render'
         col.prop(rm, 'recover')
         col.prop(rm, 'custom_cmd')
         col.prop(rm, 'external_denoise', text='Denoise')
