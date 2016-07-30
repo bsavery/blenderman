@@ -120,6 +120,8 @@ class RendermanNodeSocket(bpy.types.NodeSocket):
 
 
 def parse_float(fs):
+    if fs == None:
+        return 0.0
     return float(fs[:-1]) if 'f' in fs else float(fs)
 
 
@@ -160,6 +162,7 @@ def generate_page(sp, node, parent_name):
 def class_generate_properties(node, parent_name, shaderparameters):
     prop_names = []
     prop_meta = {}
+    output_meta = {}
     i = 0
     for sp in shaderparameters:
         if sp.tag == 'page':
@@ -193,6 +196,8 @@ def class_generate_properties(node, parent_name, shaderparameters):
                             setattr(node, Texname + "_ui_open",
                                     optionsProps[Texname])
                             setattr(node, Texname, optionsProps[Texname])
+        elif sp.tag == 'output':
+            output_meta[sp.attrib['name']] = sp.attrib        
         else:
             if (parent_name == "PxrOSL" and i == 0) or (parent_name == "PxrSeExpr" and i == 0):
                 # Enum for internal, external type selection
@@ -272,6 +277,7 @@ def class_generate_properties(node, parent_name, shaderparameters):
         i += 1
     setattr(node, 'prop_names', prop_names)
     setattr(node, 'prop_meta', prop_meta)
+    setattr(node, 'output_meta', output_meta)
 
 
 # send updates to ipr if running
@@ -301,8 +307,8 @@ def generate_property(sp):
     param_label = sp.attrib['label'] if 'label' in sp.attrib else param_name
     param_widget = sp.attrib['widget'].lower() if 'widget' in sp.attrib \
         else 'default'
-    if param_widget == 'null':
-        return (None, None, None)
+    #if param_widget == 'null':
+    #    return (None, None, None)
 
     param_type = 'float'  # for default. Some args files are sloppy
     if 'type' in sp.attrib:
@@ -410,7 +416,7 @@ def generate_property(sp):
         renderman_type = 'int'
 
     elif param_type == 'color':
-        if param_default == 'null':
+        if param_default == 'null' or param_default == None:
             param_default = '0 0 0'
         param_default = [float(c) for c in
                          param_default.replace(',', ' ').split()]
@@ -460,6 +466,14 @@ def generate_property(sp):
         prop = FloatVectorProperty(name=param_label,
                                    default=param_default, size=3,
                                    subtype="EULER",
+                                   description=param_help, update=update_func)
+    elif param_type == 'point':
+        if param_default is None:
+            param_default = '0 0 0'
+        param_default = [float(v) for v in param_default.split()]
+        prop = FloatVectorProperty(name=param_label,
+                                   default=param_default, size=3,
+                                   subtype="XYZ",
                                    description=param_help, update=update_func)
         renderman_type = param_type
     elif param_type == 'int[2]':
@@ -640,7 +654,6 @@ def node_add_inputs(node, node_name, shaderparameters):
 
 # add output sockets
 def node_add_outputs(node, shaderparameters):
-
     # Generate RNA properties for each shader parameter
     for sp in shaderparameters:
         # if this is a vstruct member don't add the input
@@ -654,3 +667,5 @@ def node_add_outputs(node, shaderparameters):
         # for struct type look for the type of connection
         if tag.attrib['value'] == 'struct':
             socket.struct_type = sp.findall('*/tag')[-1].attrib['value']
+
+    

@@ -1229,7 +1229,7 @@ class RendermanLightSettings(bpy.types.PropertyGroup):
 
     # do this to keep the nice viewport update
     def update_light_type(self, context):
-        lamp = context.lamp
+        lamp = context.lamp if hasattr(context, 'lamp') else context.scene.objects.active.data
         if lamp.renderman.renderman_type in ['SKY', 'ENV']:
             lamp.type = 'HEMI'
         elif lamp.renderman.renderman_type == 'DIST':
@@ -1248,6 +1248,10 @@ class RendermanLightSettings(bpy.types.PropertyGroup):
             light_shader = 'PxrEnvDayLightLightNode'
         elif light_type == 'PORTAL':
             light_shader = 'PxrDomeLightLightNode'
+        elif light_type == 'POINT':
+            light_shader = 'PxrSphereLightLightNode'
+        elif light_type == 'DIST':
+            light_shader = 'PxrDistantLightLightNode'
         elif light_type == 'AREA':
             try:
                 lamp.size = 1.0
@@ -1281,9 +1285,8 @@ class RendermanLightSettings(bpy.types.PropertyGroup):
         setattr(node, 'renderman_portal', light_type == 'PORTAL')
 
     def update_area_shape(self, context):
-        lamp = context.lamp
-
-        area_shape = lamp.renderman.area_shape
+        
+        area_shape = self.area_shape
         # use pxr area light for everything but env, sky
         light_shader = 'PxrRectLightLightNode'
         if area_shape == 'disk':
@@ -1292,7 +1295,7 @@ class RendermanLightSettings(bpy.types.PropertyGroup):
             light_shader = 'PxrSphereLightLightNode'
         
         # find the existing or make a new light shader node
-        nt = bpy.data.node_groups[lamp.renderman.nodetree]
+        nt = bpy.data.node_groups[self.nodetree]
         output = None
         for node in nt.nodes:
             if node.renderman_node_type == 'output':

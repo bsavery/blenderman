@@ -288,6 +288,8 @@ class RendermanShadingNode(bpy.types.Node):
                 if prop_name in ["lightGroup", "rman__Shape", "coneAngle", "penumbraAngle"]:
                     continue
                 prop_meta = self.prop_meta[prop_name]
+                if 'widget' in prop_meta and prop_meta['widget'] == 'null':
+                    continue
                 if prop_name not in self.inputs:
                     if prop_meta['renderman_type'] == 'page':
                         ui_prop = prop_name + "_ui_open"
@@ -635,7 +637,8 @@ def generate_node_type(prefs, name, args):
     ntype.typename = typename
 
     inputs = [p for p in args.findall('./param')] + \
-        [p for p in args.findall('./page')]
+        [p for p in args.findall('./page')] + \
+        [p for p in args.findall('./output')]
     outputs = [p for p in args.findall('.//output')]
 
     def init(self, context):
@@ -786,6 +789,9 @@ def draw_node_properties_recursive(layout, context, nt, node, level=0):
                     prop_meta = node.prop_meta[prop_name]
                     prop = getattr(node, prop_name)
                     
+                    if 'widget' in prop_meta and prop_meta['widget'] == 'null':
+                        continue
+
                     # else check if the socket with this name is connected
                     socket = node.inputs[prop_name] if prop_name in node.inputs \
                         else None
@@ -1000,10 +1006,11 @@ class NODE_OT_add_pattern(bpy.types.Operator, Add_Node):
 
 # return if this param has a vstuct connection or linked independently
 def is_vstruct_or_linked(node, param):
-    meta = node.shader_meta[param] if node.bl_idname == "PxrOSLPatternNode" else node.prop_meta[param]
+    meta = node.prop_meta[param]
+    
     if 'vstructmember' not in meta.keys():
         return node.inputs[param].is_linked
-    elif node.inputs[param].is_linked:
+    elif param in node.inputs and node.inputs[param].is_linked:
         return True
     else:
         vstruct_name, vstruct_member = meta['vstructmember'].split('.')
@@ -1016,7 +1023,8 @@ def is_vstruct_or_linked(node, param):
 
 # tells if this param has a vstuct connection that is linked and conditional met
 def is_vstruct_and_linked(node, param):
-    meta = node.shader_meta[param] if node.bl_idname == "PxrOSLPatternNode" else node.prop_meta[param]
+    meta = node.prop_meta[param]
+    
     if 'vstructmember' not in meta.keys():
         return False
     else:
@@ -1030,21 +1038,27 @@ def is_vstruct_and_linked(node, param):
 
 # gets the value for a node walking up the vstruct chain
 def get_val_vstruct(node, param):
-    if node.inputs[param].is_linked:
+    if param in node.inputs and node.inputs[param].is_linked:
         from_socket = node.inputs[param].links[0].from_socket
         return get_val_vstruct(from_socket.node, from_socket.identifier)
     elif is_vstruct_and_linked(node, param):
-        meta = node.shader_meta[param] if node.bl_idname == "PxrOSLPatternNode" else node.prop_meta[param]
-        vstruct_name, vstruct_member = meta['vstructmember'].split('.')
-        from_socket = node.inputs[vstruct_name].links[0].from_socket
-        vstruct_from_param = "%s_%s" % (from_socket.identifier, vstruct_member)
-        return get_val_vstruct(from_socket.node, vstruct_from_param)
+        return True
+        #meta = node.shader_meta[param] if node.bl_idname == "PxrOSLPatternNode" else node.prop_meta[param]
+        #vstruct_name, vstruct_member = meta['vstructmember'].split('.')
+        #from_socket = node.inputs[vstruct_name].links[0].from_socket
+        #vstruct_from_param = "%s_%s" % (from_socket.identifier, vstruct_member)
+        #print('vstruct linked  %s %s' % (node.name, param))
+        #return get_val_vstruct(from_socket.node, vstruct_from_param)
     else:
         return getattr(node, param)
 
 # parse a vstruct conditional string and return true or false if should link
 def vstruct_conditional(node, param):
-    meta = getattr(node, 'shader_meta')[param] if node.bl_idname == "PxrOSLPatternNode" else node.prop_meta[param]
+    
+    meta = getattr(node, 'shader_meta') if node.bl_idname == "PxrOSLPatternNode" else node.output_meta
+    if param not in meta:
+        return False
+    meta = meta[param] 
     if 'vstructConditionalExpr' not in meta.keys():
         return True
 
@@ -1061,17 +1075,37 @@ def vstruct_conditional(node, param):
     num_tokens = len(tokens)
     while i < num_tokens:
         token = tokens[i]
+        prepend,append = '',''
+        while token[0] == '(':
+            token = token[1:]
+            prepend += '('
+        while token[-1] == ')':
+            token = token[:-1]
+            append += ')'
+        
+
+        if token == 'set':
+            i += 1
+            continue
+
         # is connected change this to node.inputs.is_linked
         if i < num_tokens - 2 and tokens[i+1] == 'is'\
-            and tokens[i+2] == 'connected':
+            and 'connected' in tokens[i+2]:
             token = "is_vstruct_or_linked(node, '%s')" % token
-            i += 2
+            last_token = tokens[i+2]
+            while last_token[-1] == ')':
+                last_token = last_token[:-1]
+                append += ')'
+            i += 3
         else:
             i += 1
-        if token in node.prop_names:
+        if hasattr(node, token):
             token = "get_val_vstruct(node, '%s')" % token
-        new_tokens.append(token)
 
+        new_tokens.append(prepend + token + append)
+
+    if 'if' in new_tokens and 'else' not in new_tokens:
+        new_tokens.extend(['else', 'False'])
     return eval(" ".join(new_tokens))
 
 # Rib export
@@ -1261,7 +1295,12 @@ def shader_node_rib(ri, node, mat_name, disp_bound=0.0, portal=False):
     instance = mat_name + '.' + node.name
     params['__instanceid'] = mat_name + '.' + node.name
     if node.renderman_node_type == "pattern":
-        ri.Pattern(node.bl_label, node.name, params)
+        if node.bl_label == 'PxrOSL':
+            getLocation = bpy.context.scene.OSLProps
+            shader = getattr(getLocation, mat_name + node.name + "shader")
+            ri.Pattern(shader, node.name, params)
+        else:
+            ri.Pattern(node.bl_label, node.name, params)
     elif node.renderman_node_type == "light":
         light_group_name = ''
         scene = bpy.context.scene
@@ -1394,7 +1433,7 @@ def get_textures_for_node(node, matName=""):
         for prop_name, meta in node.prop_meta.items():
             if prop_name in txmake_options.index:
                 pass
-            else:
+            elif hasattr(node, prop_name):
                 prop = getattr(node, prop_name)
 
                 if meta['renderman_type'] == 'page':

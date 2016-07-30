@@ -723,6 +723,8 @@ def export_light_shaders(ri, lamp, do_geometry=True):
     ri.Attribute('identifier', {'string name': handle})
     # do the shader
     if rm.nodetree != '':
+        if lamp.type == 'POINT':
+            ri.Scale(.01, .01, .01)
         # make sure the shape is set on PxrStdAreaLightShape
         if lamp.type != "HEMI":
             nt = bpy.data.node_groups[rm.nodetree]
