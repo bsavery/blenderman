@@ -277,41 +277,8 @@ class ExternalRender(bpy.types.Operator):
             if rm.external_denoise:
                 denoise_files.append(rpass.get_denoise_names())
 
-        # if render locally launch prman (externally)
-#        if rm.external_action == 'render':
-#            render_output = rpass.paths['render_output']
-#            images_dir = os.path.split(render_output)[0]
-#            if not os.path.exists(images_dir):
-#                os.makedirs(images_dir)
-#            # create command and start process
-#            options = ["-t:%d" % rpass.rm.threads]
-#            if rm.enable_checkpoint:
-#                if rm.render_limit == 0:
-#                    options = options + ["-checkpoint", "%d%s" %
-#                                         (rm.checkpoint_interval, rm.checkpoint_type)]
-#                else:
-#                    options = options + ['-checkpoint', '%d%s,%d%s' % (
-#                        rm.checkpoint_interval, rm.checkpoint_type, rm.render_limit, rm.checkpoint_type)]
-#            prman_executable = os.path.join(rpass.paths['rmantree'], 'bin',
-#                                            rpass.paths['rman_binary'])
-#            cmd = [prman_executable] + options + rib_names
-#            cdir = os.path.dirname(rib_names[0])
-#            environ = os.environ.copy()
-#            environ['RMANTREE'] = rpass.paths['rmantree']
-#
-#            # Launch the command to begin rendering.
-#            self.report(
-#                {'INFO'}, 'RenderMan External Rendering rendering ribs ' + str(rib_names))
-#            try:
-#                process = subprocess.Popen(cmd, cwd=cdir, stdout=subprocess.PIPE,
-#                                           stderr=subprocess.PIPE, env=environ)
-#            except:
-#                self.report({'ERROR'}, 'Error launching prman')
-#
-#            self.report(
-#                {'INFO'}, 'RenderMan External Rendering done rendering.')
-
-        # else gen spool job
+        
+        # gen spool job
         
         denoise = rm.external_denoise
         rm_version = rm.path_rmantree.split('-')[-1]
