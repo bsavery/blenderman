@@ -1662,7 +1662,7 @@ class DataBlock:
 # NB:  we ALWAYS need the animating psys if the emitter is transforming,
 # not just if MB is on
 def is_psys_animating(ob, psys, do_mb):
-    return (psys.settings.animation_data is not None) or is_transforming(ob, True, recurse=True)
+    return (psys.settings.frame_start != psys.settings.frame_end) or is_transforming(ob, True, recurse=True)
 
 # constructs a list of instances and data blocks based on objects in a scene
 # only the needed for rendering data blocks and instances are cached
@@ -2908,7 +2908,7 @@ def export_display(ri, rpass, scene):
                                    aov.channel_name, params)
                         rpass.output_files.append(dspy_name)
 
-    if (rm.do_denoise and not rpass.external_render or rm.external_denoise and rpass.external_render) and not rpass.is_interactive:
+    if (rm.do_denoise and not rpass.external_render or rm.external_denoise and rm.output_action == 'EXPORT') and not rpass.is_interactive:
         # add display channels for denoising
         denoise_aovs = [
             # (name, declare type/name, source, statistics, filter)
