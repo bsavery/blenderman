@@ -256,19 +256,17 @@ class RENDER_PT_renderman_spooling(PRManButtonsPanel, Panel):
                      text="External Render", icon_value=rman_batch.icon_id)
 
         layout.separator()
-
-        row = layout.row()
-        split = row.split(percentage=0.33)
-        col = split.column()
-        col.prop(rm, "external_denoise")
-        sub_row = col.row()
-        sub_row.enabled = rm.external_denoise
-        sub_row.prop(rm, "crossframe_denoise")
-
-        # display driver
-        split = split.split()
-        col = split.column()
-        col.prop(rm, "display_driver", text='Render To')
+        col = layout.column()
+        col.label('Render to:')
+#        col = split.column()
+#        col.prop(rm, "external_denoise")
+#        sub_row = col.row()
+#        sub_row.enabled = rm.external_denoise
+#        sub_row.prop(rm, "crossframe_denoise")
+#
+#        # display driver
+#        split = split.split()
+        col.prop(rm, "display_driver", text='')
 
 #        sub_row = col.row()
 #        if rm.display_driver == 'openexr':
@@ -306,8 +304,12 @@ class RENDER_PT_renderman_spooling(PRManButtonsPanel, Panel):
         col.prop(rm, 'recover')
         col.prop(rm, 'custom_cmd')
         col.prop(rm, 'custom_alfname')
+        col.prop(rm, 'external_denoise', text='Denoise')
         row = col.row()
-        row.enabled = rm.rm.external_denoise
+        row.enabled = rm.external_denoise
+        row.prop(rm, 'crossframe_denoise')
+        row = col.row()
+        row.enabled = rm.external_denoise
         row.prop(rm, 'spool_denoise_aov')
         if rm.spool_denoise_aov:
             col.label("At least one AOV must be tagged as 'denoiseable'.",  icon='ERROR')
