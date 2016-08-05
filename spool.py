@@ -107,18 +107,27 @@ def spool_render(rman_version_short, rib_files, denoise_files, frame_begin, fram
 
         # denoise frame
         if per_frame_denoise:
-            cmd_str = ['denoise', denoise_files[frame_num - frame_begin][0]]
+            cmd_str = ['denoise'] + [denoise_files[frame_num - frame_begin][0]]
             write_cmd_task_line(f, 'Denoise frame %d' % frame_num,
                                 [('PixarRender', cmd_str)], 3)
         elif crossframe_denoise:
-            if frame_num - frame_begin < 3:
+            denoise_options = ['--crossframe -v variance ']
+            if frame_num - frame_begin < 1:
                 pass
+            elif frame_num - frame_begin == 1:
+                denoise_options.append('-L 1')
+                cmd_str = ['denoise'] + denoise_options + [f[0] for f in denoise_files[0:2]]
+                write_cmd_task_line(f, 'Denoise frame %d' % (frame_num - 1),
+                                    [('PixarRender', cmd_str)], 3)
             else:
-                denoise_options = ['-L'] if frame_num < frame_end else []
-                if frame_num - frame_begin > 3:
-                    denoise_options.append('-F')
-                cmd_str = ['denoise'] + denoise_options + \
-                    [f[0] for f in denoise_files[frame_num - 2: frame_num]]
+                denoise_options.append('-F 1 -L 1')
+                cmd_str = ['denoise'] + denoise_options + [f[0] for f in denoise_files[frame_num - 3: frame_num]]
+                write_cmd_task_line(f, 'Denoise frame %d' % (frame_num - 1),
+                                    [('PixarRender', cmd_str)], 3)
+            if frame_num == frame_end:
+                denoise_options.remove('-F 1 -L 1')
+                denoise_options.append('-F 1')
+                cmd_str = ['denoise'] + denoise_options + [f[0] for f in denoise_files[frame_num - 2: frame_num]]
                 write_cmd_task_line(f, 'Denoise frame %d' % frame_num,
                                     [('PixarRender', cmd_str)], 3)
 
