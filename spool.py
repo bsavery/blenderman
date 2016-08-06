@@ -21,19 +21,20 @@ def write_cmd_task_line(f, title, cmds, indent_level):
 
 
 def txmake_task(f, title, in_name, out_name, options, indent_level):
-    cmd = ['txmake'] + options + [in_name, os.path.join('textures', out_name)]
+    cmd = ['txmake'] + options + [in_name, out_name]
     write_cmd_task_line(f, title, [('PixarRender', cmd)], indent_level)
 
 
 def spool_render(rman_version_short, rib_files, denoise_files, denoise_aov_files, frame_begin, frame_end=None, denoise=None, context=None,
-                 job_texture_cmds=[], frame_texture_cmds={}):
+                 job_texture_cmds=[], frame_texture_cmds={}, rpass=None):
     prefs = bpy.context.user_preferences.addons[__package__].preferences
 
     out_dir = prefs.env_vars.out
     cdir = user_path(out_dir)
     scene = context.scene
     rm = scene.renderman
-    alf_file = os.path.join(cdir, '%s_spool.alf' % scene.name) if rm.custom_alfname == '' else os.path.join(cdir, '%s_spool.alf' % rm.custom_alfname)
+    alf_file = os.path.join(cdir, '%s_spool.alf' % scene.name) if rm.custom_alfname == '' else os.path.join(
+        cdir, '%s_spool.alf' % rm.custom_alfname)
     per_frame_denoise = denoise == 'frame'
     crossframe_denoise = denoise == 'crossframe'
 
@@ -69,8 +70,9 @@ def spool_render(rman_version_short, rib_files, denoise_files, denoise_aov_files
         write_parent_task_line(f, 'Job Textures', False, 1)
     # do job tx makes
     for in_name, out_name, options in job_texture_cmds:
+        in_name = bpy.path.abspath(in_name)
         txmake_task(f, "TxMake %s" % os.path.split(in_name)
-                    [-1], in_name, out_name, options, 2)
+                    [-1], in_name, os.path.join(rpass.paths['texture_output'], out_name), options, 2)
     if job_texture_cmds:
         end_block(f, 1)
 
@@ -87,8 +89,9 @@ def spool_render(rman_version_short, rib_files, denoise_files, denoise_aov_files
             write_parent_task_line(f, 'Frame %d textures' %
                                    frame_num, False, 3)
             for in_name, out_name, options in frame_texture_cmds[frame_num]:
+                in_name = bpy.path.abspath(in_name)
                 txmake_task(f, "TxMake %s" % os.path.split(in_name)
-                            [-1], in_name, out_name, options, 4)
+                            [-1], in_name, os.path.join(rpass.paths['texture_output'], out_name), options, 4)
             end_block(f, 3)
 
         # render frame
