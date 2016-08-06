@@ -125,7 +125,14 @@ def spool_render(rman_version_short, rib_files, denoise_files, frame_begin, fram
                 write_cmd_task_line(f, 'Denoise frame %d' % (frame_num - 1),
                                     [('PixarRender', cmd_str)], 3)
             if frame_num == frame_end:
-                denoise_options.remove('-F 1 -L 1')
+                try:
+                    denoise_options.remove('-F 1 -L 1')
+                except:
+                    pass
+                try:
+                    denoise_options.remove('-L 1')
+                except:
+                    pass
                 denoise_options.append('-F 1')
                 cmd_str = ['denoise'] + denoise_options + [f[0] for f in denoise_files[frame_num - frame_begin - 1: frame_num - frame_begin + 1]]
                 write_cmd_task_line(f, 'Denoise frame %d' % frame_num,
