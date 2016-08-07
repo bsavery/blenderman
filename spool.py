@@ -70,9 +70,12 @@ def spool_render(rman_version_short, rib_files, denoise_files, denoise_aov_files
         write_parent_task_line(f, 'Job Textures', False, 1)
     # do job tx makes
     for in_name, out_name, options in job_texture_cmds:
-        in_name = bpy.path.abspath(in_name)
-        txmake_task(f, "TxMake %s" % os.path.split(in_name)
-                    [-1], in_name, os.path.join(rpass.paths['texture_output'], out_name), options, 2)
+        out_name = os.path.join(rpass.paths['texture_output'], out_name)
+        if os.path.exists(out_name):
+            continue
+        else:
+            in_name = bpy.path.abspath(in_name)
+            txmake_task(f, "TxMake %s" % os.path.split(in_name)[-1], in_name, out_name, options, 2)
     if job_texture_cmds:
         end_block(f, 1)
 
@@ -89,9 +92,13 @@ def spool_render(rman_version_short, rib_files, denoise_files, denoise_aov_files
             write_parent_task_line(f, 'Frame %d textures' %
                                    frame_num, False, 3)
             for in_name, out_name, options in frame_texture_cmds[frame_num]:
-                in_name = bpy.path.abspath(in_name)
-                txmake_task(f, "TxMake %s" % os.path.split(in_name)
-                            [-1], in_name, os.path.join(rpass.paths['texture_output'], out_name), options, 4)
+                out_name = os.path.join(rpass.paths['texture_output'], out_name)
+                if os.path.exists(out_name):
+                    continue
+                else:
+                    in_name = bpy.path.abspath(in_name)
+                    txmake_task(f, "TxMake %s" % os.path.split(in_name)
+                            [-1], in_name, out_name, options, 4)
             end_block(f, 3)
 
         # render frame
