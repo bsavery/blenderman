@@ -21,7 +21,7 @@ def write_cmd_task_line(f, title, cmds, indent_level):
 
 
 def txmake_task(f, title, in_name, out_name, options, indent_level):
-    cmd = ['txmake'] + options + [in_name, out_name]
+    cmd = ['txmake'] + options + ['-newer'] + [in_name, out_name]
     write_cmd_task_line(f, title, [('PixarRender', cmd)], indent_level)
 
 
@@ -71,11 +71,8 @@ def spool_render(rman_version_short, rib_files, denoise_files, denoise_aov_files
     # do job tx makes
     for in_name, out_name, options in job_texture_cmds:
         out_name = os.path.join(rpass.paths['texture_output'], out_name)
-        if os.path.exists(out_name):
-            continue
-        else:
-            in_name = bpy.path.abspath(in_name)
-            txmake_task(f, "TxMake %s" % os.path.split(in_name)[-1], in_name, out_name, options, 2)
+        in_name = bpy.path.abspath(in_name)
+        txmake_task(f, "TxMake %s" % os.path.split(in_name)[-1], in_name, out_name, options, 2)
     if job_texture_cmds:
         end_block(f, 1)
 
@@ -93,11 +90,8 @@ def spool_render(rman_version_short, rib_files, denoise_files, denoise_aov_files
                                    frame_num, False, 3)
             for in_name, out_name, options in frame_texture_cmds[frame_num]:
                 out_name = os.path.join(rpass.paths['texture_output'], out_name)
-                if os.path.exists(out_name):
-                    continue
-                else:
-                    in_name = bpy.path.abspath(in_name)
-                    txmake_task(f, "TxMake %s" % os.path.split(in_name)
+                in_name = bpy.path.abspath(in_name)
+                txmake_task(f, "TxMake %s" % os.path.split(in_name)
                             [-1], in_name, out_name, options, 4)
             end_block(f, 3)
 
