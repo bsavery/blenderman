@@ -147,14 +147,7 @@ def spool_render(rman_version_short, rib_files, denoise_files, denoise_aov_files
                 write_cmd_task_line(f, 'Denoise frame %d' % (frame_num - 1),
                                     [('PixarRender', cmd_str)], 3)
             if frame_num == frame_end:
-                try:
-                    denoise_options.remove('-F 1 -L 1')
-                except:
-                    pass
-                try:
-                    denoise_options.remove('-L 1')
-                except:
-                    pass
+                denoise_options = (x for x in denoise_options if x not in  ['-L 1', '-F 1 -L 1'])
                 denoise_options.append('-F 1')
                 files = [item for sublist in denoise_aov_files[frame_num - frame_begin -
                                                                1: frame_num - frame_begin + 1] for item in sublist] if rm.spool_denoise_aov else []
