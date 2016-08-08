@@ -232,7 +232,7 @@ class ExternalRender(bpy.types.Operator):
 
     def gen_rib_frame(self, rpass):
         try:
-            rpass.gen_rib()
+            rpass.gen_rib(convert_textures=False)
         except Exception as err:
             self.report({'ERROR'}, 'Rib gen error: ' + traceback.format_exc())
 
@@ -244,6 +244,9 @@ class ExternalRender(bpy.types.Operator):
         scene = context.scene
         rpass = RPass(scene, external_render=True)
         rm = scene.renderman
+
+        if not os.path.exists(rpass.paths['texture_output']):
+            os.mkdir(rpass.paths['texture_output'])
 
         # rib gen each frame
         rpass.display_driver = scene.renderman.display_driver
@@ -265,7 +268,8 @@ class ExternalRender(bpy.types.Operator):
                     {'INFO'}, 'RenderMan External Rendering generating rib for frame %d' % frame)
                 self.gen_rib_frame(rpass)
                 rib_names.append(rpass.paths['rib_output'])
-                frame_tex_cmds[frame] = [cmd for cmd in get_texture_list(rpass.scene) if cmd not in job_tex_cmds]
+                frame_tex_cmds[frame] = [cmd for cmd in get_texture_list(
+                    rpass.scene) if cmd not in job_tex_cmds]
                 if rm.external_denoise:
                     denoise_files.append(rpass.get_denoise_names())
                     if rpass.aov_denoise_files:
@@ -280,7 +284,7 @@ class ExternalRender(bpy.types.Operator):
             if rm.external_denoise:
                 denoise_files.append(rpass.get_denoise_names())
                 if rpass.aov_denoise_files:
-                        denoise_aov_files.append(rpass.aov_denoise_files)
+                    denoise_aov_files.append(rpass.aov_denoise_files)
 
         # if render locally launch prman (externally)
         if rm.external_action == 'render':
@@ -325,7 +329,7 @@ class ExternalRender(bpy.types.Operator):
             frame_begin = scene.frame_start if rm.external_animation else scene.frame_current
             frame_end = scene.frame_end if rm.external_animation else scene.frame_current
             alf_file = spool_render(
-                str(rm_version), rib_names, denoise_files, denoise_aov_files, frame_begin, frame_end=frame_end, denoise=denoise, context=context)
+                str(rm_version), rib_names, denoise_files, denoise_aov_files, frame_begin, frame_end=frame_end, denoise=denoise, context=context, job_texture_cmds=job_tex_cmds, frame_texture_cmds=frame_tex_cmds, rpass=rpass)
 
             # if spooling send job to queuing
             if rm.external_action == 'spool':
@@ -383,7 +387,7 @@ class StartInteractive(bpy.types.Operator):
                 for area in context.screen.areas:
                     if area.type == 'VIEW_3D':
                         area.tag_redraw()
-            
+
         return {'FINISHED'}
 ######################
 # Export RIB Operators

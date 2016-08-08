@@ -21,19 +21,20 @@ def write_cmd_task_line(f, title, cmds, indent_level):
 
 
 def txmake_task(f, title, in_name, out_name, options, indent_level):
-    cmd = ['txmake'] + options + [in_name, os.path.join('textures', out_name)]
+    cmd = ['txmake'] + options + ['-newer'] + [in_name, out_name]
     write_cmd_task_line(f, title, [('PixarRender', cmd)], indent_level)
 
 
 def spool_render(rman_version_short, rib_files, denoise_files, denoise_aov_files, frame_begin, frame_end=None, denoise=None, context=None,
-                 job_texture_cmds=[], frame_texture_cmds={}):
+                 job_texture_cmds=[], frame_texture_cmds={}, rpass=None):
     prefs = bpy.context.user_preferences.addons[__package__].preferences
 
     out_dir = prefs.env_vars.out
     cdir = user_path(out_dir)
     scene = context.scene
     rm = scene.renderman
-    alf_file = os.path.join(cdir, '%s_spool.alf' % scene.name) if rm.custom_alfname == '' else os.path.join(cdir, '%s_spool.alf' % rm.custom_alfname)
+    alf_file = os.path.join(cdir, '%s_spool.alf' % scene.name) if rm.custom_alfname == '' else os.path.join(
+        cdir, '%s_spool.alf' % rm.custom_alfname)
     per_frame_denoise = denoise == 'frame'
     crossframe_denoise = denoise == 'crossframe'
 
@@ -69,8 +70,9 @@ def spool_render(rman_version_short, rib_files, denoise_files, denoise_aov_files
         write_parent_task_line(f, 'Job Textures', False, 1)
     # do job tx makes
     for in_name, out_name, options in job_texture_cmds:
-        txmake_task(f, "TxMake %s" % os.path.split(in_name)
-                    [-1], in_name, out_name, options, 2)
+        out_name = os.path.join(rpass.paths['texture_output'], out_name)
+        in_name = bpy.path.abspath(in_name)
+        txmake_task(f, "TxMake %s" % os.path.split(in_name)[-1], in_name, out_name, options, 2)
     if job_texture_cmds:
         end_block(f, 1)
 
@@ -87,6 +89,8 @@ def spool_render(rman_version_short, rib_files, denoise_files, denoise_aov_files
             write_parent_task_line(f, 'Frame %d textures' %
                                    frame_num, False, 3)
             for in_name, out_name, options in frame_texture_cmds[frame_num]:
+                out_name = os.path.join(rpass.paths['texture_output'], out_name)
+                in_name = bpy.path.abspath(in_name)
                 txmake_task(f, "TxMake %s" % os.path.split(in_name)
                             [-1], in_name, out_name, options, 4)
             end_block(f, 3)
@@ -113,43 +117,45 @@ def spool_render(rman_version_short, rib_files, denoise_files, denoise_aov_files
             denoise_options = [rm.denoise_cmd] if rm.denoise_cmd != '' else []
             if rm.spool_denoise_aov and denoise_aov_files != []:
                 denoise_options.append('--filtervariance 1')
-            cmd_str = ['denoise'] + denoise_options + [denoise_files[frame_num - frame_begin][0]]
-            if rm.spool_denoise_aov:
-                cmd_str = ['denoise'] + denoise_options + [denoise_files[frame_num - frame_begin][0]] + [" ".join(denoise_aov_files[frame_num - frame_begin])]
+            files = [" ".join(denoise_aov_files[frame_num -
+                                                frame_begin])] if rm.spool_denoise_aov else []
+            cmd_str = ['denoise'] + denoise_options + \
+                [denoise_files[frame_num - frame_begin][0]] + files
             write_cmd_task_line(f, 'Denoise frame %d' % frame_num,
                                 [('PixarRender', cmd_str)], 3)
         elif crossframe_denoise:
-            denoise_options = ['--crossframe -v variance ' + rm.denoise_cmd] if rm.denoise_cmd != '' else ['--crossframe -v variance']
+            denoise_options = ['--crossframe -v variance ' +
+                               rm.denoise_cmd] if rm.denoise_cmd != '' else ['--crossframe -v variance']
             if rm.spool_denoise_aov and denoise_aov_files != []:
                 denoise_options.append('--filtervariance 1')
             if frame_num - frame_begin < 1:
                 pass
             elif frame_num - frame_begin == 1:
                 denoise_options.append('-L 1')
-                cmd_str = ['denoise'] + denoise_options + [f[0] for f in denoise_files[0:2]]
-                if rm.spool_denoise_aov:
-                    files = [item for sublist in denoise_aov_files[0:2] for item in sublist]
-                    cmd_str = ['denoise'] + denoise_options + [f[0] for f in denoise_files[0:2]] + files
+                files = [item for sublist in denoise_aov_files[0:2]
+                         for item in sublist] if rm.spool_denoise_aov else []
+                cmd_str = ['denoise'] + denoise_options + [f[0]
+                                                           for f in denoise_files[0:2]] + files
                 write_cmd_task_line(f, 'Denoise frame %d' % (frame_num - 1),
                                     [('PixarRender', cmd_str)], 3)
             else:
                 denoise_options.append('-F 1 -L 1')
-                cmd_str = ['denoise'] + denoise_options + [f[0] for f in denoise_files[frame_num - 3: frame_num]]
-                if rm.spool_denoise_aov:
-                    files = [item for sublist in denoise_aov_files[frame_num - 3: frame_num] for item in sublist]
-                    cmd_str = ['denoise'] + denoise_options + [f[0] for f in denoise_files[frame_num - 3: frame_num]] + files
+                files = [item for sublist in denoise_aov_files[frame_num - frame_begin -
+                                                               2: frame_num - frame_begin + 1] for item in sublist] if rm.spool_denoise_aov else []
+                cmd_str = ['denoise'] + denoise_options + [f[0] for f in denoise_files[
+                    frame_num - frame_begin - 2: frame_num - frame_begin + 1]] + files
                 write_cmd_task_line(f, 'Denoise frame %d' % (frame_num - 1),
                                     [('PixarRender', cmd_str)], 3)
             if frame_num == frame_end:
-                denoise_options.remove('-F 1 -L 1')
+                denoise_options = (x for x in denoise_options if x not in  ['-L 1', '-F 1 -L 1'])
                 denoise_options.append('-F 1')
-                cmd_str = ['denoise'] + denoise_options + [f[0] for f in denoise_files[frame_num - 2: frame_num]]
-                if rm.spool_denoise_aov:
-                    files = [item for sublist in denoise_aov_files[frame_num - 2: frame_num] for item in sublist]
-                    cmd_str = ['denoise'] + denoise_options + [f[0] for f in denoise_files[frame_num - 2: frame_num]] + files
+                files = [item for sublist in denoise_aov_files[frame_num - frame_begin -
+                                                               1: frame_num - frame_begin + 1] for item in sublist] if rm.spool_denoise_aov else []
+                cmd_str = ['denoise'] + denoise_options + [f[0] for f in denoise_files[
+                    frame_num - frame_begin - 1: frame_num - frame_begin + 1]] + files
                 write_cmd_task_line(f, 'Denoise frame %d' % frame_num,
                                     [('PixarRender', cmd_str)], 3)
-                
+
         # if len(frame_texture_cmds) or per_frame_denoise:
         if denoise or frame_num in frame_texture_cmds:
             end_block(f, 2)
