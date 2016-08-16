@@ -1995,7 +1995,7 @@ def cache_motion(scene, rpass, objects=None):
 
     scene.frame_set(origframe, 0)
     elapsed = time.perf_counter() - start
-    debug("debug", "...caching transformations and deformations took [%f]"%elapsed)
+    debug("warning", "...caching transformations and deformations took [%f]"%elapsed)
     
     try:
 
@@ -3117,7 +3117,7 @@ def export_hider(ri, rpass, scene, preview=False):
 
 # I hate to make rpass global but it makes things so much easier
 def write_rib(rpass, scene, ri, visible_objects=None, engine=None):
-
+    start = time.perf_counter()
     # precalculate motion blur data
     data_blocks, instances = cache_motion(scene, rpass)
     
@@ -3168,6 +3168,9 @@ def write_rib(rpass, scene, ri, visible_objects=None, engine=None):
     ri.WorldEnd()
 
     ri.FrameEnd()
+    elapsed = time.perf_counter() - start
+    debug("warning", "...write rib took [%f]"%elapsed)
+    
 
 
 def write_preview_rib(rpass, scene, ri):
