@@ -41,11 +41,11 @@ from .util import get_sequence_path
 from .util import user_path
 from .util import path_list_convert, get_real_path
 from .util import get_properties, check_if_archive_dirty
-from .util import debug
 
 from .util import find_it_path
 from .nodes import export_shader_nodetree, get_textures
 from .nodes import shader_node_rib, get_bxdf_name
+from .util import debug
 
 addon_version = bl_info['version']
 
@@ -116,7 +116,7 @@ def is_renderable_or_parent(scene, ob):
         return True
     if is_renderable(scene, ob):
         return True
-    elif hasattr(ob, 'children') and ob.children:
+    elif hasattr(ob, 'children') or ob.children:
         for child in ob.children:
             if is_renderable_or_parent(scene, child):
                 return True
@@ -213,7 +213,9 @@ def is_deforming(ob, scene):
                            'SIMPLE_DEFORM', 'SMOOTH', 'WAVE', 'SOFT_BODY',
                            'SURFACE', 'MESH_CACHE', 'FLUID_SIMULATION',
                            'DYNAMIC_PAINT']
-    try:        
+    try:       
+        if( len(IsMeshDeforming) <1):
+            return guess_could_be_deforming(ob,scene) 
         deforming = IsMeshDeforming[ data_name(ob, scene)] 
         debug("info", "is_deforming([%s]) returned [%s]"%ob.name,str(deforming) )
         return deforming
@@ -243,10 +245,15 @@ def is_deforming(ob, scene):
 
 # handle special case of fluid sim a bit differently
 def is_deforming_fluid(ob):
-    if ob.modifiers:
-        for mod in ob.modifiers:
-            if(mod.type == 'SMOKE' and mod.smoke_type == 'DOMAIN'):
-                return True
+    if(isinstance(ob, tuple)): # if method is run on data_block.data this could be a tuple (object, particlesystems)
+        (ob,psys) = ob 
+    try:
+        if ob.modifiers:
+            for mod in ob.modifiers:
+                if(mod.type == 'SMOKE' and mod.smoke_type == 'DOMAIN'):
+                    return True
+    except:
+        debug('ERROR',"Error in is_deforming_fluid")
     return False
 
 
@@ -1792,7 +1799,9 @@ def get_dupli_block(ob, rpass, do_mb):
 # could also be improved to make a better first screening (like checking target objects of target based deformers for animation 
 # in time frame etc) if it would turn out that the brute force comparisons are too slow.
 def guess_could_be_deforming(ob, scene):
- return ob.is_deform_modified(scene,'RENDER') or \
+    if(is_deforming_fluid(ob)):
+        return True
+    return ob.is_deform_modified(scene,'RENDER') or \
        (ob.type==bpy.types.Mesh and ob.data.shape_keys is not None and  ob.data.shape_keys.animation_data is not None) #is_deforming(ob) # TW_XXX
 
 # get the data blocks needed for an object
@@ -1926,11 +1935,11 @@ def is_transforming_recursive_brute_force(instance, instances):
         return False
     if(instance.transforming):
         return True
-    elif instance.ob.parent is not None:
-        if(instances is None):
+    elif instance.ob.parent is not None and instance.ob.parent_type=='OBJECT':
+        if(instances is None ):
             debug("debug","is_transforming_recursive_brute_force got None instances")
             return False
-        return is_transforming_recursive_brute_force( instances[ instance.ob.parent.name ] )
+        return is_transforming_recursive_brute_force( instances[ instance.ob.parent.name ],instances )
     else:
         return False
 
@@ -2010,16 +2019,14 @@ def cache_motion(scene, rpass, objects=None):
                 instance = instances[instance_name]
                 if(not instance.transforming):
                     instance.transforming = is_transforming_recursive_brute_force(instance, instances)
-                if(instance.transforming):
-                    debug("debug", "Object [%s] is transforming." % instance.name)
-                else:
+                if(not instance.transforming):
                     instance.motion_data.clear()
-                    debug("debug", "Object [%s] is not transforming." % instance.name)
+                    #debug("debug", "Object [%s] is not transforming." % instance.name)
         # endif 
         elapsed = time.perf_counter() - start
-        debug("debug", "...checking transformations took [%f]"%elapsed)
+        debug("warning", "...checking transformations took [%f]"%elapsed)
         # cache whether a mesh is deforming or not
-        debug("debug", "Checking for deformation")
+        debug("warning", "Checking for deformation")
         IsMeshDeforming.clear()
         start = time.perf_counter()
         if(data_names is not None):
@@ -2028,7 +2035,7 @@ def cache_motion(scene, rpass, objects=None):
                 last_mesh = None
                 if(not data_block.do_export):
                     debug("debug", "Deformations for mesh [%s] is not checked as file was not dirty and no need to make a new export."% data_block.name)                
-                elif(data_block.deforming):
+                elif(data_block.deforming and not is_deforming_fluid(data_block.data)):
                     if(data_block.type=='MESH'):
                         data_block.deforming= False
                         for subframe, mesh in data_block.motion_data:
@@ -2041,20 +2048,17 @@ def cache_motion(scene, rpass, objects=None):
                                 if( not meshes_are_equal( mesh, last_mesh) ):
                                     data_block.deforming = True
                                     break
-                    if(data_block.deforming):
-                        debug("debug", "Mesh [%s] is deforming"% data_block.name)
-                    else:
+                    if(not data_block.deforming):
                         debug("debug", "Mesh [%s] is not deforming"% data_block.name)
                         data_block.motion_data.clear()
                 IsMeshDeforming[data_block.name]= data_block.deforming
             elapsed = time.perf_counter() - start
-            debug("debug", "...checking deformations took [%f]"%elapsed)
+            debug("warning", "...checking deformations took [%f]"%elapsed)
         #endif
     except:
         print ("Unexpected error: [%s]" % sys.exc_info()[1] )
         raise
         
-
     return data_blocks, instances
 
 
