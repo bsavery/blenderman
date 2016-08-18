@@ -2041,7 +2041,7 @@ def cache_motion(scene, rpass, objects=None):
                         for subframe, mesh in data_block.motion_data:
                             if(last_mesh is None):
                                 last_mesh = mesh
-                            elif len( mesh.vertices )!= len( last_mesh.vertices):
+                            elif len( mesh.vertices )!= len( last_mesh.vertices) or len(mesh.edges)!=len(last_mesh.edges) or len(mesh.polygons)!=len(last_mesh.polygons):
                                 # Deformation motion blur with changing vertexcounts is not supported.
                                 data_block.deforming = False
                             else:
