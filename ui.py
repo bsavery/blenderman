@@ -229,9 +229,14 @@ class RENDER_PT_renderman_render(PRManButtonsPanel, Panel):
         col.prop(rm, "do_denoise")
 
 
-class RENDER_PT_renderman_spooling(PRManButtonsPanel, Panel):
+class RENDER_PT_renderman_spooling(CollectionPanel, Panel):
+    bl_context = "render"
     bl_label = "External Rendering"
     bl_options = {'DEFAULT_CLOSED'}
+
+    def draw_item(self, layout, context, item):
+        col = layout.column()
+        col.prop(item, "override")
 
     def draw(self, context):
         layout = self.layout
@@ -257,18 +262,19 @@ class RENDER_PT_renderman_spooling(PRManButtonsPanel, Panel):
 
         layout.separator()
 
-        row = layout.row()
-        split = row.split(percentage=0.33)
-        col = split.column()
-        col.prop(rm, "external_denoise")
-        sub_row = col.row()
+        col = layout.column()
+        col.prop(rm, "display_driver", text='Render To')
+
+        # denoising
+        layout.separator()
+        split = layout.split(percentage=0.5)
+        split.prop(rm, "external_denoise")
+        sub_row = split.row()
         sub_row.enabled = rm.external_denoise
         sub_row.prop(rm, "crossframe_denoise")
-
-        # display driver
-        split = split.split()
-        col = split.column()
-        col.prop(rm, "display_driver", text='Render To')
+        col = layout.column()
+        col.enabled = rm.external_denoise
+        col.prop(rm, 'spool_denoise_aov')
 
 #        sub_row = col.row()
 #        if rm.display_driver == 'openexr':
@@ -276,8 +282,6 @@ class RENDER_PT_renderman_spooling(PRManButtonsPanel, Panel):
 #            sub_row.prop(rm,  "exr_format_options")
 #            sub_row = col.row()
 #            sub_row.prop(rm,  "exr_compression")
-
-        layout.separator()
 
         layout.separator()
         split = layout.split(percentage=0.33)
@@ -297,35 +301,46 @@ class RENDER_PT_renderman_spooling(PRManButtonsPanel, Panel):
         sub_row = split.row()
         sub_row.enabled = rm.external_action == 'spool'
         sub_row.prop(rm, "queuing_system")
-        
-        # options
-        col = layout.column()
-        col.label('Spooling Options:')
-        col = layout.column()
-        col.enabled = rm.external_action != 'render'
-        col.prop(rm, 'recover')
-        col.prop(rm, 'custom_cmd')
-        col.prop(rm, 'custom_alfname')
-        row = col.row()
-        row.enabled = rm.external_denoise
-        row.prop(rm, 'spool_denoise_aov')
-        if rm.spool_denoise_aov:
-            col.label("At least one AOV must be tagged as 'denoiseable'.",  icon='ERROR')
-        row =col.row()
-        row.enabled = rm.external_denoise
-        row.prop(rm, 'denoise_cmd')
 
         # checkpointing
         layout.separator()
-        row = layout.row()
-        row.prop(rm, 'enable_checkpoint')
-        row = layout.row()
+        col = layout.column()
+        col.prop(rm, 'recover')
+        col.prop(rm, 'enable_checkpoint')
+        row = col.row()
         row.enabled = rm.enable_checkpoint
         row.prop(rm, 'checkpoint_type')
-        row = layout.row(align=True)
+        row = col.row(align=True)
         row.enabled = rm.enable_checkpoint
         row.prop(rm, 'checkpoint_interval')
         row.prop(rm, 'render_limit')
+
+        # options
+        layout.separator()
+
+        icon = 'TRIA_DOWN' if rm.spool_advanced else 'TRIA_RIGHT'
+
+        col = layout.column()
+        col.prop(rm, 'spool_advanced', icon=icon, text="Advanced Options",
+                 icon_only=True, emboss=False)
+        if rm.spool_advanced:
+            col.label('Rendering Options:', icon='LINK')
+            layout.separator()
+            col.prop(rm, 'custom_alfname')
+            col.prop(rm, 'custom_cmd')
+            col.prop(rm, "spool_threads")
+
+            layout.separator()
+            col = layout.column()
+            col.enabled = rm.external_denoise
+            col.label('Denoise Options:', icon='LINK')
+            layout.separator()
+            col.label('Custom Denoise Commands:')
+            col.prop(rm, 'denoise_cmd', text="")
+            col.prop(rm, 'denoise_threads')
+            col.prop(rm, 'denoise_filter')
+            self._draw_collection(context, layout, rm, "Filter Overrides:", "collection.add_remove",
+                                  "scene.renderman", "denoise_override", "denoise_override_index")
 
 
 class RENDER_PT_renderman_sampling(PRManButtonsPanel, Panel):
