@@ -328,16 +328,13 @@ class RENDER_PT_renderman_spooling(CollectionPanel, Panel):
             layout.separator()
             col.prop(rm, 'custom_alfname')
             col.prop(rm, 'custom_cmd')
-            col.prop(rm, "spool_threads")
 
             layout.separator()
             col = layout.column()
             col.enabled = rm.external_denoise
             col.label('Denoise Options:', icon='LINK')
             layout.separator()
-            col.label('Custom Denoise Commands:')
-            col.prop(rm, 'denoise_cmd', text="")
-            col.prop(rm, 'denoise_threads')
+            col.prop(rm, 'denoise_cmd')
             col.prop(rm, 'denoise_filter')
             self._draw_collection(context, layout, rm, "Filter Overrides:", "collection.add_remove",
                                   "scene.renderman", "denoise_override", "denoise_override_index")
