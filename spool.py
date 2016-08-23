@@ -98,19 +98,18 @@ def spool_render(rman_version_short, rib_files, denoise_files, denoise_aov_files
             end_block(f, 3)
 
         # render frame
-        cmd_str = ['prman', '-Progress', '-cwd', cdir, '-t:%d' %
-                   rm.threads, rib_files[frame_num - frame_begin]]
+        cmd_str = ['prman', '-Progress', '-cwd', cdir, rib_files[frame_num - frame_begin]]
         if rm.enable_checkpoint:
             if rm.render_limit == 0:
-                cmd_str.insert(5, '-checkpoint %d%s' %
+                cmd_str.insert(4, '-checkpoint %d%s' %
                                (rm.checkpoint_interval, rm.checkpoint_type))
             else:
-                cmd_str.insert(5, '-checkpoint %d%s,%d%s' % (
+                cmd_str.insert(4, '-checkpoint %d%s,%d%s' % (
                     rm.checkpoint_interval, rm.checkpoint_type, rm.render_limit, rm.checkpoint_type))
         if rm.recover:
-            cmd_str.insert(5, '-recover 1')
+            cmd_str.insert(4, '-recover 1')
         if rm.custom_cmd != '':
-            cmd_str.insert(5, rm.custom_cmd)
+            cmd_str.insert(4, rm.custom_cmd)
         write_cmd_task_line(f, 'Render frame %d' % frame_num, [('PixarRender',
                                                                 cmd_str)], 3)
 
