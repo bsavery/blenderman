@@ -229,14 +229,10 @@ class RENDER_PT_renderman_render(PRManButtonsPanel, Panel):
         col.prop(rm, "do_denoise")
 
 
-class RENDER_PT_renderman_spooling(CollectionPanel, Panel):
+class RENDER_PT_renderman_spooling(PRManButtonsPanel, Panel):
     bl_context = "render"
     bl_label = "External Rendering"
     bl_options = {'DEFAULT_CLOSED'}
-
-    def draw_item(self, layout, context, item):
-        col = layout.column()
-        col.prop(item, "override")
 
     def draw(self, context):
         layout = self.layout
@@ -324,7 +320,7 @@ class RENDER_PT_renderman_spooling(CollectionPanel, Panel):
         col.prop(rm, 'spool_advanced', icon=icon, text="Advanced Options",
                  icon_only=True, emboss=False)
         if rm.spool_advanced:
-            col.label('Rendering Options:', icon='LINK')
+            col.label('Rendering Options:')
             layout.separator()
             col.prop(rm, 'custom_alfname')
             col.prop(rm, 'custom_cmd')
@@ -332,12 +328,11 @@ class RENDER_PT_renderman_spooling(CollectionPanel, Panel):
             layout.separator()
             col = layout.column()
             col.enabled = rm.external_denoise
-            col.label('Denoise Options:', icon='LINK')
+            col.label('Denoise Options:')
             layout.separator()
             col.prop(rm, 'denoise_cmd')
             col.prop(rm, 'denoise_filter')
-            self._draw_collection(context, layout, rm, "Filter Overrides:", "collection.add_remove",
-                                  "scene.renderman", "denoise_override", "denoise_override_index")
+            col.prop(rm, 'denoise_override')
 
 
 class RENDER_PT_renderman_sampling(PRManButtonsPanel, Panel):

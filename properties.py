@@ -426,18 +426,6 @@ class RendermanAOV(bpy.types.PropertyGroup):
         min=0, max=16, default=2)
 
 
-def get_filter_overrides():
-    rmantree = guess_rmantree()
-    args_path = os.path.join(rmantree, 'lib', 'denoise')
-    overrides = [("none", "", "")]
-    for root, directories, files in os.walk(args_path):
-        for filename in files:
-            name_split = filename.split('.')
-            if 'filteroverride' in name_split:
-                overrides += [(filename, '.'.join(name_split[0:-2]), "")]
-    return overrides
-
-
 def get_denoise_filters():
     rmantree = guess_rmantree()
     args_path = os.path.join(rmantree, 'lib', 'denoise')
@@ -448,27 +436,6 @@ def get_denoise_filters():
             if 'filteroverride' not in name_split:
                 filters += [(filename, '.'.join(name_split[0:-1]), "")]
     return filters
-
-
-class RendermanDenoiseOverride(bpy.types.PropertyGroup):
-
-    def filters(self, context):
-        items = get_filter_overrides()
-        return items
-
-    def update_type(self, context):
-        types = self.filters(context)
-        for item in types:
-            if self.override == item[0]:
-                self.name = item[1]
-
-    name = StringProperty(name="filter name", default='filter_override')
-
-    override = EnumProperty(
-        name="Filter Override",
-        description="Name of filter override",
-        items=filters,
-        update=update_type)
 
 
 class RendermanRenderLayerSettings(bpy.types.PropertyGroup):
@@ -895,11 +862,6 @@ class RendermanSceneSettings(bpy.types.PropertyGroup):
                ('tractor', 'tractor', 'Tractor, must have tractor setup')],
         default='lq')
 
-    spool_threads = IntProperty(
-        name="Rendering Threads",
-        description="Number of processor threads to use.  Note, 0 uses all cores, -1 uses all cores but one.",
-        default=-1)
-
     spool_advanced = BoolProperty(
         name="Advanced Options",
         description="Enable the display of advanced spooling options",
@@ -931,15 +893,10 @@ class RendermanSceneSettings(bpy.types.PropertyGroup):
         items=get_denoise_filters(),
         default="default.filter.json")
 
-    denoise_threads = IntProperty(
-        name="Denoise Threads",
-        description="Number of processor threads to use for denoising.  Note, 0 uses all cores, -1 uses all cores but one.",
-        default=-1)
-
-    denoise_override = CollectionProperty(type=RendermanDenoiseOverride,
-                                          name="Denoise Overrides")
-
-    denoise_override_index = IntProperty(min=-1, default=-1)
+    denoise_override = StringProperty(
+        name="Denoise Overrides",
+        description="Enter the names of any override files you wish to use during the denoise process",
+        default='')
 
     external_animation = BoolProperty(
         name="Render Animation",
@@ -2095,7 +2052,6 @@ classes = [RendermanPath,
            RendermanInlineRIB,
            RendermanGroup,
            LightLinking,
-           RendermanDenoiseOverride,
            TraceSet,
            RendermanMeshPrimVar,
            RendermanParticlePrimVar,
