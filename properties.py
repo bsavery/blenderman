@@ -53,6 +53,7 @@ def get_integrator_names():
             integrator_names.append((f.split('.')[0], f.split('.')[0][3:], ''))
     return integrator_names
 
+
 class RendermanIntegratorSettings(bpy.types.PropertyGroup):
     pass
 
@@ -208,37 +209,36 @@ class TraceSet(bpy.types.PropertyGroup):
                         )
 
 
-aov_mapping = [ 
-                 
-                 ("rgba", "Combined (rgba)", "Combined (rgba)"),
-                 ("z", "z", "z"),
-                 ("Nn", "Nn", "Nn"),
-                 ("dPdtime", "dPdtime", "dPdtime"),
-                 ("u", "u", "u"),
-                 ("v", "v", "v"),
-                 ("id", "id", "id"),
-                 ("lpe:C<.D%G>[S]+<L.%LG>", "Caustics", "Caustics"),
-                 ("lpe:shadows;C[<.D%G><.S%G>]<L.%LG>", "Shadows", "Shadows"),
-                 ("color lpe:nothruput;noinfinitecheck;noclamp;unoccluded;overwrite;C(U2L)|O",
-                  "Albedo", "Albedo"),
-                 ("lpe:C<RS%G>([DS]+<L.%LG>)|([DS]*O)",
-                  "Reflection", "Reflection"),
-                 ("lpe:C<.D%G><L.%LG>", "Diffuse", "Diffuse"),
-                 ("lpe:(C<RD%G>[DS]+<L.%LG>)|(C<RD%G>[DS]*O)",
-                  "IndirectDiffuse", "IndirectDiffuse"),
-                 ("lpe:C<.S%G><L.%LG>", "Specular", "Specular"),
-                 ("lpe:(C<RS%G>[DS]+<L.%LG>)|(C<RS%G>[DS]*O)",
-                  "IndirectSpecular", "IndirectSpecular"),
-                 ("lpe:(C<TD%G>[DS]+<L.%LG>)|(C<TD%G>[DS]*O)",
-                  "Subsurface", "Subsurface"),
-                 ("lpe:(C<T[S]%G>[DS]+<L.%LG>)|(C<T[S]%G>[DS]*O)",
-                  "Refraction", "Refraction"),
-                 ("lpe:emission", "Emission", "Emission"),
-                 ("custom_lpe_string", "Custom lpe", "Custom lpe"),
-                 ("custom_aov_string",  "Custom AOV", "Custom AOV"), 
-                 ("built_in_aov", "Other Built in AOV", "Built in AOV"),
-                 ]
+aov_mapping = [
 
+    ("rgba", "Combined (rgba)", "Combined (rgba)"),
+    ("z", "z", "z"),
+    ("Nn", "Nn", "Nn"),
+    ("dPdtime", "dPdtime", "dPdtime"),
+    ("u", "u", "u"),
+    ("v", "v", "v"),
+    ("id", "id", "id"),
+    ("lpe:C<.D%G>[S]+<L.%LG>", "Caustics", "Caustics"),
+    ("lpe:shadows;C[<.D%G><.S%G>]<L.%LG>", "Shadows", "Shadows"),
+    ("color lpe:nothruput;noinfinitecheck;noclamp;unoccluded;overwrite;C(U2L)|O",
+     "Albedo", "Albedo"),
+    ("lpe:C<RS%G>([DS]+<L.%LG>)|([DS]*O)",
+     "Reflection", "Reflection"),
+    ("lpe:C<.D%G><L.%LG>", "Diffuse", "Diffuse"),
+    ("lpe:(C<RD%G>[DS]+<L.%LG>)|(C<RD%G>[DS]*O)",
+     "IndirectDiffuse", "IndirectDiffuse"),
+    ("lpe:C<.S%G><L.%LG>", "Specular", "Specular"),
+    ("lpe:(C<RS%G>[DS]+<L.%LG>)|(C<RS%G>[DS]*O)",
+     "IndirectSpecular", "IndirectSpecular"),
+    ("lpe:(C<TD%G>[DS]+<L.%LG>)|(C<TD%G>[DS]*O)",
+     "Subsurface", "Subsurface"),
+    ("lpe:(C<T[S]%G>[DS]+<L.%LG>)|(C<T[S]%G>[DS]*O)",
+     "Refraction", "Refraction"),
+    ("lpe:emission", "Emission", "Emission"),
+    ("custom_lpe_string", "Custom lpe", "Custom lpe"),
+    ("custom_aov_string",  "Custom AOV", "Custom AOV"),
+    ("built_in_aov", "Other Built in AOV", "Built in AOV"),
+]
 
 
 class RendermanAOV(bpy.types.PropertyGroup):
@@ -249,51 +249,56 @@ class RendermanAOV(bpy.types.PropertyGroup):
 
     def built_in_aovs(self, context):
         items = [
-                 ("float a", "alpha", ""),
-                 ("float id", "id", "Returns the integer assigned via the 'identifier' attribute as the pixel value"),
-                 ("float z", "z_depth", "Depth from the camera in world space"),
-                 ("float zback", "z_back",
-                  "Depth at the back of volumetric objects in world space"),
-                 ("point P",  "P",  "Position of the point hit by the incident ray"),
-                 ("float PRadius", "PRadius",
-                  "Cross-sectional size of the ray at the hit point"),
-                 ("float cpuTime", "cpuTime", "The time taken to render a pixel"),
-                 ("float sampleCount", "sampleCount",
-                  "The number of samples taken for the resulting pixel"),
-                 ("normal Nn", "Nn", "Normalized shading normal"),
-                 ("normal Ngn", "Ngn", "Normalized geometric normal"),
-                 ("vector Tn", "Tn", "Normalized shading tangent"),
-                 ("vector Vn", "Vn", "Normalized view vector (reverse of ray direction)"),
-                 ("float VLen", "VLen", "Distance to hit point along the ray"),
-                 ("float curvature", "curvature", "Local surface curvature"),
-                 ("float incidentRaySpread", "incidentRaySpread",
-                  "Rate of spread of incident ray"),
-                 ("float mpSize", "mpSize", "Size of the micropolygon that the ray hit"),
-                 ("float u", "u", "The parametric coordinates on the primitive"),
-                 ("float v", "v", "The parametric coordinates on the primitive"),
-                 ("float w", "w", "The parametric coordinates on the primitive"),
-                 ("float du", "du", "Derivatives of u, v, and w to adjacent micropolygons"),
-                 ("float dv", "dv", "Derivatives of u, v, and w to adjacent micropolygons"),
-                 ("float dw", "dw", "Derivatives of u, v, and w to adjacent micropolygons"),
-                 ("vector dPdu", "dPdu", "Direction of maximal change in u, v, and w"),
-                 ("vector dPdv", "dPdv", "Direction of maximal change in u, v, and w"),
-                 ("vector dPdw", "dPdw", "Direction of maximal change in u, v, and w"),
-                 ("float dufp", "dufp", "Multiplier to dPdu, dPdv, dPdw for ray differentials"),
-                 ("float dvfp", "dvfp", "Multiplier to dPdu, dPdv, dPdw for ray differentials"),
-                 ("float dwfp", "dwfp", "Multiplier to dPdu, dPdv, dPdw for ray differentials"),
-                 ("float time", "time", "Time sample of the ray"),
-                 ("vector dPdtime", "dPdtime", "Motion vector"),
-                 ("float id", "id", "Returns the integer assigned via the identifier attribute as the pixel value"),
-                 ("float outsideIOR", "outsideIOR",
-                  "Index of refraction outside this surface"),
-                 ("point __Pworld", "Pworld", "P in world-space"),
-                 ("normal __Nworld", "Nworld", "Nn in world-space"),
-                 ("float __depth", "depth", "Multi-purpose AOV\nr : depth from camera in world-space\ng : height in world-space\nb : geometric facing ratio : abs(Nn.V)"),
-                 ("float[2] __st", "st", "Texture coords"),
-                 ("point __Pref", "Pref", "Reference Position primvar (if available)"),
-                 ("normal __Nref", "Nref", "Reference Normal primvar (if available)"),
-                 ("point __WPref", "WPref", "Reference World Position primvar (if available)"),
-                 ("normal __WNref",  "WNref", "Reference World Normal primvar (if available)")]
+            ("float a", "alpha", ""),
+            ("float id", "id", "Returns the integer assigned via the 'identifier' attribute as the pixel value"),
+            ("float z", "z_depth", "Depth from the camera in world space"),
+            ("float zback", "z_back",
+             "Depth at the back of volumetric objects in world space"),
+            ("point P",  "P",  "Position of the point hit by the incident ray"),
+            ("float PRadius", "PRadius",
+             "Cross-sectional size of the ray at the hit point"),
+            ("float cpuTime", "cpuTime", "The time taken to render a pixel"),
+            ("float sampleCount", "sampleCount",
+             "The number of samples taken for the resulting pixel"),
+            ("normal Nn", "Nn", "Normalized shading normal"),
+            ("normal Ngn", "Ngn", "Normalized geometric normal"),
+            ("vector Tn", "Tn", "Normalized shading tangent"),
+            ("vector Vn", "Vn", "Normalized view vector (reverse of ray direction)"),
+            ("float VLen", "VLen", "Distance to hit point along the ray"),
+            ("float curvature", "curvature", "Local surface curvature"),
+            ("float incidentRaySpread", "incidentRaySpread",
+             "Rate of spread of incident ray"),
+            ("float mpSize", "mpSize",
+             "Size of the micropolygon that the ray hit"),
+            ("float u", "u", "The parametric coordinates on the primitive"),
+            ("float v", "v", "The parametric coordinates on the primitive"),
+            ("float w", "w", "The parametric coordinates on the primitive"),
+            ("float du", "du", "Derivatives of u, v, and w to adjacent micropolygons"),
+            ("float dv", "dv", "Derivatives of u, v, and w to adjacent micropolygons"),
+            ("float dw", "dw", "Derivatives of u, v, and w to adjacent micropolygons"),
+            ("vector dPdu", "dPdu", "Direction of maximal change in u, v, and w"),
+            ("vector dPdv", "dPdv", "Direction of maximal change in u, v, and w"),
+            ("vector dPdw", "dPdw", "Direction of maximal change in u, v, and w"),
+            ("float dufp", "dufp",
+             "Multiplier to dPdu, dPdv, dPdw for ray differentials"),
+            ("float dvfp", "dvfp",
+             "Multiplier to dPdu, dPdv, dPdw for ray differentials"),
+            ("float dwfp", "dwfp",
+             "Multiplier to dPdu, dPdv, dPdw for ray differentials"),
+            ("float time", "time", "Time sample of the ray"),
+            ("vector dPdtime", "dPdtime", "Motion vector"),
+            ("float id", "id", "Returns the integer assigned via the identifier attribute as the pixel value"),
+            ("float outsideIOR", "outsideIOR",
+             "Index of refraction outside this surface"),
+            ("point __Pworld", "Pworld", "P in world-space"),
+            ("normal __Nworld", "Nworld", "Nn in world-space"),
+            ("float __depth", "depth", "Multi-purpose AOV\nr : depth from camera in world-space\ng : height in world-space\nb : geometric facing ratio : abs(Nn.V)"),
+            ("float[2] __st", "st", "Texture coords"),
+            ("point __Pref", "Pref", "Reference Position primvar (if available)"),
+            ("normal __Nref", "Nref", "Reference Normal primvar (if available)"),
+            ("point __WPref", "WPref",
+             "Reference World Position primvar (if available)"),
+            ("normal __WNref",  "WNref", "Reference World Normal primvar (if available)")]
         return items
 
     def update_type(self, context):
@@ -421,6 +426,18 @@ class RendermanAOV(bpy.types.PropertyGroup):
         min=0, max=16, default=2)
 
 
+def get_denoise_filters():
+    rmantree = guess_rmantree()
+    args_path = os.path.join(rmantree, 'lib', 'denoise')
+    filters = []
+    for root, directories, files in os.walk(args_path):
+        for filename in files:
+            name_split = filename.split('.')
+            if 'filteroverride' not in name_split:
+                filters += [(filename, '.'.join(name_split[0:-1]), "")]
+    return filters
+
+
 class RendermanRenderLayerSettings(bpy.types.PropertyGroup):
     render_layer = StringProperty()
     custom_aovs = CollectionProperty(type=RendermanAOV,
@@ -471,6 +488,7 @@ class RendermanRenderLayerSettings(bpy.types.PropertyGroup):
             ('tiled', 'Tiled Storage', '')],
         default='scanline')
 
+
 class RendermanSceneSettings(bpy.types.PropertyGroup):
     light_groups = CollectionProperty(type=RendermanGroup,
                                       name='Light Groups')
@@ -503,8 +521,8 @@ class RendermanSceneSettings(bpy.types.PropertyGroup):
         default='group', update=reset_ll_object_index)
 
     render_layers = CollectionProperty(type=RendermanRenderLayerSettings,
-                                   name='Custom AOVs')
-    
+                                       name='Custom AOVs')
+
     solo_light = BoolProperty(name="Solo Light", default=False)
 
     pixelsamples_x = IntProperty(
@@ -831,10 +849,10 @@ class RendermanSceneSettings(bpy.types.PropertyGroup):
                 'Only Generate RIB and job file (no render)'),
                ('spool', 'Spool Job', 'Spool Job to queuing system')],
         default='render')
-        
+
     custom_alfname = StringProperty(
-        name="Custom Spool Name", 
-        description="Allows a custom name for the spool .alf file.  This would allow you to export multiple spool files for the same scene.", 
+        name="Custom Spool Name",
+        description="Allows a custom name for the spool .alf file.  This would allow you to export multiple spool files for the same scene.",
         default='')
 
     queuing_system = EnumProperty(
@@ -843,26 +861,42 @@ class RendermanSceneSettings(bpy.types.PropertyGroup):
         items=[('lq', 'LocalQueue', 'LocalQueue, must have RMS installed'),
                ('tractor', 'tractor', 'Tractor, must have tractor setup')],
         default='lq')
-        
+
+    spool_advanced = BoolProperty(
+        name="Advanced Options",
+        description="Enable the display of advanced spooling options",
+        default=False)
+
     recover = BoolProperty(
-        name="Enable Recovery", 
+        name="Enable Recovery",
         description="Attempt to resume render from a previous checkpoint (if possible)",
         default=False)
-    
+
     custom_cmd = StringProperty(
         name="Custom Render Commands",
-        description="Inserts a string of custom command arguments into the render process.", 
+        description="Inserts a string of custom command arguments into the render process.",
         default='')
-        
+
     denoise_cmd = StringProperty(
-        name="Custom Denoise Commands", 
-        description="Inserts a string of custom commands arguments into the denoising process, if selected.", 
+        name="Custom Denoise Commands",
+        description="Inserts a string of custom commands arguments into the denoising process, if selected.",
         default='')
-        
+
     spool_denoise_aov = BoolProperty(
         name="Process denoisable AOV's",
-        description="Denoises tagged AOV's", 
+        description="Denoises tagged AOV's",
         default=False)
+
+    denoise_filter = EnumProperty(
+        name="Denoise Filter",
+        description="Choose an alternate configuration for the denoise filter",
+        items=get_denoise_filters(),
+        default="default.filter.json")
+
+    denoise_override = StringProperty(
+        name="Denoise Overrides",
+        description="Enter the names of any override files you wish to use during the denoise process",
+        default='')
 
     external_animation = BoolProperty(
         name="Render Animation",
@@ -1239,7 +1273,8 @@ class RendermanLightSettings(bpy.types.PropertyGroup):
 
     # do this to keep the nice viewport update
     def update_light_type(self, context):
-        lamp = context.lamp if hasattr(context, 'lamp') else context.scene.objects.active.data
+        lamp = context.lamp if hasattr(
+            context, 'lamp') else context.scene.objects.active.data
         if lamp.renderman.renderman_type in ['SKY', 'ENV']:
             lamp.type = 'HEMI'
         elif lamp.renderman.renderman_type == 'DIST':
@@ -1295,7 +1330,7 @@ class RendermanLightSettings(bpy.types.PropertyGroup):
         setattr(node, 'renderman_portal', light_type == 'PORTAL')
 
     def update_area_shape(self, context):
-        
+
         area_shape = self.area_shape
         # use pxr area light for everything but env, sky
         light_shader = 'PxrRectLightLightNode'
@@ -1303,7 +1338,7 @@ class RendermanLightSettings(bpy.types.PropertyGroup):
             light_shader = 'PxrDiskLightLightNode'
         elif area_shape == 'sphere':
             light_shader = 'PxrSphereLightLightNode'
-        
+
         # find the existing or make a new light shader node
         nt = bpy.data.node_groups[self.nodetree]
         output = None
@@ -1344,7 +1379,7 @@ class RendermanLightSettings(bpy.types.PropertyGroup):
         update=update_area_shape,
         items=[('rect', 'Rectangle', 'Rectangle'),
                ('disk', 'Disk', 'Disk'),
-               ('sphere', 'Sphere', 'Sphere'),],
+               ('sphere', 'Sphere', 'Sphere'), ],
         default='rect'
     )
 
@@ -1394,8 +1429,7 @@ class RendermanLightSettings(bpy.types.PropertyGroup):
             if engine.ipr is not None and engine.ipr.is_ipr_running():
                 engine.ipr.solo_light()
         elif engine.ipr is not None and engine.ipr.is_ipr_running():
-                engine.ipr.un_solo_light()
-
+            engine.ipr.un_solo_light()
 
         scene.renderman.solo_light = self.solo
 
@@ -1950,50 +1984,55 @@ class Tab_CollectionGroup(bpy.types.PropertyGroup):
 
 
 initial_aov_channels = [("a", "alpha", ""),
-     ("id", "id", "Returns the integer assigned via the 'identifier' attribute as the pixel value"),
-     ("z", "z_depth", "Depth from the camera in world space"),
-     ("zback", "z_back",
-      "Depth at the back of volumetric objects in world space"),
-     ("P",  "P",  "Position of the point hit by the incident ray"),
-     ("PRadius", "PRadius",
-      "Cross-sectional size of the ray at the hit point"),
-     ("cpuTime", "cpuTime", "The time taken to render a pixel"),
-     ("sampleCount", "sampleCount",
-      "The number of samples taken for the resulting pixel"),
-     ("Nn", "Nn", "Normalized shading normal"),
-     ("Ngn", "Ngn", "Normalized geometric normal"),
-     ("Tn", "Tn", "Normalized shading tangent"),
-     ("Vn", "Vn", "Normalized view vector (reverse of ray direction)"),
-     ("VLen", "VLen", "Distance to hit point along the ray"),
-     ("curvature", "curvature", "Local surface curvature"),
-     ("incidentRaySpread", "incidentRaySpread",
-      "Rate of spread of incident ray"),
-     ("mpSize", "mpSize", "Size of the micropolygon that the ray hit"),
-     ("u", "u", "The parametric coordinates on the primitive"),
-     ("v", "v", "The parametric coordinates on the primitive"),
-     ("w", "w", "The parametric coordinates on the primitive"),
-     ("du", "du", "Derivatives of u, v, and w to adjacent micropolygons"),
-     ("dv", "dv", "Derivatives of u, v, and w to adjacent micropolygons"),
-     ("dw", "dw", "Derivatives of u, v, and w to adjacent micropolygons"),
-     ("dPdu", "dPdu", "Direction of maximal change in u, v, and w"),
-     ("dPdv", "dPdv", "Direction of maximal change in u, v, and w"),
-     ("dPdw", "dPdw", "Direction of maximal change in u, v, and w"),
-     ("dufp", "dufp", "Multiplier to dPdu, dPdv, dPdw for ray differentials"),
-     ("dvfp", "dvfp", "Multiplier to dPdu, dPdv, dPdw for ray differentials"),
-     ("dwfp", "dwfp", "Multiplier to dPdu, dPdv, dPdw for ray differentials"),
-     ("time", "time", "Time sample of the ray"),
-     ("dPdtime", "dPdtime", "Motion vector"),
-     ("id", "id", "Returns the integer assigned via the identifier attribute as the pixel value"),
-     ("outsideIOR", "outsideIOR",
-      "Index of refraction outside this surface"),
-     ("__Pworld", "Pworld", "P in world-space"),
-     ("__Nworld", "Nworld", "Nn in world-space"),
-     ("__depth", "depth", "Multi-purpose AOV\nr : depth from camera in world-space\ng : height in world-space\nb : geometric facing ratio : abs(Nn.V)"),
-     ("__st", "st", "Texture coords"),
-     ("__Pref", "Pref", "Reference Position primvar (if available)"),
-     ("__Nref", "Nref", "Reference Normal primvar (if available)"),
-     ("__WPref", "WPref", "Reference World Position primvar (if available)"),
-     ("__WNref",  "WNref", "Reference World Normal primvar (if available)")]
+                        ("id", "id", "Returns the integer assigned via the 'identifier' attribute as the pixel value"),
+                        ("z", "z_depth", "Depth from the camera in world space"),
+                        ("zback", "z_back",
+                         "Depth at the back of volumetric objects in world space"),
+                        ("P",  "P",  "Position of the point hit by the incident ray"),
+                        ("PRadius", "PRadius",
+                         "Cross-sectional size of the ray at the hit point"),
+                        ("cpuTime", "cpuTime", "The time taken to render a pixel"),
+                        ("sampleCount", "sampleCount",
+                         "The number of samples taken for the resulting pixel"),
+                        ("Nn", "Nn", "Normalized shading normal"),
+                        ("Ngn", "Ngn", "Normalized geometric normal"),
+                        ("Tn", "Tn", "Normalized shading tangent"),
+                        ("Vn", "Vn", "Normalized view vector (reverse of ray direction)"),
+                        ("VLen", "VLen", "Distance to hit point along the ray"),
+                        ("curvature", "curvature", "Local surface curvature"),
+                        ("incidentRaySpread", "incidentRaySpread",
+                         "Rate of spread of incident ray"),
+                        ("mpSize", "mpSize",
+                         "Size of the micropolygon that the ray hit"),
+                        ("u", "u", "The parametric coordinates on the primitive"),
+                        ("v", "v", "The parametric coordinates on the primitive"),
+                        ("w", "w", "The parametric coordinates on the primitive"),
+                        ("du", "du", "Derivatives of u, v, and w to adjacent micropolygons"),
+                        ("dv", "dv", "Derivatives of u, v, and w to adjacent micropolygons"),
+                        ("dw", "dw", "Derivatives of u, v, and w to adjacent micropolygons"),
+                        ("dPdu", "dPdu", "Direction of maximal change in u, v, and w"),
+                        ("dPdv", "dPdv", "Direction of maximal change in u, v, and w"),
+                        ("dPdw", "dPdw", "Direction of maximal change in u, v, and w"),
+                        ("dufp", "dufp",
+                         "Multiplier to dPdu, dPdv, dPdw for ray differentials"),
+                        ("dvfp", "dvfp",
+                         "Multiplier to dPdu, dPdv, dPdw for ray differentials"),
+                        ("dwfp", "dwfp",
+                         "Multiplier to dPdu, dPdv, dPdw for ray differentials"),
+                        ("time", "time", "Time sample of the ray"),
+                        ("dPdtime", "dPdtime", "Motion vector"),
+                        ("id", "id", "Returns the integer assigned via the identifier attribute as the pixel value"),
+                        ("outsideIOR", "outsideIOR",
+                         "Index of refraction outside this surface"),
+                        ("__Pworld", "Pworld", "P in world-space"),
+                        ("__Nworld", "Nworld", "Nn in world-space"),
+                        ("__depth", "depth", "Multi-purpose AOV\nr : depth from camera in world-space\ng : height in world-space\nb : geometric facing ratio : abs(Nn.V)"),
+                        ("__st", "st", "Texture coords"),
+                        ("__Pref", "Pref", "Reference Position primvar (if available)"),
+                        ("__Nref", "Nref", "Reference Normal primvar (if available)"),
+                        ("__WPref", "WPref",
+                         "Reference World Position primvar (if available)"),
+                        ("__WNref",  "WNref", "Reference World Normal primvar (if available)")]
 
 
 @persistent
