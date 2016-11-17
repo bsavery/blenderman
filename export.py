@@ -2499,7 +2499,7 @@ def property_group_to_params(node, lamp=None):
 def export_integrator(ri, rpass, scene, preview=False):
     rm = scene.renderman
     integrator = rm.integrator
-    if preview or rpass.is_interactive:
+    if preview:
         integrator = "PxrPathTracer"
 
     integrator_settings = getattr(rm, "%s_settings" % integrator)
