@@ -375,7 +375,8 @@ class RPass:
             engine.end_result(result)
 
         # create command and start process
-        options = self.options + ['-Progress'] + ['-cwd', cdir]
+        options = self.options + ['-Progress'] + ['-cwd', cdir] + \
+            ['-woff', 'N02003']
         prman_executable = 'prman'
         if self.display_driver in ['openexr', 'tiff']:
             options = options + ['-checkpoint',
@@ -626,7 +627,7 @@ class RPass:
             -dspyserver it" % self.paths['export_dir']
         else:
             filename = "launch:prman? -t:%d" % self.rm.threads + " -cwd %s -ctrl $ctrlin $ctrlout \
-            -dspyserver it" % self.paths['export_dir']
+            -dspyserver it" % self.paths['export_dir'].replace(' ', '%20')
         self.ri.Begin(filename)
         self.ri.Option("rib", {"string asciistyle": "indented,wide"})
         interactive_initial_rib(self, self.ri, self.scene, prman)

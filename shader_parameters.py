@@ -64,7 +64,7 @@ def generate_page(sp, node, parent_name, first_level=False):
         default = parent_name == 'Diffuse'
         prop = BoolProperty(name="Enable " + parent_name,
                             default=bool(default),
-                            update=update_func)
+                            update=update_func_with_inputs)
         setattr(node, param_name, prop)
 
     for sub_param in sp.findall('param') + sp.findall('page'):
@@ -223,8 +223,7 @@ def update_conditional_visops(node):
             prop_meta['hidden'] = not eval(prop_meta['conditionalVisOp'])
 
 
-# send updates to ipr if running
-def update_func(self, context):
+def update_func_with_inputs(self, context):
     # check if this prop is set on an input
     node = self.node if hasattr(self, 'node') else self
 
@@ -245,6 +244,37 @@ def update_func(self, context):
 
     if node.bl_idname in ['PxrLayerPatternNode', 'PxrSurfaceBxdfNode']:
         node_add_inputs(node, node.name, node.prop_names)
+    else:
+        update_inputs(node)
+
+    # set any inputs that are visible and param is hidden to hidden
+    prop_meta = getattr(node, 'prop_meta')
+    if hasattr(node, 'inputs'):
+        for input_name, socket in node.inputs.items():
+            if 'hidden' in prop_meta[input_name] \
+                    and prop_meta[input_name]['hidden'] and not socket.hide:
+                socket.hide = True
+
+
+# send updates to ipr if running
+def update_func(self, context):
+    # check if this prop is set on an input
+    node = self.node if hasattr(self, 'node') else self
+
+    if node.renderman_node_type == 'lightfilter' and context and hasattr(context, 'lamp'):
+        context.lamp.renderman.update_filter_shape()
+
+    from . import engine
+    if engine.is_ipr_running():
+        engine.ipr.issue_shader_edits(node=node)
+
+    if context and hasattr(context, 'material'):
+        mat = context.material
+        if mat:
+            node.update_mat(mat)
+
+    # update the conditional_vis_ops
+    update_conditional_visops(node)
 
     # set any inputs that are visible and param is hidden to hidden
     prop_meta = getattr(node, 'prop_meta')
@@ -380,6 +410,8 @@ def generate_property(sp):
         prop_meta['is_vstruct'] = True
     renderman_type = param_type
 
+    update_function = update_func_with_inputs if 'enable' in param_name else update_func
+
     prop = None
 
     # set this prop as non connectable
@@ -417,21 +449,21 @@ def generate_property(sp):
                                        default=param_default, precision=3,
                                        size=len(param_default),
                                        description=param_help,
-                                       update=update_func)
+                                       update=update_function)
 
         else:
             param_default = parse_float(param_default)
             if param_widget == 'checkbox' or param_widget == 'switch':
                 prop = BoolProperty(name=param_label,
                                     default=bool(param_default),
-                                    description=param_help, update=update_func)
+                                    description=param_help, update=update_function)
 
             elif param_widget == 'mapper':
                 prop = EnumProperty(name=param_label,
                                     items=sp_optionmenu_to_string(
                                         sp.find("hintdict[@name='options']")),
                                     default=sp.attrib['default'],
-                                    description=param_help, update=update_func)
+                                    description=param_help, update=update_function)
 
             else:
                 param_min = parse_float(sp.attrib['min']) if 'min' \
@@ -445,7 +477,7 @@ def generate_property(sp):
                 prop = FloatProperty(name=param_label,
                                      default=param_default, precision=3,
                                      soft_min=param_min, soft_max=param_max,
-                                     description=param_help, update=update_func)
+                                     description=param_help, update=update_function)
         renderman_type = 'float'
 
     elif param_type == 'int' or param_type == 'integer':
@@ -460,7 +492,7 @@ def generate_property(sp):
                                      default=param_default,
                                      size=len(param_default),
                                      description=param_help,
-                                     update=update_func)
+                                     update=update_function)
         else:
             param_default = int(param_default) if param_default else 0
             # make invertT default 0
@@ -470,14 +502,14 @@ def generate_property(sp):
             if param_widget == 'checkbox' or param_widget == 'switch':
                 prop = BoolProperty(name=param_label,
                                     default=bool(param_default),
-                                    description=param_help, update=update_func)
+                                    description=param_help, update=update_function)
 
             elif param_widget == 'mapper':
                 prop = EnumProperty(name=param_label,
                                     items=sp_optionmenu_to_string(
                                         sp.find("hintdict[@name='options']")),
                                     default=sp.attrib['default'],
-                                    description=param_help, update=update_func)
+                                    description=param_help, update=update_function)
             else:
                 param_min = int(sp.attrib['min']) if 'min' in sp.attrib else 0
                 param_max = int(
@@ -486,7 +518,7 @@ def generate_property(sp):
                                    default=param_default,
                                    soft_min=param_min,
                                    soft_max=param_max,
-                                   description=param_help, update=update_func)
+                                   description=param_help, update=update_function)
         renderman_type = 'int'
 
     elif param_type == 'color':
@@ -500,13 +532,13 @@ def generate_property(sp):
                                    default=param_default, size=3,
                                    subtype="COLOR",
                                    soft_min=0.0, soft_max=1.0,
-                                   description=param_help, update=update_func)
+                                   description=param_help, update=update_function)
         renderman_type = 'color'
     elif param_type == 'shader':
         param_default = ''
         prop = StringProperty(name=param_label,
                               default=param_default,
-                              description=param_help, update=update_func)
+                              description=param_help, update=update_function)
         renderman_type = 'string'
 
     elif param_type == 'string' or param_type == 'struct':
@@ -517,22 +549,22 @@ def generate_property(sp):
         if param_widget == 'fileinput' or param_widget == 'assetidinput':
             prop = StringProperty(name=param_label,
                                   default=param_default, subtype="FILE_PATH",
-                                  description=param_help, update=update_func)
+                                  description=param_help, update=update_function)
         elif param_widget == 'mapper':
             prop = EnumProperty(name=param_label,
                                 default=param_default, description=param_help,
                                 items=sp_optionmenu_to_string(
                                     sp.find("hintdict[@name='options']")),
-                                update=update_func)
+                                update=update_function)
         elif param_widget == 'popup':
             options = [(o, o, '') for o in sp.attrib['options'].split('|')]
             prop = EnumProperty(name=param_label,
                                 default=param_default, description=param_help,
-                                items=options, update=update_func)
+                                items=options, update=update_function)
         else:
             prop = StringProperty(name=param_label,
                                   default=param_default,
-                                  description=param_help, update=update_func)
+                                  description=param_help, update=update_function)
         renderman_type = param_type
 
     elif param_type == 'vector' or param_type == 'normal':
@@ -542,7 +574,7 @@ def generate_property(sp):
         prop = FloatVectorProperty(name=param_label,
                                    default=param_default, size=3,
                                    subtype="EULER",
-                                   description=param_help, update=update_func)
+                                   description=param_help, update=update_function)
     elif param_type == 'point':
         if param_default is None:
             param_default = '0 0 0'
@@ -550,7 +582,7 @@ def generate_property(sp):
         prop = FloatVectorProperty(name=param_label,
                                    default=param_default, size=3,
                                    subtype="XYZ",
-                                   description=param_help, update=update_func)
+                                   description=param_help, update=update_function)
         renderman_type = param_type
     elif param_type == 'int[2]':
         param_type = 'int'
@@ -558,7 +590,7 @@ def generate_property(sp):
         is_array = 2
         prop = IntVectorProperty(name=param_label,
                                  default=param_default, size=2,
-                                 description=param_help, update=update_func)
+                                 description=param_help, update=update_function)
         renderman_type = 'int'
         prop_meta['arraySize'] = 2
 

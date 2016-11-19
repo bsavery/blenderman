@@ -134,8 +134,8 @@ def spool_render(rman_version_short, rib_files, denoise_files, denoise_aov_files
                 if rm.denoise_gpu:
                     denoise_options.append('--override gpuIndex 0 --')
                 cmd_str = ['denoise'] + denoise_options + \
-                    [quote(file) for file in denoise_files[
-                        frame_num - frame_begin][0]]
+                    [quote(denoise_files[
+                    frame_num - frame_begin][0])]
             write_cmd_task_line(f, 'Denoise frame %d' % frame_num,
                                 [('PixarRender', cmd_str)], 3)
         elif crossframe_denoise:

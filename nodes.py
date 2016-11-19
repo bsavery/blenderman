@@ -2271,7 +2271,6 @@ def register():
 def unregister():
     nodeitems_utils.unregister_node_categories("RENDERMANSHADERNODES")
     # bpy.utils.unregister_module(__name__)
-    bpy.app.handlers.load_post.remove(rebuildOSLSystem)
-
+    
     for cls in classes:
         bpy.utils.unregister_class(cls)

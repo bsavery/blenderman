@@ -569,8 +569,8 @@ class RendermanSceneSettings(bpy.types.PropertyGroup):
         default=False)
 
     shadingrate = FloatProperty(
-        name="Shading Rate",
-        description="Default maximum distance between displacement shading samples.  This can be left at 1 unless you need more detail on displaced objects.",
+        name="Micropolygon Length",
+        description="Default maximum distance between displacement samples.  This can be left at 1 unless you need more detail on displaced objects.",
         default=1.0)
 
     motion_blur = BoolProperty(
@@ -1788,6 +1788,12 @@ class RendermanParticleSettings(bpy.types.PropertyGroup):
                             'Instanced objects at each point')
                            ]
 
+    use_object_material = BoolProperty(
+        name="Use Master Object's Material",
+        description="Use the master object's material for instancing.",
+        default=False
+    )
+
     particle_type = EnumProperty(
         name="Point Type",
         description="Geometric primitive for points to be rendered as.",
@@ -2026,8 +2032,8 @@ class RendermanObjectSettings(bpy.types.PropertyGroup):
         description="Override the default shading rate for this object.",
         default=False)
     shadingrate = FloatProperty(
-        name="Shading Rate",
-        description="Maximum distance between shading samples (lower = more detailed shading).",
+        name="Micropolygon Length",
+        description="Maximum distance between displacement samples (lower = more detailed shading).",
         default=1.0)
     geometric_approx_motion = FloatProperty(
         name="Motion Approximation",

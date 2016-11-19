@@ -676,14 +676,11 @@ def export_transform(ri, instance, concat=False, flatten=False):
                 m[1][1] *= data.size
                 m[2][2] *= data.size
 
-        if instance.type == 'LAMP' and instance.ob.data.type in ['SPOT']:
-            m = m.copy()
-            m2 = Matrix.Rotation(math.radians(180), 4, 'X')
-            m = m * m2
-
-        if instance.type == 'LAMP' and instance.ob.data.renderman.renderman_type == "DIST":
+        if instance.type == 'LAMP' and instance.ob.data.type == "SUN":
             m = m.copy()
             m2 = Matrix.Rotation(math.radians(180), 4, 'Y')
+            m = m2 * m
+            m2 = Matrix.Rotation(math.radians(90), 4, 'Z')
             m = m2 * m
         if concat and ob.parent_type == "object":
             ri.ConcatTransform(rib(m))
@@ -700,9 +697,11 @@ def export_object_transform(ri, ob):
     if ob.type == 'LAMP' and ob.data.renderman.renderman_type != "FILTER":
         m = m.copy()
         m[0][0] *= -1.0
-    if ob.type == 'LAMP' and ob.data.renderman.renderman_type == "DIST":
+    if ob.type == 'LAMP' and ob.data.rtype == "SUN":
         m = m.copy()
         m2 = Matrix.Rotation(math.radians(180), 4, 'Y')
+        m = m2 * m
+        m2 = Matrix.Rotation(math.radians(90), 4, 'Z')
         m = m2 * m
     if ob.type == 'LAMP' and ob.data.type == 'AREA':
         m = m.copy()
@@ -1002,8 +1001,8 @@ def export_particle_instances(ri, scene, rpass, psys, ob, motion_data, type='OBJ
         ri.Disk(0, 1.0, 360.0)
     ri.ObjectEnd()
 
-    if rm.use_object_material and len(master_ob.data.materials) > 0:
-        export_material_archive(ri, master_ob.data.materials[0].name)
+    if type == 'OBJECT' and rm.use_object_material and len(master_ob.data.materials) > 0:
+        export_material_archive(ri, master_ob.data.materials[0])
 
     width = rm.width
 
@@ -2234,7 +2233,7 @@ def export_object_attributes(ri, scene, ob, visible_objects):
                      "string lpegroup": obj_groups_str})
 
     if ob.renderman.shading_override:
-        ri.ShadingRate(ob.renderman.shadingrate)
+        ri.Attribute("dice", {"float micropolygonlength": ob.renderman.shadingrate})
         approx_params = {}
         # output motionfactor always, could not find documented default value?
         approx_params[
@@ -2553,7 +2552,7 @@ def export_render_settings(ri, rpass, scene, preview=False):
 
     # ri.PixelSamples(rm.pixelsamples_x, rm.pixelsamples_y)
     ri.PixelFilter(rm.pixelfilter, rm.pixelfilter_x, rm.pixelfilter_y)
-    ri.ShadingRate(rm.shadingrate)
+    ri.Attribute("dice", {"float micropolygonlength": rm.shadingrate})
     ri.Attribute("trace", depths)
     if rm.use_statistics:
         ri.Option("statistics", {'int endofframe': 1,
