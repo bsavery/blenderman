@@ -788,8 +788,9 @@ class RENDER_PT_layer_options(PRManButtonsPanel, Panel):
             col.prop(rm_rl, 'export_multilayer')
             if rm_rl.export_multilayer:
                 col.prop(rm_rl, 'use_deep')
-                col.prop(rm_rl,  "exr_format_options")
-                col.prop(rm_rl,  "exr_compression")
+                col.prop(rm_rl, "asrgba")
+                col.prop(rm_rl, "exr_format_options")
+                col.prop(rm_rl, "exr_compression")
                 col.prop(rm_rl, "exr_storage")
 
 

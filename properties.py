@@ -128,7 +128,8 @@ class RendermanAOV(bpy.types.PropertyGroup):
         items = [
             # Basic lpe
             ("", "Basic LPE's", "Basic LPE's", "", 0),
-            ("color rgba", "rgba", "Combined (beauty)", "", 1),
+            ("color lpe:C[<.D%G><.S%G>]*[<L.%LG>O]",
+             "rgb", "Combined (beauty)", "", 1),
             ("color lpe:C<.D%G><L.%LG>", "Diffuse", "Diffuse", "", 2),
             ("color lpe:(C<RD%G>[DS]+<L.%LG>)|(C<RD%G>[DS]*O)",
              "IndirectDiffuse", "IndirectDiffuse", "", 3),
@@ -395,6 +396,11 @@ class RendermanRenderLayerSettings(bpy.types.PropertyGroup):
         name="Use Deep Data",
         description="The output file will contain extra 'deep' information that can aid with compositing.  This can increase file sizes dramatically.",
         default=False)
+
+    asrgba = BoolProperty(
+        name="EXR as RGBA",
+        description="Forces the first four channels of the EXR to be RGBA.  This improves compatibility with some compositing appplications.  If checkpointing or AOV denoising is used this checkbox is ignored",
+        default=True)
 
     exr_compression = EnumProperty(
         name="EXR Compression",

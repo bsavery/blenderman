@@ -2233,7 +2233,8 @@ def export_object_attributes(ri, scene, ob, visible_objects):
                      "string lpegroup": obj_groups_str})
 
     if ob.renderman.shading_override:
-        ri.Attribute("dice", {"float micropolygonlength": ob.renderman.shadingrate})
+        ri.Attribute(
+            "dice", {"float micropolygonlength": ob.renderman.shadingrate})
         approx_params = {}
         # output motionfactor always, could not find documented default value?
         approx_params[
@@ -2980,6 +2981,7 @@ def export_display(ri, rpass, scene):
                 pixelfilter_y = aov.aov_pixelfilter_y
 
                 name_map = {
+                    "rgb": "emission",
                     "directDiffuseLobe": "diffuse",
                     "subsurfaceLobe": "diffuse",
                     "Subsurface": "diffuse",
@@ -3012,7 +3014,7 @@ def export_display(ri, rpass, scene):
 
                 # Remaps any color lpe channel names to a denoise friendly one
                 if aov_name in name_map.keys():
-                    aov.channel_name = '%s%s%s' % (
+                    aov.channel_name = '%s_%s_%s' % (
                         name_map[aov_name], aov_name, layer_name)
 
                 if aov.aov_name == "custom_lpe":
@@ -3038,19 +3040,19 @@ def export_display(ri, rpass, scene):
                 if stats != 'none':
                     params["string statistics"] = stats
 
-                if source == 'rgba':
-                    del params['string source']
-                    ri.DisplayChannel("color Ci", params)
-                    ri.DisplayChannel("float a",  params)
-                else:
-                    ri.DisplayChannel(source_type + ' %s' %
-                                      aov.channel_name, params)
+                # if source == 'rgba':
+                #     del params['string source']
+                #     ri.DisplayChannel("color Ci", params)
+                #     ri.DisplayChannel("float a",  params)
+                # else:
+                ri.DisplayChannel(source_type + ' %s' %
+                                  aov.channel_name, params)
 
             # if this is a multilayer combine em!
             if rm_rl.export_multilayer and rpass.external_render:
                 channels = []
                 for aov in rm_rl.custom_aovs:
-                    channels.append("Ci,a") if aov.channel_name is 'rgba' else channels.append(
+                    channels.append(
                         aov.channel_name)
                 out_type, ext = ('openexr', 'exr')
                 # removes 'z' and 'zback' channels as DeepEXR will
@@ -3064,7 +3066,7 @@ def export_display(ri, rpass, scene):
                     params["string type"] = rm_rl.exr_format_options
                 if rm_rl.exr_compression != 'default':
                     params["string compression"] = rm_rl.exr_compression
-                if channels[0] == "Ci,a" and not rm.spool_denoise_aov and not rm.enable_checkpoint:
+                if rm_rl.asrgba and not rm.spool_denoise_aov and not rm.enable_checkpoint:
                     params["int asrgba"] = 1
                 dspy_name = user_path(
                     addon_prefs.path_aov_image, scene=scene, display_driver=rpass.display_driver,
@@ -3080,8 +3082,6 @@ def export_display(ri, rpass, scene):
                     aov_channel_name = aov.channel_name
                     if not aov_name or not aov.channel_name:
                         continue
-                    if aov.channel_id == "color rgba":
-                        aov_channel_name = "Ci,a"
                     if layer == scene.render.layers[0] and aov == 'rgba':
                         # we already output this skip
                         continue
