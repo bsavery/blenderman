@@ -790,7 +790,8 @@ class OT_add_renderman_aovs(bpy.types.Operator):
 
         aovs = [
             # (name, do?, declare type/name, source)
-            ("color rgba", active_layer.use_pass_combined, "rgba"),
+            ("color lpe:C[<.D%G><.S%G>]*[<L.%LG>O]", active_layer.use_pass_combined, "rgb"),
+            ("float a", active_layer.use_pass_combined, "alpha"),
             ("float z", active_layer.use_pass_z, "z"),
             ("normal Nn", active_layer.use_pass_normal, "Normal"),
             ("vector dPdtime", active_layer.use_pass_vector, "Vectors"),
@@ -824,6 +825,7 @@ class OT_add_renderman_aovs(bpy.types.Operator):
                 aov_setting.channel_id = aov_type
                 aov_setting.name = name
                 aov_setting.channel_name = name
+                aov_setting.aov_name = aov_type
 
         return {'FINISHED'}
 

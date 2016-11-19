@@ -788,8 +788,9 @@ class RENDER_PT_layer_options(PRManButtonsPanel, Panel):
             col.prop(rm_rl, 'export_multilayer')
             if rm_rl.export_multilayer:
                 col.prop(rm_rl, 'use_deep')
-                col.prop(rm_rl,  "exr_format_options")
-                col.prop(rm_rl,  "exr_compression")
+                col.prop(rm_rl, "asrgba")
+                col.prop(rm_rl, "exr_format_options")
+                col.prop(rm_rl, "exr_compression")
                 col.prop(rm_rl, "exr_storage")
 
 
@@ -1263,31 +1264,36 @@ class OBJECT_PT_renderman_object_raytracing(CollectionPanel, Panel):
         ob = context.object
         rm = ob.renderman
 
-        layout.prop(
-            rm, "raytrace_override", text="Override Default Ray Tracing")
+        col = layout.column()
+        col.prop(rm, "raytrace_pixel_variance")
+        col.prop(rm, "raytrace_intersectpriority")
+        row = col.row()
+        row.enabled = rm.raytrace_intersectpriority != 0
+        row.prop(rm, "raytrace_ior")
 
         col = layout.column()
-        col.active = rm.raytrace_override
+        icon = 'DISCLOSURE_TRI_DOWN' if rm.raytrace_override \
+            else 'DISCLOSURE_TRI_RIGHT'
+
         row = col.row()
-        row.prop(rm, "raytrace_pixel_variance")
-        row = col.row()
-        row.prop(rm, "raytrace_maxdiffusedepth", text="Max Diffuse Depth")
-        row = col.row()
-        row.prop(rm, "raytrace_maxspeculardepth", text="Max Specular Depth")
-        row = col.row()
-        row.prop(rm, "raytrace_tracedisplacements", text="Trace Displacements")
-        row = col.row()
-        row.prop(rm, "raytrace_autobias", text="Ray Origin Auto Bias")
-        row = col.row()
-        row.prop(rm, "raytrace_bias", text="Ray Origin Bias Amount")
-        row.active = not rm.raytrace_autobias
-        row = col.row()
-        row.prop(rm, "raytrace_samplemotion", text="Sample Motion Blur")
-        row = col.row()
-        row.prop(rm, "raytrace_decimationrate", text="Decimation Rate")
-        row = col.row()
-        row.prop(
-            rm, "raytrace_intersectpriority", text="Intersection Priority")
+        row.prop(rm, "raytrace_override", icon=icon, text="Raytrace Overrides",
+                 icon_only=True, emboss=False)
+        if rm.raytrace_override:
+            row = col.row()
+            row.prop(rm, "raytrace_maxdiffusedepth", text="Max Diffuse Depth")
+            row = col.row()
+            row.prop(rm, "raytrace_maxspeculardepth",
+                     text="Max Specular Depth")
+            row = col.row()
+            row.prop(rm, "raytrace_tracedisplacements",
+                     text="Trace Displacements")
+            row = col.row()
+            row.prop(rm, "raytrace_autobias", text="Ray Origin Auto Bias")
+            row = col.row()
+            row.prop(rm, "raytrace_bias", text="Ray Origin Bias Amount")
+            row.active = not rm.raytrace_autobias
+            row = col.row()
+            row.prop(rm, "raytrace_samplemotion", text="Sample Motion Blur")
 
 
 class RENDER_PT_layer_custom_aovs(CollectionPanel, Panel):
