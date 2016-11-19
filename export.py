@@ -2258,10 +2258,10 @@ def export_object_attributes(ri, scene, ob, visible_objects):
     # ray tracing attributes
     trace_params = {}
     shade_params = {}
-    if ob.renderman.raytrace_pixel_variance == not 1.0:
+    if ob.renderman.raytrace_pixel_variance != 1.0:
         shade_params[
             "relativepixelvariance"] = ob.renderman.raytrace_pixel_variance
-    if ob.renderman.raytrace_intersectpriority == not 0:
+    if ob.renderman.raytrace_intersectpriority != 0:
         trace_params[
             "int intersectpriority"] = ob.renderman.raytrace_intersectpriority
         shade_params["float indexofrefraction"] = ob.renderman.raytrace_ior
