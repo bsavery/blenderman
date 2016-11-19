@@ -2123,6 +2123,10 @@ class RendermanObjectSettings(bpy.types.PropertyGroup):
         name="Intersect Priority",
         description="Dictates a priority used when ray tracing overlapping materials",
         default=0)
+    raytrace_ior = FloatProperty(
+        name="Index of Refraction",
+        description="When using nested dielectrics (raytracing overlapping materials), this should be set to the same ior value as your material",
+        default=1.0)
 
     trace_displacements = BoolProperty(
         name="Trace Displacements",

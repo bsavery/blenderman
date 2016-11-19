@@ -2256,8 +2256,16 @@ def export_object_attributes(ri, scene, ob, visible_objects):
         ri.Matte(ob.renderman.matte)
 
     # ray tracing attributes
+    trace_params = {}
+    shade_params = {}
+    if ob.renderman.raytrace_pixel_variance == not 1.0:
+        shade_params[
+            "relativepixelvariance"] = ob.renderman.raytrace_pixel_variance
+    if ob.renderman.raytrace_intersectpriority == not 0:
+        trace_params[
+            "int intersectpriority"] = ob.renderman.raytrace_intersectpriority
+        shade_params["float indexofrefraction"] = ob.renderman.raytrace_ior
     if ob.renderman.raytrace_override:
-        trace_params = {}
         if ob.renderman.raytrace_maxdiffusedepth != 1:
             trace_params[
                 "int maxdiffusedepth"] = ob.renderman.raytrace_maxdiffusedepth
@@ -2272,16 +2280,10 @@ def export_object_attributes(ri, scene, ob, visible_objects):
                 trace_params["float bias"] = ob.renderman.raytrace_bias
         if ob.renderman.raytrace_samplemotion:
             trace_params["int samplemotion"] = 1
-        if ob.renderman.raytrace_decimationrate != 1:
-            trace_params[
-                "int decimationrate"] = ob.renderman.raytrace_decimationrate
-        if ob.renderman.raytrace_intersectpriority != 0:
-            trace_params[
-                "int intersectpriority"] = ob.renderman.raytrace_intersectpriority
-        if ob.renderman.raytrace_pixel_variance != 1.0:
-            ri.Attribute(
-                "shade",  {"relativepixelvariance": ob.renderman.raytrace_pixel_variance})
 
+    if shade_params:
+        ri.Attribute("shade",  shade_params)
+    if trace_params:
         ri.Attribute("trace", trace_params)
 
     # light linking
