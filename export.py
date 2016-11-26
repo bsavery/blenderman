@@ -210,7 +210,7 @@ def is_subdmesh(ob):
 # XXX do this better, perhaps by hooking into modifier type data in RNA?
 # Currently assumes too much is deforming when it isn't
 def is_deforming(ob):
-    deforming_modifiers = ['ARMATURE', 'CAST', 'CLOTH', 'CURVE', 'DISPLACE',
+    deforming_modifiers = ['ARMATURE', 'MESH_SEQUENCE_CACHE', 'CAST', 'CLOTH', 'CURVE', 'DISPLACE',
                            'HOOK', 'LATTICE', 'MESH_DEFORM', 'SHRINKWRAP',
                            'SIMPLE_DEFORM', 'SMOOTH', 'WAVE', 'SOFT_BODY',
                            'SURFACE', 'MESH_CACHE', 'FLUID_SIMULATION',
@@ -321,7 +321,7 @@ def get_strands(scene, ob, psys, objectCorrectionMatrix=False):
     scalpT = []
     nverts = 0
     for pindex in range(total_hair_count):
-        if not psys.settings.show_guide_hairs and pindex < num_parents:
+        if psys.settings.child_type != 'NONE' and pindex < num_parents:
             continue
 
         strand_points = []
@@ -390,10 +390,8 @@ def get_strands(scene, ob, psys, objectCorrectionMatrix=False):
 
 # only export particles that are alive,
 # or have been born since the last frame
-
-
 def valid_particle(pa, valid_frames):
-    return pa.die_time >= valid_frames[0] and pa.birth_time <= valid_frames[1]
+    return pa.die_time >= valid_frames[-1] and pa.birth_time <= valid_frames[0]
 
 
 def get_particles(scene, ob, psys, valid_frames=None):
@@ -648,19 +646,18 @@ def create_mesh(ob, scene):
         ob.modifiers[len(ob.modifiers) - 1].show_render = True
     return mesh
 
+
 def modify_light_matrix(m, ob):
     if ob.data.type in ['AREA', 'SPOT']:
+        data = ob.data
         m2 = Matrix.Rotation(math.radians(180), 4, 'X')
         m = m * m2
-        data = ob.data
-        if ob.data.type == 'HEMI':
+        if ob.data.type == 'AREA':
             if data.renderman.area_shape == 'rect':
-                m[0][0] *= data.size
-                m[1][1] *= data.size_y
+                m = m * Matrix.Scale(data.size, 4, (1, 0, 0)) * \
+                    Matrix.Scale(data.size_y, 4, (0, 1, 0))
             else:
-                m[0][0] *= data.size
-                m[1][1] *= data.size
-                m[2][2] *= data.size
+                m = m * Matrix.Scale(data.size, 4, (1,1,1))
 
     if ob.data.type in ["SUN", 'HEMI']:
         eul = m.to_euler()
@@ -669,8 +666,8 @@ def modify_light_matrix(m, ob):
         m2 = Matrix.Rotation(math.radians(180), 4, 'X')
         m = m * m2
     elif ob.data.renderman.renderman_type != "FILTER":
-        m[0][0] *= -1.0
-    
+        m = m * Matrix.Scale(-1.0, 4, (1, 0, 0))
+
     if ob.data.type == 'HEMI':
         m[2][2] *= -1
 
@@ -684,7 +681,7 @@ def export_transform(ri, instance, concat=False, flatten=False):
     if instance.transforming and len(instance.motion_data) > 0:
         samples = [sample[1] for sample in instance.motion_data]
     else:
-        samples = [ob.matrix_local] if ob.parent and  ob.parent_type == "object" and ob.type != 'LAMP'\
+        samples = [ob.matrix_local] if ob.parent and ob.parent_type == "object" and ob.type != 'LAMP'\
             else [ob.matrix_world]
     for m in samples:
         if instance.type == 'LAMP':
@@ -768,11 +765,14 @@ def export_light_shaders(ri, lamp, group_name=''):
 
 
 def export_world_rib(ri, world):
-    if world.renderman.world_rib_box != '':
+    if world and world.renderman.world_rib_box != '':
         export_rib_box(ri, world.renderman.world_rib_box)
 
 
 def export_world(ri, world, do_geometry=True):
+    if not world:
+        return
+
     rm = world.renderman
     # if no shader do nothing!
     if rm.use_renderman_node and rm.renderman_type == 'NONE':
@@ -1100,7 +1100,7 @@ def get_texture_list(scene):
                     get_textures_for_node(o.data.renderman.get_light_node())
         else:
             mats_to_scan += recursive_texture_set(o)
-    if scene.world.renderman.renderman_type != 'NONE':
+    if scene.world and scene.world.renderman.renderman_type != 'NONE':
         textures = textures + \
             get_textures_for_node(scene.world.renderman.get_light_node())
 
@@ -1935,7 +1935,7 @@ def get_transform(instance, subframe):
         instance.motion_data.append((subframe, mat.copy()))
 
 
-def get_deformation(data_block, subframe, scene):
+def get_deformation(data_block, subframe, scene, subframes):
     if not data_block.deforming or not data_block.do_export:
         return
     else:
@@ -1948,7 +1948,7 @@ def get_deformation(data_block, subframe, scene):
                 begin_frame = scene.frame_current - 1 if subframe == 1 else scene.frame_current
                 end_frame = scene.frame_current + 1 if subframe != 1 else scene.frame_current
                 points = get_particles(
-                    scene, ob, psys, [begin_frame, end_frame])
+                    scene, ob, psys, subframes)
                 data_block.motion_data.append((subframe, points))
             else:
                 # this is hair
@@ -1976,7 +1976,9 @@ def cache_motion(scene, rpass, objects=None):
         # ordered from future to present,
         # to prevent too many scene updates
         # (since loop ends on current frame/subframe)
-        for seg in get_subframes(num_segs, scene):
+        subframes = get_subframes(num_segs, scene)
+        actual_subframes = [origframe + subframe for subframe in subframes]
+        for seg in subframes:
             if seg < 0.0:
                 scene.frame_set(origframe - 1, 1.0 + seg)
             else:
@@ -1986,7 +1988,7 @@ def cache_motion(scene, rpass, objects=None):
                 get_transform(instances[name], seg)
 
             for name in data_names:
-                get_deformation(data_blocks[name], seg, scene)
+                get_deformation(data_blocks[name], seg, scene, actual_subframes)
 
     scene.frame_set(origframe, 0)
 
@@ -2059,7 +2061,8 @@ def export_instance_read_archive(ri, instance, instances, data_blocks, rpass, is
     if instance.ob:
         export_object_attributes(ri, rpass.scene, instance.ob, visible_objects)
     # now the matrix, if we're transforming do the motion here
-    export_transform(ri, instance, concat=is_child)
+    if instance.type != 'META':
+        export_transform(ri, instance, concat=is_child)
 
     for db_name in instance.data_block_names:
         if db_name in data_blocks:
@@ -2220,7 +2223,8 @@ def export_object_attributes(ri, scene, ob, visible_objects):
                      "string lpegroup": obj_groups_str})
 
     if ob.renderman.shading_override:
-        ri.Attribute("dice", {"float micropolygonlength": ob.renderman.shadingrate})
+        ri.Attribute(
+            "dice", {"float micropolygonlength": ob.renderman.shadingrate})
         approx_params = {}
         # output motionfactor always, could not find documented default value?
         approx_params[
@@ -2242,8 +2246,14 @@ def export_object_attributes(ri, scene, ob, visible_objects):
         ri.Matte(ob.renderman.matte)
 
     # ray tracing attributes
+    trace_params = {}
+    shade_params = {}
+    if ob.renderman.raytrace_intersectpriority != 0:
+        trace_params[
+            "int intersectpriority"] = ob.renderman.raytrace_intersectpriority
+        shade_params["float indexofrefraction"] = ob.renderman.raytrace_ior
+
     if ob.renderman.raytrace_override:
-        trace_params = {}
         if ob.renderman.raytrace_maxdiffusedepth != 1:
             trace_params[
                 "int maxdiffusedepth"] = ob.renderman.raytrace_maxdiffusedepth
@@ -2265,9 +2275,12 @@ def export_object_attributes(ri, scene, ob, visible_objects):
             trace_params[
                 "int intersectpriority"] = ob.renderman.raytrace_intersectpriority
         if ob.renderman.raytrace_pixel_variance != 1.0:
-            ri.Attribute(
-                "shade",  {"relativepixelvariance": ob.renderman.raytrace_pixel_variance})
+            shade_params[
+                "relativepixelvariance"] = ob.renderman.raytrace_pixel_variance
 
+    if shade_params:
+        ri.Attribute("shade", shade_params)
+    if trace_params:
         ri.Attribute("trace", trace_params)
 
     # light linking
@@ -2325,6 +2338,8 @@ def export_mesh_archive(ri, scene, data_block):
     else:
         export_geometry_data(ri, scene, ob)
 
+    data_block.motion_data = None
+
 
 # export the archives for an mesh. If this is a
 # deforming mesh the particle export will handle it
@@ -2333,6 +2348,7 @@ def export_particle_archive(ri, scene, rpass, data_block, objectCorrectionMatrix
     data = data_block.motion_data if data_block.deforming else None
     export_particle_system(ri, scene, rpass, ob, psys,
                            objectCorrectionMatrix, data=data)
+    data_block.motion_data = None
 
 # export the archives for an mesh. If this is a
 # deforming mesh the particle export will handle it
@@ -2573,15 +2589,13 @@ def export_camera_matrix(ri, scene, ob, motion_data=[]):
 
 
 def export_camera(ri, scene, instances, camera_to_use=None):
-
-    if not scene.camera or scene.camera.type != 'CAMERA':
-        return
-
     r = scene.render
     if camera_to_use:
         ob = camera_to_use
         motion = []
     else:
+        if not scene.camera or scene.camera.type != 'CAMERA':
+            return
         i = instances[scene.camera.name]
         ob = i.ob
         motion = i.motion_data
@@ -3066,7 +3080,7 @@ def export_display(ri, rpass, scene):
                     aov_channel_name = aov.channel_name
                     if not aov_name or not aov.channel_name:
                         continue
-                    if aov.channel_id == "color rgba":
+                    if aov.aov_name == "color rgba":
                         aov_channel_name = "Ci,a"
                     if layer == scene.render.layers[0] and aov == 'rgba':
                         # we already output this skip
@@ -3422,8 +3436,7 @@ def issue_light_filter_transform_edit(ri, rpass, obj):
 
 def issue_camera_edit(ri, rpass, camera):
     ri.EditBegin('option')
-    export_camera(
-        ri, rpass.scene, [], camera_to_use=camera)
+    export_camera(ri, rpass.scene, [], camera_to_use=camera)
     ri.EditEnd()
 
 # search this material/lamp for textures to re txmake and do them

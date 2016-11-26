@@ -40,7 +40,7 @@ from .shader_parameters import class_generate_properties
 from .shader_parameters import node_add_inputs
 from .shader_parameters import node_add_outputs
 from .shader_parameters import socket_map
-from .shader_parameters import txmake_options
+from .shader_parameters import txmake_options, update_conditional_visops
 from .util import args_files_in_path
 from .util import get_path_list
 from .util import rib
@@ -614,6 +614,7 @@ def generate_node_type(prefs, name, args):
     outputs = [p for p in args.findall('.//output')]
 
     def init(self, context):
+        update_conditional_visops(self)
         if self.renderman_node_type == 'bxdf':
             self.outputs.new('RendermanShaderSocket', "Bxdf").type = 'SHADER'
             #socket_template = self.socket_templates.new(identifier='Bxdf', name='Bxdf', type='SHADER')

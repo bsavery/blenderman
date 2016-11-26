@@ -1263,7 +1263,14 @@ class OBJECT_PT_renderman_object_raytracing(CollectionPanel, Panel):
         ob = context.object
         rm = ob.renderman
 
-        layout.prop(
+        col = layout.column()
+        row = col.row(align=True)
+        row.prop(
+            rm, "raytrace_intersectpriority", text="Intersection Priority")
+        row.prop(rm, "raytrace_ior")
+
+
+        col.prop(
             rm, "raytrace_override", text="Override Default Ray Tracing")
 
         col = layout.column()
@@ -1285,9 +1292,7 @@ class OBJECT_PT_renderman_object_raytracing(CollectionPanel, Panel):
         row.prop(rm, "raytrace_samplemotion", text="Sample Motion Blur")
         row = col.row()
         row.prop(rm, "raytrace_decimationrate", text="Decimation Rate")
-        row = col.row()
-        row.prop(
-            rm, "raytrace_intersectpriority", text="Intersection Priority")
+        
 
 
 class RENDER_PT_layer_custom_aovs(CollectionPanel, Panel):

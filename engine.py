@@ -650,7 +650,7 @@ class RPass:
                 return
         # record the marker to rib and flush to that point
         # also do the camera in case the camera is locked to display.
-        if scene.camera != active and scene.camera.is_updated:
+        if scene.camera.name != active.name and scene.camera.is_updated:
             if is_ipr_running():
                 issue_transform_edits(self, self.ri, scene.camera, prman)
             else:
@@ -668,7 +668,7 @@ class RPass:
 
             for light_name in lights_deleted:
                 self.lights.pop(light_name, None)
-
+        
     def update_illuminates(self):
         update_illuminates(self, self.ri, prman)
 
