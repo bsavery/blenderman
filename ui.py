@@ -1836,7 +1836,7 @@ class Renderman_Object_Panel(CollectionPanel, Panel):
         row.template_list("RENDERMAN_GROUP_UL_List", "Renderman_group_list",
                           group, "members", group, 'members_index',
                           item_dyntip_propname='name',
-                          type='GRID', columns=9)
+                          type='GRID', columns=3)
 
 
 class Renderman_UI_Panel(bpy.types.Panel):
