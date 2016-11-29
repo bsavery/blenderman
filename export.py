@@ -2522,7 +2522,7 @@ def export_integrator(ri, rpass, scene, preview=False):
     integrator_settings = getattr(rm, "%s_settings" % integrator)
     params = property_group_to_params(integrator_settings)
 
-    ri.Integrator(rm.integrator, "integrator", params)
+    ri.Integrator(integrator, "integrator", params)
 
 
 def render_get_resolution(r):
