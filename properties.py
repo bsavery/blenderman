@@ -130,14 +130,14 @@ class RendermanAOV(bpy.types.PropertyGroup):
             ("", "Basic LPE's", "Basic LPE's", "", 0),
             ("color rgba", "rgba", "Combined (beauty)", "", 1),
             ("color lpe:C<.D%G><L.%LG>", "Diffuse", "Diffuse", "", 2),
-            ("color lpe:(C<RD%G>[DS]+<L.%LG>)|(C<RD%G>[DS]*O)",
+            ("color lpe:(C<R.D%G>[DS]+<L.%LG>)|(C<R.D%G>[DS]*O)",
              "IndirectDiffuse", "IndirectDiffuse", "", 3),
             ("color lpe:C<.S%G><L.%LG>", "Specular", "Specular", "", 4),
-            ("color lpe:(C<RS%G>[DS]+<L.%LG>)|(C<RS%G>[DS]*O)",
+            ("color lpe:(C<R.S%G>[DS]+<L.%LG>)|(C<R.S%G>[DS]*O)",
              "IndirectSpecular", "IndirectSpecular", "", 5),
-            ("color lpe:(C<TD%G>[DS]+<L.%LG>)|(C<TD%G>[DS]*O)",
+            ("color lpe:(C<T.D%G>[DS]+<L.%LG>)|(C<T.D%G>[DS]*O)",
              "Subsurface", "Subsurface", "", 6),
-            ("color lpe:C<RS%G>([DS]+<L.%LG>)|([DS]*O)",
+            ("color lpe:C<R.S%G>([DS]+<L.%LG>)|([DS]*O)",
              "Reflection", "Reflection", "", 7),
             ("color lpe:(C<T[S]%G>[DS]+<L.%LG>)|(C<T[S]%G>[DS]*O)",
              "Refraction", "Refraction", "", 8),
@@ -1688,6 +1688,14 @@ class RendermanWorldSettings(bpy.types.PropertyGroup):
 
         self.light_node = light_shader + "_settings"
 
+
+    def update_vis(self, context):
+        lamp = context.scene.world
+
+        from . import engine
+        if engine.is_ipr_running():
+            engine.ipr.update_light_visibility(lamp)
+
     renderman_type = EnumProperty(
         name="World Type",
         update=update_light_type,
@@ -1707,6 +1715,12 @@ class RendermanWorldSettings(bpy.types.PropertyGroup):
     light_node = StringProperty(
         name="Light Node",
         default='')
+
+    light_primary_visibility = BoolProperty(
+        name="Light Primary Visibility",
+        description="Camera visibility for this light",
+        update=update_vis,
+        default=True)
 
     shadingrate = FloatProperty(
         name="Light Shading Rate",
@@ -1853,6 +1867,15 @@ class RendermanCurveGeometrySettings(bpy.types.PropertyGroup):
     prim_vars_index = IntProperty(min=-1, default=-1)
 
 
+class OpenVDBChannel(bpy.types.PropertyGroup):
+    name = StringProperty(name="Channel Name")
+    type = EnumProperty(name="Channel Type", 
+                        items=[
+                            ('float', 'Float', ''),
+                            ('vector', 'Vector', ''),
+                            ('color', 'Color', ''),
+                        ])
+
 class RendermanObjectSettings(bpy.types.PropertyGroup):
 
     # for some odd reason blender truncates this as a float
@@ -1877,6 +1900,8 @@ class RendermanObjectSettings(bpy.types.PropertyGroup):
         items=[('BLENDER_SCENE_DATA', 'Blender Scene Data', 'Exports and renders blender scene data directly from memory'),
                ('ARCHIVE', 'Archive',
                 'Renders a prevously exported RIB archive'),
+               ('OPENVDB', 'OpenVDB File',
+                'Renders a prevously exported OpenVDB file'),
                ('DELAYED_LOAD_ARCHIVE', 'Delayed Load Archive',
                 'Loads and renders geometry from an archive only when its bounding box is visible'),
                ('PROCEDURAL_RUN_PROGRAM', 'Procedural Run Program',
@@ -1885,6 +1910,10 @@ class RendermanObjectSettings(bpy.types.PropertyGroup):
                 'Generates procedural geometry at render time from a dynamic shared object library')
                ],
         default='BLENDER_SCENE_DATA')
+
+    openvdb_channels = CollectionProperty(
+        type=OpenVDBChannel, name="OpenVDB Channels")
+    openvdb_channel_index = IntProperty(min=-1, default=-1)
 
     archive_anim_settings = PointerProperty(
         type=RendermanAnimSequenceSettings,
@@ -2352,6 +2381,7 @@ classes = [RendermanPath,
            RendermanSceneSettings,
            RendermanMeshGeometrySettings,
            RendermanCurveGeometrySettings,
+           OpenVDBChannel,
            RendermanObjectSettings,
            Tab_CollectionGroup
            ]

@@ -648,7 +648,7 @@ def create_mesh(ob, scene):
 
 
 def modify_light_matrix(m, ob):
-    if ob.data.type in ['AREA', 'SPOT']:
+    if ob.data.type in ['AREA', 'SPOT', 'SUN']:
         data = ob.data
         m2 = Matrix.Rotation(math.radians(180), 4, 'X')
         m = m * m2
@@ -659,7 +659,7 @@ def modify_light_matrix(m, ob):
             else:
                 m = m * Matrix.Scale(data.size, 4, (1,1,1))
 
-    if ob.data.type in ["SUN", 'HEMI']:
+    if ob.data.type in ['HEMI']:
         eul = m.to_euler()
         eul = Euler([-eul[0], -eul[1], eul[2]], eul.order)
         m = eul.to_matrix().to_4x4()
@@ -748,14 +748,14 @@ def export_light_shaders(ri, lamp, group_name=''):
     light_shader = rm.get_light_node()
     if light_shader:
         # make sure the shape is set on PxrStdAreaLightShape
-        if lamp.type == 'SPOT':
-            light_shader.coneAngle = .5 * \
-                math.degrees(lamp.spot_size)
-            light_shader.penumbraAngle = math.degrees(
-                lamp.spot_blend)
+        
         params = property_group_to_params(light_shader)
         params['__instanceid'] = handle
         params['string lightGroup'] = group_name
+        if lamp.type == 'SPOT':
+            params['float coneAngle'] = math.degrees(lamp.spot_size)
+            params['float coneSoftness'] = lamp.spot_blend
+
         primary_vis = rm.light_primary_visibility
         ri.Attribute("visibility", {'int transmission': 0, 'int indirect': 0,
                                     'int camera': int(primary_vis)})
@@ -807,7 +807,7 @@ def export_world(ri, world, do_geometry=True):
         plugin_name = "PxrDomeLight"
         params = {'color lightColor': rib(world.horizon_color)}
     ri.Attribute("visibility", {'int transmission': 0, 'int indirect': 0,
-                                'int camera': 1})
+                                'int camera': int(rm.light_primary_visibility)})
     ri.Light(plugin_name, handle, params)
 
     ri.AttributeEnd()
@@ -933,6 +933,15 @@ def geometry_source_rib(ri, scene, ob):
             ri.Procedural("DynamicLoad", [path_dso, rm.path_dso_initial_data],
                           rib(bounds))
 
+        elif rm.geometry_source == 'OPENVDB':
+            openvdb_file = rib_path(get_sequence_path(rm.path_archive,
+                                                      blender_frame, anim))
+            params = {"constant string[2] blobbydso:stringargs": [openvdb_file, "density"]}
+            for channel in rm.openvdb_channels:
+                if channel.name != '':
+                    params['varying %s %s' % (channel.type, channel.name)] = []
+            ri.Volume("blobbydso:impl_openvdb", rib(bounds), [0, 0, 0],
+                params)
 
 def export_blobby_particles(ri, scene, psys, ob, motion_data):
     rm = psys.settings.renderman
@@ -1862,7 +1871,7 @@ def get_data_blocks_needed(ob, rpass, do_mb):
                 if psys.settings.render_type == 'OBJECT':
                     data_blocks.extend(get_dupli_block(
                         psys.settings.dupli_object, rpass, do_mb))
-                else:
+                elif psys.settings.dupli_group:
                     for dupli_ob in psys.settings.dupli_group.objects:
                         data_blocks.extend(
                             get_dupli_block(dupli_ob, rpass, do_mb))
@@ -2067,7 +2076,7 @@ def export_instance_read_archive(ri, instance, instances, data_blocks, rpass, is
     for db_name in instance.data_block_names:
         if db_name in data_blocks:
             if(hasattr(data_blocks[db_name].data, 'renderman')):
-                if(data_blocks[db_name].data.renderman.geometry_source == 'ARCHIVE'):
+                if(data_blocks[db_name].data.renderman.geometry_source != 'BLENDER_SCENE_DATA'):
                     export_data_rib_archive(
                         ri, data_blocks[db_name], instance, rpass)
                 else:
@@ -2090,6 +2099,8 @@ def export_data_read_archive(ri, data_block, rpass):
         export_material_archive(ri, mat)
 
     archive_filename = relpath_archive(data_block.archive_filename, rpass)
+    for mat in data_block.material:
+        export_material_archive(ri, mat)
 
     # we want these relative paths of the archive
     if data_block.type == 'MESH':
@@ -2112,27 +2123,31 @@ def export_data_read_archive(ri, data_block, rpass):
 
 def export_data_rib_archive(ri, data_block, instance, rpass):
 
-    arvhiveInfo = instance.ob.renderman
-
-    relPath = os.path.splitext(get_real_path(arvhiveInfo.path_archive))[0]
-
-    archiveFileExtention = ".zip"
-
-    objectName = os.path.split(os.path.splitext(relPath)[0])[1]
-
-    archiveAnimated = arvhiveInfo.archive_anim_settings.animated_sequence
-
     ri.AttributeBegin()
-    if(archiveAnimated is True):
-        current_frame = bpy.context.scene.frame_current
-        zero_fill = str(current_frame).zfill(4)
-        archive_filename = relPath + archiveFileExtention + \
-            "!" + os.path.join(zero_fill, objectName + ".rib")
-        ri.ReadArchive(archive_filename)
+    ob = instance.ob
+    rm = ob.renderman
 
+    for mat in data_block.material:
+        export_material_archive(ri, mat)
+    
+    if rm.geometry_source == "ARCHIVE":
+        arvhiveInfo = instance.ob.renderman
+        relPath = os.path.splitext(get_real_path(arvhiveInfo.path_archive))[0]
+        archiveFileExtention = ".zip"
+        objectName = os.path.split(os.path.splitext(relPath)[0])[1]
+        archiveAnimated = arvhiveInfo.archive_anim_settings.animated_sequence
+        if(archiveAnimated is True):
+            current_frame = bpy.context.scene.frame_current
+            zero_fill = str(current_frame).zfill(4)
+            archive_filename = relPath + archiveFileExtention + \
+                "!" + os.path.join(zero_fill, objectName + ".rib")
+            ri.ReadArchive(archive_filename)
+
+        else:
+            archive_filename = relPath + archiveFileExtention + "!" + objectName + ".rib"
+            ri.ReadArchive(archive_filename)
     else:
-        archive_filename = relPath + archiveFileExtention + "!" + objectName + ".rib"
-        ri.ReadArchive(archive_filename)
+        geometry_source_rib(ri, rpass.scene, ob)
     ri.AttributeEnd()
 
 
@@ -2507,7 +2522,7 @@ def export_integrator(ri, rpass, scene, preview=False):
     integrator_settings = getattr(rm, "%s_settings" % integrator)
     params = property_group_to_params(integrator_settings)
 
-    ri.Integrator(rm.integrator, "integrator", params)
+    ri.Integrator(integrator, "integrator", params)
 
 
 def render_get_resolution(r):
@@ -2839,6 +2854,55 @@ def export_samplefilters(ri, scene):
         ri.SampleFilter('PxrSampleFilterCombiner', 'combiner', params)
 
 
+channel_name_map = {
+                    "directDiffuseLobe": "diffuse",
+                    "subsurfaceLobe": "diffuse",
+                    "Subsurface": "diffuse",
+                    "transmissiveSingleScatterLobe": "diffuse",
+                    "Caustics": "diffuse",
+                    "Albedo": "diffuse",
+                    "Diffuse": "diffuse",
+                    "IndirectDiffuse": "indirectdiffuse",
+                    "indirectDiffuseLobe": "indirectdiffuse",
+                    "directSpecularPrimaryLobe": "specular",
+                    "directSpecularRoughLobe": "specular",
+                    "directSpecularClearcoatLobe": "specular",
+                    "directSpecularIridescenceLobe": "specular",
+                    "directSpecularFuzzLobe": "specular",
+                    "directSpecularGlassLobe": "specular",
+                    "transmissiveGlassLobe": "specular",
+                    "Reflection": "specular",
+                    "Refraction": "specular",
+                    "Specular": "specular",
+                    "indirectSpecularPrimaryLobe": "indirectspecular",
+                    "indirectSpecularRoughLobe": "indirectspecular",
+                    "IndirectSpecular": "indirectspecular",
+                    "indirectSpecularClearcoatLobe": "indirectspecular",
+                    "indirectSpecularIridescenceLobe": "indirectspecular",
+                    "indirectSpecularFuzzLobe": "indirectspecular",
+                    "indirectSpecularGlassLobe": "indirectspecular",
+                    "Shadows": "emission",
+                    "Emission": "emission"
+                }
+
+def get_channel_name(aov, layer_name):
+    aov_name = aov.name.replace(' ', '')
+    aov_channel_name = aov.channel_name
+    if not aov.aov_name or not aov.channel_name:
+        return ''
+    elif aov.aov_name == "color rgba":
+        aov_channel_name = "Ci,a"
+    # Remaps any color lpe channel names to a denoise friendly one
+    elif aov_name in channel_name_map.keys():
+        aov_channel_name = '%s_%s_%s' % (
+            channel_name_map[aov_name], aov_name, layer_name)
+
+    elif aov.aov_name == "color custom_lpe":
+        aov_channel_name = aov.name
+
+    return aov_channel_name
+
+
 def export_display(ri, rpass, scene):
     rm = scene.renderman
 
@@ -2979,43 +3043,10 @@ def export_display(ri, rpass, scene):
                 stats = aov.stats_type
                 pixelfilter_x = aov.aov_pixelfilter_x
                 pixelfilter_y = aov.aov_pixelfilter_y
-
-                name_map = {
-                    "directDiffuseLobe": "diffuse",
-                    "subsurfaceLobe": "diffuse",
-                    "Subsurface": "diffuse",
-                    "transmissiveSingleScatterLobe": "diffuse",
-                    "Caustics": "diffuse",
-                    "Albedo": "diffuse",
-                    "Diffuse": "diffuse",
-                    "IndirectDiffuse": "indirectdiffuse",
-                    "indirectDiffuseLobe": "indirectdiffuse",
-                    "directSpecularPrimaryLobe": "specular",
-                    "directSpecularRoughLobe": "specular",
-                    "directSpecularClearcoatLobe": "specular",
-                    "directSpecularIridescenceLobe": "specular",
-                    "directSpecularFuzzLobe": "specular",
-                    "directSpecularGlassLobe": "specular",
-                    "transmissiveGlassLobe": "specular",
-                    "Reflection": "specular",
-                    "Refraction": "specular",
-                    "Specular": "specular",
-                    "indirectSpecularPrimaryLobe": "indirectspecular",
-                    "indirectSpecularRoughLobe": "indirectspecular",
-                    "IndirectSpecular": "indirectspecular",
-                    "indirectSpecularClearcoatLobe": "indirectspecular",
-                    "indirectSpecularIridescenceLobe": "indirectspecular",
-                    "indirectSpecularFuzzLobe": "indirectspecular",
-                    "indirectSpecularGlassLobe": "indirectspecular",
-                    "Shadows": "emission",
-                    "Emission": "emission"
-                }
-
-                # Remaps any color lpe channel names to a denoise friendly one
-                if aov_name in name_map.keys():
-                    aov.channel_name = '%s_%s_%s' % (
-                        name_map[aov_name], aov_name, layer_name)
-
+                channel_name = get_channel_name(aov, layer_name)
+                
+                if channel_name == '':
+                    continue
                 if aov.aov_name == "color custom_lpe":
                     source = aov.custom_lpe_string
 
@@ -3044,7 +3075,7 @@ def export_display(ri, rpass, scene):
                     ri.DisplayChannel("float a",  params)
                 else:
                     ri.DisplayChannel(source_type + ' %s' %
-                                      aov.channel_name, params)
+                                      channel_name, params)
 
             # if this is a multilayer combine em!
             if rm_rl.export_multilayer and rpass.external_render:
@@ -3077,11 +3108,10 @@ def export_display(ri, rpass, scene):
             else:
                 for aov in rm_rl.custom_aovs:
                     aov_name = aov.name.replace(' ', '')
-                    aov_channel_name = aov.channel_name
-                    if not aov_name or not aov.channel_name:
+                    aov_channel_name = get_channel_name(aov, layer_name)
+                    if aov_channel_name == '':
                         continue
-                    if aov.aov_name == "color rgba":
-                        aov_channel_name = "Ci,a"
+
                     if layer == scene.render.layers[0] and aov == 'rgba':
                         # we already output this skip
                         continue

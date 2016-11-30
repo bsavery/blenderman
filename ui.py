@@ -912,6 +912,7 @@ class DATA_PT_renderman_world(ShaderPanel, Panel):
             layout.prop(world.renderman, "renderman_type", expand=True)
             if world.renderman.renderman_type == 'NONE':
                 return
+            layout.prop(world.renderman, 'light_primary_visibility')
             lamp_node = world.renderman.get_light_node()
             if lamp_node:
                 draw_props(lamp_node, lamp_node.prop_names, layout)
@@ -1049,7 +1050,7 @@ class DATA_PT_renderman_node_filters_lamp(CollectionPanel, Panel):
                               "light_filters_index")
 
 
-class OBJECT_PT_renderman_object_geometry(Panel):
+class OBJECT_PT_renderman_object_geometry(Panel, CollectionPanel):
     bl_space_type = 'PROPERTIES'
     bl_region_type = 'WINDOW'
     bl_context = "object"
@@ -1059,6 +1060,11 @@ class OBJECT_PT_renderman_object_geometry(Panel):
     def poll(cls, context):
         rd = context.scene.render
         return (context.object and rd.engine in {'PRMAN_RENDER'})
+
+    def draw_item(self, layout, context, item):
+        col = layout.column()
+        col.prop(item, "name")
+        col.prop(item, "type")
 
     def draw(self, context):
         layout = self.layout
@@ -1085,6 +1091,11 @@ class OBJECT_PT_renderman_object_geometry(Panel):
         elif rm.geometry_source == 'DYNAMIC_LOAD_DSO':
             col.prop(rm, "path_dso")
             col.prop(rm, "path_dso_initial_data")
+        elif rm.geometry_source == 'OPENVDB':
+            col.prop(rm, 'path_archive', text='OpenVDB file')
+            self._draw_collection(context, layout, rm, "",
+                                  "collection.add_remove", "object.renderman",
+                                  "openvdb_channels", "openvdb_channel_index")
 
         if rm.geometry_source in ('DELAYED_LOAD_ARCHIVE',
                                   'PROCEDURAL_RUN_PROGRAM',
@@ -1826,7 +1837,7 @@ class Renderman_Object_Panel(CollectionPanel, Panel):
         row.template_list("RENDERMAN_GROUP_UL_List", "Renderman_group_list",
                           group, "members", group, 'members_index',
                           item_dyntip_propname='name',
-                          type='GRID', columns=9)
+                          type='GRID', columns=3)
 
 
 class Renderman_UI_Panel(bpy.types.Panel):
