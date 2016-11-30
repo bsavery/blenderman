@@ -2567,10 +2567,18 @@ def export_render_settings(ri, rpass, scene, preview=False):
         depths = {'int maxdiffusedepth': rm.preview_max_diffuse_depth,
                   'int maxspeculardepth': rm.preview_max_specular_depth,
                   'int displacements': 1}
+    
+    dicing_params = {"float micropolygonlength": rm.shadingrate,
+                    "string strategy": rm.dicing_strategy,
+                    "string instancestrategy": "worlddistance", 
+                    "float instanceworlddistancelength": rm.instanceworlddistancelength}
+                    
+    if rm.dicing_strategy is "worlddistance":
+        dicing_params["float worlddistancelength"] = rm.worlddistancelength
 
     # ri.PixelSamples(rm.pixelsamples_x, rm.pixelsamples_y)
     ri.PixelFilter(rm.pixelfilter, rm.pixelfilter_x, rm.pixelfilter_y)
-    ri.Attribute("dice", {"float micropolygonlength": rm.shadingrate})
+    ri.Attribute("dice", dicing_params)
     ri.Attribute("trace", depths)
     if rm.use_statistics:
         ri.Option("statistics", {'int endofframe': 1,
