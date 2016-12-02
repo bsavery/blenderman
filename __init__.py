@@ -24,12 +24,13 @@
 # ##### END MIT LICENSE BLOCK #####
 import bpy
 import sys
+from . import addon_updater_ops
 
 bl_info = {
     "name": "RenderMan For Blender",
     "author": "Brian Savery",
     "version": (21, 2, 0),
-    "blender": (2, 77, 0),
+    "blender": (2, 78, 0),
     "location": "Info Header, render engine menu",
     "description": "RenderMan 21.2 integration",
     "warning": "",
@@ -116,6 +117,7 @@ def load_addon():
 def register():
     from . import preferences
     preferences.register()
+    addon_updater_ops.register(bl_info)
     load_addon()
     bpy.utils.register_module(__name__)
 
@@ -123,7 +125,7 @@ def register():
 def unregister():
     from . import preferences
     remove_handlers()
-
+    addon_updater_ops.unregister()
     properties.unregister()
     operators.unregister()
     ui.unregister()
