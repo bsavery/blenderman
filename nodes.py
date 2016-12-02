@@ -1373,10 +1373,16 @@ def gen_params(ri, node, mat_name=None):
                     to_socket = node.inputs[prop_name]
                     from_socket = to_socket.links[0].from_socket
                     from_node = to_socket.links[0].from_node
-                    params['reference %s %s' % (meta['renderman_type'],
+                    if 'arraySize' in meta:
+                        params['reference %s[1] %s' % (meta['renderman_type'],
+                                              meta['renderman_name'])] \
+                            = [get_output_param_str(
+                                from_node, mat_name, from_socket, to_socket)]
+                    else:
+                        params['reference %s %s' % (meta['renderman_type'],
                                                 meta['renderman_name'])] = \
-                        [get_output_param_str(
-                            from_node, mat_name, from_socket, to_socket)]
+                            [get_output_param_str(
+                                from_node, mat_name, from_socket, to_socket)]
 
                 # see if vstruct linked
                 elif is_vstruct_and_linked(node, prop_name):
@@ -1461,7 +1467,14 @@ def gen_params(ri, node, mat_name=None):
             colors.extend(dummy_ramp.color_ramp.elements[-1].color[:3])
             params['color[%d] colors' % len(positions)] = colors
             params['float[%d] positions' % len(positions)] = positions
-
+    if node.plugin_name == 'PxrMatteID':
+        user_attr = {}
+        for name, val in params.items():
+            if 'matteTexture' in name:
+                i = name.split('matteTexture')[1]
+                new_val = [1, 1, 1] if 'reference' in name else val
+                user_attr['color MatteID' + i] = new_val
+        ri.Attribute('user', user_attr)
     return params
 
 

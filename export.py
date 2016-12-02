@@ -658,7 +658,12 @@ def modify_light_matrix(m, ob):
                     Matrix.Scale(data.size_y, 4, (0, 1, 0))
             else:
                 m = m * Matrix.Scale(data.size, 4, (1,1,1))
-
+        elif ob.data.type == 'SPOT':
+            m = m * Matrix.Scale(.01, 4, (1, 0, 0)) * \
+                    Matrix.Scale(.01, 4, (0, 1, 0))
+    elif ob.data.type == 'POINT':
+        m = m * Matrix.Scale(.001, 4, (1, 0, 0)) * Matrix.Scale(.001, 4, (0, 1, 0)) * Matrix.Scale(.001, 4, (0, 0, 1))
+        
     if ob.data.type in ['HEMI']:
         eul = m.to_euler()
         eul = Euler([-eul[0], -eul[1], eul[2]], eul.order)
@@ -741,9 +746,7 @@ def export_light_shaders(ri, lamp, group_name=''):
     rm = lamp.renderman
     # need this for rerendering
     ri.Attribute('identifier', {'string name': handle})
-    if lamp.type == 'POINT':
-        ri.Scale(.01, .01, .01)
-
+    
     # do the shader
     light_shader = rm.get_light_node()
     if light_shader:
@@ -755,6 +758,8 @@ def export_light_shaders(ri, lamp, group_name=''):
         if lamp.type == 'SPOT':
             params['float coneAngle'] = math.degrees(lamp.spot_size)
             params['float coneSoftness'] = lamp.spot_blend
+        if lamp.type in ['SPOT', 'POINT']:
+            params['int areaNormalize'] = 1
 
         primary_vis = rm.light_primary_visibility
         ri.Attribute("visibility", {'int transmission': 0, 'int indirect': 0,
@@ -3449,8 +3454,6 @@ def issue_light_transform_edit(ri, obj):
     lamp = obj.data
     ri.EditBegin('attribute', {'string scopename': obj.data.name})
     export_object_transform(ri, obj)
-    if lamp.renderman.renderman_type == 'POINT':
-        ri.Scale(.01, .01, .01)
     ri.EditEnd()
 
 
@@ -3465,9 +3468,7 @@ def issue_light_filter_transform_edit(ri, rpass, obj):
 
         # reset the transform for light
         export_object_transform(ri, light_obj)
-        if lamp.renderman.renderman_type == 'POINT':
-            ri.Scale(.01, .01, .01)
-
+        
         export_light_shaders(ri, lamp, get_light_group(light_obj))
         ri.EditEnd()
 
@@ -3685,8 +3686,6 @@ def issue_shader_edits(rpass, ri, prman, nt=None, node=None):
             export_light_filters(ri, lamp, do_coordsys=True)
 
             export_object_transform(ri, lamp_ob)
-            if lamp.renderman.renderman_type == 'POINT':
-                ri.Scale(.01, .01, .01)
             export_light_shaders(ri, lamp, get_light_group(ob))
             ri.EditEnd()
 

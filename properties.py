@@ -1181,10 +1181,16 @@ class RendermanLightFilter(bpy.types.PropertyGroup):
 class RendermanLightSettings(bpy.types.PropertyGroup):
 
     def get_light_node(self):
-        return getattr(self, self.light_node) if self.light_node else None
+        if self.renderman_type == 'SPOT':
+            light_shader = 'PxrRectLight' if self.id_data.use_square else 'PxrDiskLight'
+            return getattr(self, light_shader + "_settings", None)
+        return getattr(self, self.light_node, None)
 
     def get_light_node_name(self):
-        return self.light_node.replace('_settings', '')
+        if self.renderman_type == 'SPOT':
+            return 'PxrRectLight' if self.id_data.use_square else 'PxrDiskLight'
+        else:
+            return self.light_node.replace('_settings', '')
 
     light_node = StringProperty(
         name="Light Node",
@@ -1225,7 +1231,7 @@ class RendermanLightSettings(bpy.types.PropertyGroup):
         elif light_type == 'FILTER':
             light_shader = 'PxrBlockerLightFilter'
         elif light_type == 'SPOT':
-            light_shader = 'PxrDiskLight'
+            light_shader = 'PxrRectLight' if lamp.use_square else 'PxrDiskLight'
         elif light_type == 'AREA':
             try:
                 lamp.shape = 'RECTANGLE'
