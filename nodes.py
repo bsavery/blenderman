@@ -1391,6 +1391,8 @@ def gen_params(ri, node, mat_name=None):
                     from_socket = node.inputs[
                         vstruct_name].links[0].from_socket
 
+                    temp_map_name = map_name
+
                     if from_socket.node.bl_idname == 'ShaderNodeGroup':
                         ng = from_socket.node.node_tree
                         group_output = next((n for n in ng.nodes if n.bl_idname == 'NodeGroupOutput'),
@@ -1401,6 +1403,7 @@ def gen_params(ri, node, mat_name=None):
                         in_sock = group_output.inputs[from_socket.name]
                         if len(in_sock.links):
                             from_socket = in_sock.links[0].from_socket
+                            temp_map_name = map_name + '.' + from_socket.node.name    
 
                     vstruct_from_param = "%s_%s" % (
                         from_socket.identifier, vstruct_member)
@@ -1410,7 +1413,7 @@ def gen_params(ri, node, mat_name=None):
                         params['reference %s %s' % (meta['renderman_type'],
                                                     meta['renderman_name'])] = \
                             [get_output_param_str(
-                                from_socket.node, mat_name, actual_socket)]
+                                from_socket.node, temp_map_name, actual_socket)]
                     else:
                         print('Warning! %s not found on %s' %
                               (vstruct_from_param, from_socket.node.name))
@@ -1467,14 +1470,6 @@ def gen_params(ri, node, mat_name=None):
             colors.extend(dummy_ramp.color_ramp.elements[-1].color[:3])
             params['color[%d] colors' % len(positions)] = colors
             params['float[%d] positions' % len(positions)] = positions
-    if node.plugin_name == 'PxrMatteID':
-        user_attr = {}
-        for name, val in params.items():
-            if 'matteTexture' in name:
-                i = name.split('matteTexture')[1]
-                new_val = [1, 1, 1] if 'reference' in name else val
-                user_attr['color MatteID' + i] = new_val
-        ri.Attribute('user', user_attr)
     return params
 
 
@@ -1781,7 +1776,7 @@ def get_output_param_str(node, mat_name, socket, to_socket=None):
         in_sock = group_output.inputs[socket.name]
         if len(in_sock.links):
             link = in_sock.links[0]
-            return build_output_param_str(mat_name, link.from_node, link.from_socket, do_convert_socket(link.from_socket, to_socket))
+            return build_output_param_str(mat_name + '.' + node.name, link.from_node, link.from_socket, do_convert_socket(link.from_socket, to_socket))
         else:
             return "error:error"
     if node.bl_idname == 'NodeGroupInput':
@@ -1814,7 +1809,7 @@ def translate_node_group(ri, group_node, mat_name):
     global current_group_node
     current_group_node = group_node
     for node in nodes_to_export:
-        shader_node_rib(ri, node, mat_name=mat_name)
+        shader_node_rib(ri, node, mat_name=(mat_name + '.' + group_node.name))
     current_group_node = None
 
 

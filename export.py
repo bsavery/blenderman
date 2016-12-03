@@ -789,14 +789,16 @@ def export_world(ri, world, do_geometry=True):
     world_type = rm.renderman_type if rm.use_renderman_node else 'ENV'
     if do_geometry:
         m = Matrix.Identity(4)
-        if world_type == 'ENV':
-            m[0] *= -1.0
-        if world_type == 'SKY':
-            m2 = Matrix.Rotation(math.radians(180), 4, 'X')
-            m = m2 * m
+        m = m * Matrix.Rotation(math.radians(180), 4, 'Y')
+        eul = m.to_euler()
+        eul = Euler([-eul[0], -eul[1], eul[2]], eul.order)
+        m = eul.to_matrix().to_4x4()
+        m2 = Matrix.Rotation(math.radians(180), 4, 'X')
+        m = m * m2
+        m = m * Matrix.Scale(-1.0, 4, (1, 0, 0))
         ri.Transform(rib(m))
         # No need to name Coordinate System system for world.
-        ri.ShadingRate(rm.shadingrate)
+        #ri.ShadingRate(rm.shadingrate)
 
     handle = world.name
     # need this for rerendering
@@ -1467,7 +1469,7 @@ def export_openVDB(ri, ob):
         debug('error', "Please save and export OpenVDB files before rendering.")
         return
     params = {"constant string[2] blobbydso:stringargs": [cacheFile, "density:fogvolume"], "varying float density": [],
-              "varying float flame": [], "varying color smoke_color": []}
+              "varying float flame": [], "varying color color": []}
     ri.Volume("blobbydso:impl_openvdb", rib_ob_bounds(ob.bound_box), [0, 0, 0],
               params)
 
@@ -1491,7 +1493,7 @@ def export_smoke(ri, ob):
     params = {
         "varying float density": smoke_data.density_grid,
         "varying float flame": smoke_data.flame_grid,
-        "varying color smoke_color": [item for index, item in enumerate(smoke_data.color_grid) if index % 4 != 0]
+        "varying color color": [item for index, item in enumerate(smoke_data.color_grid) if index % 4 != 0]
     }
 
     smoke_res = rib(smoke_data.domain_resolution)
@@ -2335,6 +2337,16 @@ def export_object_attributes(ri, scene, ob, visible_objects):
                                 light_nm, filter_name, link.illuminate == 'ON')
                 else:
                     ri.Illuminate(light_name, link.illuminate == 'ON')
+
+    user_attr = {}
+    for i in range(8):
+        name = 'MatteID%d' % i
+        if getattr(rm, name) != [0.0, 0.0, 0.0]:
+            user_attr["color %s" % name] = rib(getattr(rm, name))
+
+    if len(user_attr):
+        ri.Attribute('user', user_attr)
+    
 
 
 def get_bounding_box(ob):

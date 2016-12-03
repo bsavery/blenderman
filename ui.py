@@ -1307,8 +1307,40 @@ class OBJECT_PT_renderman_object_raytracing(CollectionPanel, Panel):
         row.prop(rm, "raytrace_samplemotion", text="Sample Motion Blur")
         row = col.row()
         row.prop(rm, "raytrace_decimationrate", text="Decimation Rate")
-        
 
+class OBJECT_PT_renderman_object_matteid(Panel):
+    bl_space_type = 'PROPERTIES'
+    bl_region_type = 'WINDOW'
+    bl_context = "object"
+    bl_label = "Matte ID"
+    bl_options = {'DEFAULT_CLOSED'}
+
+    @classmethod
+    def poll(cls, context):
+        rd = context.scene.render
+        return (context.object and rd.engine in {'PRMAN_RENDER'})
+
+    def draw(self, context):
+        layout = self.layout
+        ob = context.object
+        rm = ob.renderman
+
+        row = layout.row()
+        row.prop(rm, 'MatteID0')
+        row = layout.row()
+        row.prop(rm, 'MatteID1')
+        row = layout.row()
+        row.prop(rm, 'MatteID2')
+        row = layout.row()
+        row.prop(rm, 'MatteID3')
+        row = layout.row()
+        row.prop(rm, 'MatteID4')
+        row = layout.row()
+        row.prop(rm, 'MatteID5')
+        row = layout.row()
+        row.prop(rm, 'MatteID6')
+        row = layout.row()
+        row.prop(rm, 'MatteID7')
 
 class RENDER_PT_layer_custom_aovs(CollectionPanel, Panel):
     bl_label = "Passes"

@@ -221,7 +221,8 @@ def update_conditional_visops(node):
     for param_name, prop_meta in getattr(node, 'prop_meta').items():
         if 'conditionalVisOp' in prop_meta:
             prop_meta['hidden'] = not eval(prop_meta['conditionalVisOp'])
-
+            if hasattr(node, 'inputs') and param_name in node.inputs:
+                node.inputs[param_name].hide = not eval(prop_meta['conditionalVisOp'])
 
 def update_func_with_inputs(self, context):
     # check if this prop is set on an input
@@ -251,9 +252,8 @@ def update_func_with_inputs(self, context):
     prop_meta = getattr(node, 'prop_meta')
     if hasattr(node, 'inputs'):
         for input_name, socket in node.inputs.items():
-            if 'hidden' in prop_meta[input_name] \
-                    and prop_meta[input_name]['hidden'] and not socket.hide:
-                socket.hide = True
+            if 'hidden' in prop_meta[input_name]:
+                socket.hide = prop_meta[input_name]['hidden']
 
 
 # send updates to ipr if running
