@@ -261,7 +261,7 @@ def data_name(ob, scene):
     if ob.type == 'META':
         return fix_name(ob.name.split('.')[0])
 
-    if is_smoke(ob):
+    if is_smoke(ob) or ob.renderman.primitive == 'RI_VOLUME':
         return "%s-VOLUME" % fix_name(ob.name)
 
     if ob.data.users > 1 and (ob.is_modified(scene, "RENDER") or
@@ -272,10 +272,7 @@ def data_name(ob, scene):
         return "%s.%s-MESH" % (fix_name(ob.name), fix_name(ob.data.name))
 
     else:
-        if ob.renderman.primitive == 'RI_VOLUME':
-            return "%s-VOLUME" % fix_name(ob.name)
-        else:
-            return "%s-MESH" % fix_name(ob.data.name)
+        return "%s-MESH" % fix_name(ob.data.name)
 
 
 def get_name(ob):
