@@ -172,11 +172,6 @@ class RendermanPreferences(AddonPreferences):
         subtype='FILE_PATH',
         default=os.path.join('$OUT', 'images', '{scene}.{layer}.{pass}.####.{file_type}'))
 
-    draw_ipr_text = BoolProperty(
-        name="Draw IPR Text",
-        description="Draw notice on View3D when IPR is active",
-        default=True)
-
     env_vars = PointerProperty(
         type=RendermanEnvVarSettings,
         name="Environment Variable Settings")
@@ -184,7 +179,7 @@ class RendermanPreferences(AddonPreferences):
     auto_check_update = bpy.props.BoolProperty(
         name = "Auto-check for Update",
         description = "If enabled, auto-check for updates using an interval",
-        default = False)
+        default = True)
     
     updater_intrval_months = bpy.props.IntProperty(
         name='Months',
@@ -195,7 +190,7 @@ class RendermanPreferences(AddonPreferences):
     updater_intrval_days = bpy.props.IntProperty(
         name='Days',
         description = "Number of days between checking for updates",
-        default=7,
+        default=1,
         min=0)
 
     updater_intrval_hours = bpy.props.IntProperty(
