@@ -272,7 +272,10 @@ def data_name(ob, scene):
         return "%s.%s-MESH" % (fix_name(ob.name), fix_name(ob.data.name))
 
     else:
-        return "%s-MESH" % fix_name(ob.data.name)
+        if ob.renderman.primitive == 'RI_VOLUME':
+            return "%s-VOLUME" % fix_name(ob.name)
+        else:
+            return "%s-MESH" % fix_name(ob.data.name)
 
 
 def get_name(ob):
@@ -1503,6 +1506,9 @@ def export_smoke(ri, ob):
     ri.Volume("box", rib_ob_bounds(ob.bound_box),
               smoke_res, params)
 
+def export_volume(ri,ob):
+    rm = ob.renderman
+    ri.Volume("box", rib_ob_bounds(ob.bound_box), [0, 0, 0])
 
 def export_sphere(ri, ob):
     rm = ob.renderman
@@ -1640,6 +1646,8 @@ def export_geometry_data(ri, scene, ob, data=None):
         export_disk(ri, ob)
     elif prim == 'TORUS':
         export_torus(ri, ob)
+    elif prim == 'RI_VOLUME':
+        export_volume(ri, ob)
 
     elif prim == 'META':
         export_blobby_family(ri, scene, ob)

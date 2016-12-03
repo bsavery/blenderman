@@ -1976,6 +1976,7 @@ class RendermanObjectSettings(bpy.types.PropertyGroup):
                ('POLYGON_MESH', 'Polygon Mesh', 'Mesh object'),
                ('SUBDIVISION_MESH', 'Subdivision Mesh',
                 'Smooth subdivision surface formed by mesh cage'),
+               ('RI_VOLUME', 'Volume', 'Volume primitive'), 
                ('POINTS', 'Points',
                 'Renders object vertices as single points'),
                ('SPHERE', 'Sphere', 'Parametric sphere primitive'),
