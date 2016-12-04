@@ -555,6 +555,25 @@ class RendermanSceneSettings(bpy.types.PropertyGroup):
         name="Micropolygon Length",
         description="Default maximum distance between displacement samples.  This can be left at 1 unless you need more detail on displaced objects.",
         default=1.0)
+        
+    dicing_strategy = EnumProperty(
+        name="Dicing Strategy", 
+        description="Sets the method that PRMan uses to tessellate objects.  Spherical may help with volume rendering", 
+        items=[
+                ("planarprojection", "Planar Projection", "Tessellates using the screen space coordinates of a primitive projected onto a plane"),
+                ("sphericalprojection", "Spherical Projection", "Tessellates using the coordinates of a primitive projected onto a sphere"), 
+                ("worlddistance", "World Distance", "Tessellation is determined using distances measured in world space units compared to the current micropolygon length")], 
+        default="sphericalprojection")
+        
+    worlddistancelength = FloatProperty(
+        name="World Distance Length", 
+        description="If this is a value above 0, it sets the length of a micropolygon after tessellation", 
+        default=-1.0)
+        
+    instanceworlddistancelength = FloatProperty(
+        name="Instance World Distance Length", 
+        description="Set the length of a micropolygon for tessellated instanced meshes", 
+        default=1e30)
 
     motion_blur = BoolProperty(
         name="Motion Blur",

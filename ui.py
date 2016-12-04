@@ -30,6 +30,7 @@ from bpy.types import Panel
 from .nodes import NODE_LAYOUT_SPLIT, is_renderman_nodetree, panel_node_draw
 
 from . import engine
+from . import addon_updater_ops
 # global dictionaries
 from bl_ui.properties_particle import ParticleButtonsPanel
 
@@ -502,51 +503,54 @@ class RENDER_PT_renderman_advanced_settings(PRManButtonsPanel, Panel):
 
         layout.separator()
 
-        row = layout.row()
-        row.prop(rm, "shadingrate")
+        col = layout.column()
+        col.prop(rm, "shadingrate")
+        col.prop(rm, "dicing_strategy")
+        row = col.row()
+        row.enabled = rm.dicing_strategy == "worlddistance"
+        row.prop(rm, "worlddistancelength")
+        col.prop(rm, "instanceworlddistancelength")
 
         layout.separator()
 
-        row = layout.row()
-        row.prop(rm, "texture_cache_size")
-        row = layout.row()
-        row.prop(rm, "geo_cache_size")
-        row = layout.row()
-        row.prop(rm, "opacity_cache_size")
+        col = layout.column()
+        col.prop(rm, "texture_cache_size")
+        col.prop(rm, "geo_cache_size")
+        col.prop(rm, "opacity_cache_size")
 
         layout.separator()
-        row = layout.row()
+        col = layout.column()
+        row = col.row()
         row.label("Pixel Filter:")
         row.prop(rm, "pixelfilter", text="")
-        row = layout.row()
+        row = col.row(align=True)
         row.prop(rm, "pixelfilter_x", text="Size X")
         row.prop(rm, "pixelfilter_y", text="Size Y")
 
         layout.separator()
-        row = layout.row()
-        row.prop(rm, "dark_falloff")
+        col = layout.column()
+        col.prop(rm, "dark_falloff")
 
         layout.separator()
-        row = layout.row()
-        row.prop(rm, "bucket_shape")
+        col = layout.column()
+        col.prop(rm, "bucket_shape")
         if rm.bucket_shape == 'SPIRAL':
-            row = layout.row(align=True)
+            row = col.row(align=True)
             row.prop(rm, "bucket_sprial_x", text="X")
             row.prop(rm, "bucket_sprial_y", text="Y")
-
-        row = layout.row()
+        
+        layout.separator()
+        col = layout.column()
+        row = col.row()
         row.prop(rm, "use_statistics", text="Output stats")
         row.operator('rman.open_stats')
-
-        layout.separator()
-        row = layout.row()
+        row = col.row()
         row.operator('rman.open_rib')
         row.prop(rm, "editor_override")
-
-        layout.separator()
-        layout.prop(rm, "always_generate_textures")
-        layout.prop(rm, "lazy_rib_gen")
-        layout.prop(rm, "threads")
+        row = col.row()
+        col.prop(rm, "always_generate_textures")
+        col.prop(rm, "lazy_rib_gen")
+        col.prop(rm, "threads")
 
 
 class MESH_PT_renderman_prim_vars(CollectionPanel, Panel):
@@ -2355,6 +2359,8 @@ class Renderman_UI_Panel(bpy.types.Panel):
             box.operator("export.export_rib_archive",
                          icon_value=rman_archive.icon_id)
 
+        # Addon updater
+        addon_updater_ops.update_notice_box_ui(self, context)
         # Create Geo LightBlocker
 
         # Update Archive !! Not needed with current system.

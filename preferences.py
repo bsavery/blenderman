@@ -32,6 +32,7 @@ from bpy.props import IntProperty, PointerProperty, EnumProperty
 
 from .util import get_installed_rendermans,\
     rmantree_from_env, guess_rmantree
+from . import addon_updater_ops
 
 
 class RendermanPreferencePath(bpy.types.PropertyGroup):
@@ -171,14 +172,40 @@ class RendermanPreferences(AddonPreferences):
         subtype='FILE_PATH',
         default=os.path.join('$OUT', 'images', '{scene}.{layer}.{pass}.####.{file_type}'))
 
-    draw_ipr_text = BoolProperty(
-        name="Draw IPR Text",
-        description="Draw notice on View3D when IPR is active",
-        default=True)
-
     env_vars = PointerProperty(
         type=RendermanEnvVarSettings,
         name="Environment Variable Settings")
+
+    auto_check_update = bpy.props.BoolProperty(
+        name = "Auto-check for Update",
+        description = "If enabled, auto-check for updates using an interval",
+        default = True)
+    
+    updater_intrval_months = bpy.props.IntProperty(
+        name='Months',
+        description = "Number of months between checking for updates",
+        default=0,
+        min=0)
+
+    updater_intrval_days = bpy.props.IntProperty(
+        name='Days',
+        description = "Number of days between checking for updates",
+        default=1,
+        min=0)
+
+    updater_intrval_hours = bpy.props.IntProperty(
+        name='Hours',
+        description = "Number of hours between checking for updates",
+        default=0,
+        min=0,
+        max=23)
+
+    updater_intrval_minutes = bpy.props.IntProperty(
+        name='Minutes',
+        description = "Number of minutes between checking for updates",
+        default=0,
+        min=0,
+        max=59)
 
     def draw(self, context):
         layout = self.layout
@@ -199,6 +226,7 @@ class RendermanPreferences(AddonPreferences):
         layout.prop(self, 'path_display_driver_image')
         layout.prop(self, 'path_aov_image')
         layout.prop(self, 'draw_ipr_text')
+        addon_updater_ops.update_settings_ui(self, context)
         #layout.prop(env, "shd")
         #layout.prop(env, "ptc")
         #layout.prop(env, "arc")
