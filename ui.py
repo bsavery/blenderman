@@ -32,6 +32,7 @@ from .nodes import NODE_LAYOUT_SPLIT, is_renderman_nodetree, panel_node_draw
 from . import engine
 # global dictionaries
 from bl_ui.properties_particle import ParticleButtonsPanel
+from . import addon_updater_ops
 
 # helper functions for parameters
 from .nodes import draw_nodes_properties_ui, draw_node_properties_recursive
@@ -2357,6 +2358,9 @@ class Renderman_UI_Panel(bpy.types.Panel):
             rman_archive = icons.get("archive_RIB")
             box.operator("export.export_rib_archive",
                          icon_value=rman_archive.icon_id)
+
+        #Auto Updater popup
+            addon_updater_ops.update_notice_box_ui(self, context)
         # Create Geo LightBlocker
 
         # Update Archive !! Not needed with current system.
