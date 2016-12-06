@@ -115,7 +115,7 @@ class RendermanPreferences(AddonPreferences):
 
     rmantree_choice = EnumProperty(
         name='RenderMan Version to use',
-        description='Leaving as "Newest" will automatically update when you install a new RenderMan version.',
+        description='Leaving as "Newest" will automatically update when you install a new RenderMan version',
         # default='NEWEST',
         items=find_installed_rendermans
     )
