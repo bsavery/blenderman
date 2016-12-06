@@ -99,7 +99,7 @@ class Renderman_start_it(bpy.types.Operator):
 class Renderman_open_last_RIB(bpy.types.Operator):
     bl_idname = 'rman.open_rib'
     bl_label = "Open Last RIB Scene file."
-    bl_description = "Opens the last generated Scene.rib file in the system default text editor."
+    bl_description = "Opens the last generated Scene.rib file in the system default text editor"
 
     def invoke(self, context, event=None):
         rm = context.scene.renderman
@@ -434,7 +434,7 @@ class StartInteractive(bpy.types.Operator):
 class ExportRIBObject(bpy.types.Operator):
     bl_idname = "export.export_rib_archive"
     bl_label = "Export Object as RIB Archive."
-    bl_description = "Export single object as a RIB archive for use in other blend files or for other uses."
+    bl_description = "Export single object as a RIB archive for use in other blend files or for other uses"
 
     export_mat = BoolProperty(
         name="Export Material",
@@ -1267,7 +1267,7 @@ class AddCamera(bpy.types.Operator):
 class RM_restart_addon(bpy.types.Operator):
     bl_idname = "renderman.restartaddon"
     bl_label = "Restart Addon"
-    bl_description = "Restarts the RenderMan for Blender addon."
+    bl_description = "Restarts the RenderMan for Blender addon"
 
     def execute(self, context):
         bpy.ops.script.reload()
