@@ -435,7 +435,7 @@ class RENDER_PT_renderman_sampling(PRManButtonsPanel, Panel):
 
         row = col.row()
         row.prop(rm, "show_integrator_settings", icon=icon, text=text,
-                 icon_only=True, emboss=False)
+                 icon_only=False, emboss=False)
         if rm.show_integrator_settings:
             draw_props(integrator_settings,
                        integrator_settings.prop_names, col)
