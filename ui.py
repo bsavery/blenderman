@@ -1974,7 +1974,7 @@ class Renderman_UI_Panel(bpy.types.Panel):
             row.operator('lighting.start_interactive',
                          text="Stop IPR", icon_value=rman_batch_cancel.icon_id)
             row.prop(context.scene, "rm_ipr", text="",
-                     icon='DISCLOSURE_TRI_UP' if context.scene.rm_ipr else 'DISCLOSURE_TRI_DOWN')
+                     icon='DISCLOSURE_TRI_DOWN' if context.scene.rm_ipr else 'DISCLOSURE_TRI_RIGHT')
             if context.scene.rm_ipr:
 
                 scene = context.scene
@@ -2037,7 +2037,7 @@ class Renderman_UI_Panel(bpy.types.Panel):
                          text="External Render", icon_value=rman_batch.icon_id)
 
             row.prop(context.scene, "rm_render_external", text="",
-                     icon='DISCLOSURE_TRI_UP' if context.scene.rm_render_external else 'DISCLOSURE_TRI_DOWN')
+                     icon='DISCLOSURE_TRI_DOWN' if context.scene.rm_render_external else 'DISCLOSURE_TRI_RIGHT')
             if context.scene.rm_render_external:
                 scene = context.scene
                 rd = scene.render
@@ -2178,7 +2178,7 @@ class Renderman_UI_Panel(bpy.types.Panel):
         if lamp_hemi:
 
             row.prop(context.scene, "rm_env", text="",
-                     icon='DISCLOSURE_TRI_UP' if context.scene.rm_env else 'DISCLOSURE_TRI_DOWN')
+                     icon='DISCLOSURE_TRI_DOWN' if context.scene.rm_env else 'DISCLOSURE_TRI_RIGHT')
 
             if context.scene.rm_env:
                 ob = bpy.context.object
@@ -2296,7 +2296,7 @@ class Renderman_UI_Panel(bpy.types.Panel):
         if lamp_sun:
 
             row.prop(context.scene, "rm_daylight", text="",
-                     icon='DISCLOSURE_TRI_UP' if context.scene.rm_daylight else 'DISCLOSURE_TRI_DOWN')
+                     icon='DISCLOSURE_TRI_DOWN' if context.scene.rm_daylight else 'DISCLOSURE_TRI_RIGHT')
 
             if context.scene.rm_daylight:
                 ob = bpy.context.object

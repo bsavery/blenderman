@@ -261,7 +261,7 @@ def data_name(ob, scene):
     if ob.type == 'META':
         return fix_name(ob.name.split('.')[0])
 
-    if is_smoke(ob):
+    if is_smoke(ob) or ob.renderman.primitive == 'RI_VOLUME':
         return "%s-VOLUME" % fix_name(ob.name)
 
     if ob.data.users > 1 and (ob.is_modified(scene, "RENDER") or
@@ -1503,6 +1503,9 @@ def export_smoke(ri, ob):
     ri.Volume("box", rib_ob_bounds(ob.bound_box),
               smoke_res, params)
 
+def export_volume(ri,ob):
+    rm = ob.renderman
+    ri.Volume("box", rib_ob_bounds(ob.bound_box), [0, 0, 0])
 
 def export_sphere(ri, ob):
     rm = ob.renderman
@@ -1640,6 +1643,8 @@ def export_geometry_data(ri, scene, ob, data=None):
         export_disk(ri, ob)
     elif prim == 'TORUS':
         export_torus(ri, ob)
+    elif prim == 'RI_VOLUME':
+        export_volume(ri, ob)
 
     elif prim == 'META':
         export_blobby_family(ri, scene, ob)
@@ -2749,6 +2754,19 @@ def export_options(ri, scene):
     ri.Option("searchpath", {"string procedural": [
               ".:${RMANTREE}/lib/plugins:@"]})
 
+    lpe_options = {
+        "string diffuse2": "Diffuse",
+        "string diffuse3": "Subsurface",
+        "string specular2": "Specular",
+        "string specular3": "RoughSpecular",
+        "string specular4": "Clearcoat",
+        "string specular5": "Iridescence",
+        "string specular6": "Fuzz",
+        "string specular7": "SingleScatter",
+        "string specular8": "Glass",
+    }
+
+    ri.Option('lpe', lpe_options)
 
 def export_searchpaths(ri, paths):
     ri.Option("ribparse", {"string varsubst": ["$"]})

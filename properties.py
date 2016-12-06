@@ -1995,6 +1995,7 @@ class RendermanObjectSettings(bpy.types.PropertyGroup):
                ('POLYGON_MESH', 'Polygon Mesh', 'Mesh object'),
                ('SUBDIVISION_MESH', 'Subdivision Mesh',
                 'Smooth subdivision surface formed by mesh cage'),
+               ('RI_VOLUME', 'Volume', 'Volume primitive'), 
                ('POINTS', 'Points',
                 'Renders object vertices as single points'),
                ('SPHERE', 'Sphere', 'Parametric sphere primitive'),
@@ -2183,56 +2184,56 @@ class RendermanObjectSettings(bpy.types.PropertyGroup):
         description="Matte ID 0 Color, you also need to add the PxrMatteID node to your bxdf",
         size=3,
         subtype='COLOR',
-        default=[0.0, 0.0, 0.0])
+        default=[0.0, 0.0, 0.0], soft_min=0.0, soft_max=1.0)
 
     MatteID1 = FloatVectorProperty(
         name="Matte ID 1",
         description="Matte ID 1 Color, you also need to add the PxrMatteID node to your bxdf",
         size=3,
         subtype='COLOR',
-        default=[0.0, 0.0, 0.0])
+        default=[0.0, 0.0, 0.0], soft_min=0.0, soft_max=1.0)
 
     MatteID2 = FloatVectorProperty(
         name="Matte ID 2",
         description="Matte ID 2 Color, you also need to add the PxrMatteID node to your bxdf",
         size=3,
         subtype='COLOR',
-        default=[0.0, 0.0, 0.0])
+        default=[0.0, 0.0, 0.0], soft_min=0.0, soft_max=1.0)
 
     MatteID3 = FloatVectorProperty(
         name="Matte ID 3",
         description="Matte ID 3 Color, you also need to add the PxrMatteID node to your bxdf",
         size=3,
         subtype='COLOR',
-        default=[0.0, 0.0, 0.0])
+        default=[0.0, 0.0, 0.0], soft_min=0.0, soft_max=1.0)
 
     MatteID4 = FloatVectorProperty(
         name="Matte ID 4",
         description="Matte ID 4 Color, you also need to add the PxrMatteID node to your bxdf",
         size=3,
         subtype='COLOR',
-        default=[0.0, 0.0, 0.0])
+        default=[0.0, 0.0, 0.0], soft_min=0.0, soft_max=1.0)
 
     MatteID5 = FloatVectorProperty(
         name="Matte ID 5",
         description="Matte ID 5 Color, you also need to add the PxrMatteID node to your bxdf",
         size=3,
         subtype='COLOR',
-        default=[0.0, 0.0, 0.0])
+        default=[0.0, 0.0, 0.0], soft_min=0.0, soft_max=1.0)
 
     MatteID6 = FloatVectorProperty(
         name="Matte ID 6",
         description="Matte ID 6 Color, you also need to add the PxrMatteID node to your bxdf",
         size=3,
         subtype='COLOR',
-        default=[0.0, 0.0, 0.0])
+        default=[0.0, 0.0, 0.0], soft_min=0.0, soft_max=1.0)
 
     MatteID7 = FloatVectorProperty(
         name="Matte ID 7",
         description="Matte ID 7 Color, you also need to add the PxrMatteID node to your bxdf",
         size=3,
         subtype='COLOR',
-        default=[0.0, 0.0, 0.0])
+        default=[0.0, 0.0, 0.0], soft_min=0.0, soft_max=1.0)
 
 
 class Tab_CollectionGroup(bpy.types.PropertyGroup):
