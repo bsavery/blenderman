@@ -437,7 +437,7 @@ def generate_property(sp):
 
     for s in sp:
         if s.tag == 'help' and s.text:
-            param_help = s.text
+            param_help = s.text.rstrip('.')
 
     if 'float' in param_type:
         if 'arraySize' in sp.attrib.keys():
