@@ -24,7 +24,6 @@
 # ##### END MIT LICENSE BLOCK #####
 import bpy
 import sys
-from . import addon_updater_ops
 
 bl_info = {
     "name": "RenderMan For Blender",
@@ -117,7 +116,6 @@ def load_addon():
 def register():
     from . import preferences
     preferences.register()
-    addon_updater_ops.register(bl_info)
     load_addon()
     bpy.utils.register_module(__name__)
 
@@ -125,7 +123,6 @@ def register():
 def unregister():
     from . import preferences
     remove_handlers()
-    addon_updater_ops.unregister()
     properties.unregister()
     operators.unregister()
     ui.unregister()
