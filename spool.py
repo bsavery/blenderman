@@ -22,12 +22,15 @@ def write_cmd_task_line(f, title, cmds, indent_level):
 
 
 def txmake_task(f, title, in_name, out_name, options, indent_level):
-    cmd = ['txmake'] + options + [in_name, os.path.join('textures', out_name)]
+    cmd = ['txmake'] + options + ['-newer'] + [in_name, out_name]
     write_cmd_task_line(f, title, [('PixarRender', cmd)], indent_level)
+    
+def quote(filename):
+    return '"%s"' % filename
 
 
 def spool_render(rman_version_short, rib_files, denoise_files, frame_begin, frame_end=None, denoise=None, context=None,
-                 job_texture_cmds=[], frame_texture_cmds={}):
+                 job_texture_cmds=[], frame_texture_cmds={}, rpass=None):
     prefs = bpy.context.user_preferences.addons[__package__].preferences
 
     out_dir = prefs.env_vars.out
@@ -70,8 +73,10 @@ def spool_render(rman_version_short, rib_files, denoise_files, frame_begin, fram
         write_parent_task_line(f, 'Job Textures', False, 1)
     # do job tx makes
     for in_name, out_name, options in job_texture_cmds:
+        in_name = bpy.path.abspath(in_name)
+        out_name = os.path.join(rpass.paths['texture_output'], out_name)
         txmake_task(f, "TxMake %s" % os.path.split(in_name)
-                    [-1], in_name, out_name, options, 2)
+                    [-1], quote(in_name), quote(out_name), options, 2)
     if job_texture_cmds:
         end_block(f, 1)
 
@@ -82,14 +87,17 @@ def spool_render(rman_version_short, rib_files, denoise_files, frame_begin, fram
     for frame_num in range(frame_begin, frame_end + 1):
         if frame_num in frame_texture_cmds or denoise:
             write_parent_task_line(f, 'Frame %d' % frame_num, True, 2)
-
+        
         # do frame specic txmake
         if frame_num in frame_texture_cmds:
             write_parent_task_line(f, 'Frame %d textures' %
                                    frame_num, False, 3)
             for in_name, out_name, options in frame_texture_cmds[frame_num]:
+                in_name = bpy.path.abspath(in_name)
+                out_name = os.path.join(
+                    rpass.paths['texture_output'], out_name)
                 txmake_task(f, "TxMake %s" % os.path.split(in_name)
-                            [-1], in_name, out_name, options, 4)
+                            [-1], quote(in_name), quote(out_name), options, 4)
             end_block(f, 3)
 
         # render frame
