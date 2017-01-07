@@ -597,6 +597,8 @@ class MESH_PT_renderman_prim_vars(CollectionPanel, Panel):
 
         layout.prop(rm, "export_default_uv")
         layout.prop(rm, "export_default_vcol")
+        layout.prop(rm, "interp_bound")
+        layout.prop(rm, "face_boundry")
 
 
 class MATERIAL_PT_renderman_preview(Panel):

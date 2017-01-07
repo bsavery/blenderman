@@ -1892,6 +1892,16 @@ class RendermanMeshGeometrySettings(bpy.types.PropertyGroup):
         name="Export Default Vertex Color",
         description="Export the active Vertex Color set as the default 'Cs' primitive variable",
         default=True)
+    interp_bound = IntProperty(
+        name="Subdivision Edge Interpolation Mode", 
+        description="Defines how a subdivided mesh interpolates its boundary edges", 
+        default=1, 
+        min=0, max=2)
+    face_boundry = IntProperty(
+        name="UV Interpolation Mode", 
+        description="Defines how a subdivided mesh interpolates its UV coordinates", 
+        default=1, 
+        min=0, max=3)
 
     prim_vars = CollectionProperty(
         type=RendermanMeshPrimVar, name="Primitive Variables")
