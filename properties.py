@@ -1900,7 +1900,7 @@ class RendermanMeshGeometrySettings(bpy.types.PropertyGroup):
     face_boundary = IntProperty(
         name="Subdivision UV Interpolation Mode", 
         description="Defines how a subdivided mesh interpolates its UV coordinates", 
-        default=1, 
+        default=3, 
         min=0, max=3)
 
     prim_vars = CollectionProperty(
