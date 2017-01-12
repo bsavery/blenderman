@@ -2364,6 +2364,9 @@ def export_object_attributes(ri, scene, ob, visible_objects):
         if getattr(rm, name) != [0.0, 0.0, 0.0]:
             user_attr["color %s" % name] = rib(getattr(rm, name))
 
+    if hasattr(ob, 'color'):
+        user_attr["color Cs" ] = rib(ob.color[:3])
+
     if len(user_attr):
         ri.Attribute('user', user_attr)
     

@@ -1303,6 +1303,19 @@ def gen_params(ri, node, mat_name=None):
     params = {}
     # If node is OSL node get properties from dynamic location.
     if node.bl_idname == "PxrOSLPatternNode":
+
+        if getattr(node, "codetypeswitch") == "EXT":
+            prefs = bpy.context.user_preferences.addons[__package__].preferences
+            osl_path = user_path(getattr(node, 'shadercode'))
+            FileName = os.path.basename(osl_path)
+            FileNameNoEXT,ext = os.path.splitext(FileName)
+            out_file = os.path.join(
+                user_path(prefs.env_vars.out), "shaders", FileName)
+            if ext == ".oso":
+                if not os.path.exists(out_file) or not os.path.samefile(osl_path, out_file):
+                    if not os.path.exists(os.path.join(user_path(prefs.env_vars.out), "shaders")):
+                        os.mkdir(os.path.join(user_path(prefs.env_vars.out), "shaders"))
+                    shutil.copy(osl_path, out_file)
         for input_name, input in node.inputs.items():
             prop_type = input.renderman_type
             if input.is_linked:
