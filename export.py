@@ -1270,7 +1270,7 @@ def export_subdivision_mesh(ri, scene, ob, data=None):
         return
     tags = ['interpolateboundary', 'facevaryinginterpolateboundary']
     nargs = [1, 0, 1, 0]
-    intargs = [ob.data.renderman.interp_bound, ob.data.renderman.face_boundry]
+    intargs = [ob.data.renderman.interp_boundary, ob.data.renderman.face_boundary]
     floatargs = []
 
     primvars = get_primvars(ob, mesh, "facevarying")
