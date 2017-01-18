@@ -1,0 +1,52 @@
+Notes - 
+    Move to everything class based.  
+    New style classes.
+    One Class per file
+    Do ribgen through property groups (i.e object.renderman class rib gens object)
+    Move to new IPR through viewport display
+    check all code with pylint.  pep8 compliant!
+    DOCUMENT CODE!!!
+
+general structure
+
+/RenderMan_for_Blender
+    /resources - all the resource files
+        /Args - Args files for osl shaders
+            PxrLayerMixer.args
+            PxrLayer.args
+            PxrOsl.args
+            PxrShadedSide.args
+        /examples - put the benchmark scenes in here along with example renders. Also a script to render all the files and compare output test scenes if you will. Developers must test changes.
+        /filters - light filter blend files
+        /icons
+        /preview - preview scene
+        /shaders - osl
+
+    __init__.py  - Load module and register classes with bpy.utils.register_module - don't individually register classes.  Also try to load generated plugin types
+
+    /preferences
+
+    /operators
+       - Add more simple operators like "add renderman light" etc
+        
+    /ui 
+        - one class per panel
+
+    /engine
+        engine.py - use viewport display instead of IPR
+        rpass.py
+        spool.py
+        server.py - display server 
+
+    /properties
+        base_id.py - base for all id property groups.  this would define methods for rib gen of this property group
+        object.py - rib gen for object 
+        particle.py - particle system ribgen
+        lamp.py
+        material.py
+
+        rman_plugin.py - base for all node types and plugins generated from args files
+        RmanShader.py - Shader node type
+        Sockets.py - socket types
+
+    /util

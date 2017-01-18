@@ -36,7 +36,6 @@ from extensions_framework import util as efutil
 from mathutils import Matrix, Vector
 EnableDebugging = False
 
-
 class BlenderVersionError(Exception):
     pass
 
@@ -236,28 +235,22 @@ def args_files_in_path(prefs, idblock, shader_type='', threaded=True):
 
 def get_path_list(rm, type):
     paths = []
-    if rm.use_default_paths:
-        # here for getting args
-        if type == 'args':
-            rmantree = guess_rmantree()
-            paths.append(os.path.join(rmantree, 'lib', 'plugins'))
-            paths.append(os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                                      'Args'))
-        if type == 'shader':
-            paths.append(os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                                      'shaders'))
-            paths.append(os.path.join(bpy.utils.resource_path('LOCAL'), 'scripts',
-                                      'addons', 'cycles', 'shader'))
-            paths.append(os.path.join('${RMANTREE}', 'lib', 'shaders'))
-        paths.append('@')
+    # here for getting args
+    if type == 'args':
+        rmantree = guess_rmantree()
+        paths.append(os.path.join(rmantree, 'lib', 'plugins'))
+        paths.append(os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                  'Args'))
+    if type == 'shader':
+        paths.append(os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                  'shaders'))
+        paths.append(os.path.join(bpy.utils.resource_path('LOCAL'), 'scripts',
+                                  'addons', 'cycles', 'shader'))
+        paths.append(os.path.join('${RMANTREE}', 'lib', 'shaders'))
+    paths.append('@')
 
-    if rm.use_builtin_paths:
-        paths.append(os.path.join(os.path.dirname(os.path.realpath(__file__)),
+    paths.append(os.path.join(os.path.dirname(os.path.realpath(__file__)),
                                   "%ss" % type))
-
-    if hasattr(rm, "%s_paths" % type):
-        for p in getattr(rm, "%s_paths" % type):
-            paths.append(bpy.path.abspath(p.name))
 
     return paths
 
@@ -329,7 +322,7 @@ def get_sequence_path(path, blender_frame, anim):
     return make_frame_path(path, frame)
 
 
-def user_path(path, scene=None, ob=None, display_driver=None, layer_name=None, pass_name=None):
+def user_path(path, scene=None, ob=None, display_driver=None, layer_name=None, pass_name=None, out=None):
     '''
     # bit more complicated system to allow accessing scene or object attributes.
     # let's stay simple for now...
@@ -356,6 +349,9 @@ def user_path(path, scene=None, ob=None, display_driver=None, layer_name=None, p
 
     unsaved = True if not bpy.data.filepath else False
     # first builtin special blender variables
+
+    if out:
+        path = path.replace('{out}', out)
     if unsaved:
         path = path.replace('{blend}', 'untitled')
     else:
@@ -679,16 +675,12 @@ def init_exporter_env(prefs):
         os.environ['ARC'] = prefs.env_vars.arc
 
 
-def init_env(rm):
+def init_env():
     # init_exporter_env(scene.renderman)
     # try user set (or guessed) path
-    RMANTREE = guess_rmantree()
-    os.environ['RMANTREE'] = RMANTREE
-    RMANTREE_BIN = os.path.join(RMANTREE, 'bin')
-    if RMANTREE_BIN not in sys.path:
-        sys.path.append(RMANTREE_BIN)
-    pathsep = os.pathsep
-    if 'PATH' in os.environ.keys():
-        os.environ['PATH'] += pathsep + os.path.join(RMANTREE, "bin")
-    else:
-        os.environ['PATH'] = os.path.join(RMANTREE, "bin")
+    rmantree = guess_rmantree()
+    set_rmantree(rmantree)
+    rmantree_bin = os.path.join(rmantree, 'bin')
+    it_path = find_it_path()
+    set_path([rmantree_bin, os.path.dirname(it_path)])
+    set_pythonpath(rmantree_bin)
