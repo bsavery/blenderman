@@ -18,7 +18,7 @@ class RENDER_PT_renderman_advanced_settings(PRManPanel):
 
         col = layout.column()
         col.label("Shading and Tessellation:")
-        col.prop(rm, "shadingrate")
+        col.prop(rm, "micropoly_length")
         col.prop(rm, "dicing_strategy")
         row = col.row()
         row.enabled = rm.dicing_strategy == "worlddistance"
@@ -59,9 +59,7 @@ class RENDER_PT_renderman_advanced_settings(PRManPanel):
         row = col.row()
         row.prop(rm, "use_statistics", text="Output stats")
         row.operator('rman.open_stats')
-        row = col.row()
-        row.operator('rman.open_rib')
-        row.prop(rm, "editor_override")
+        col.operator('rman.open_rib')
         row = col.row()
         col.prop(rm, "always_generate_textures")
         col.prop(rm, "lazy_rib_gen")

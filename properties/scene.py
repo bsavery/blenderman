@@ -139,7 +139,7 @@ class RendermanSceneSettings(RendermanBasePropertyGroup):
         description="Y coordinate of bucket spiral start",
         min=-1, default=-1)
 
-    shadingrate = FloatProperty(
+    micropoly_length = FloatProperty(
         name="Micropolygon Length",
         description="Default maximum distance between displacement samples.  This can be left at 1 unless you need more detail on displaced objects.",
         default=1.0)
@@ -174,11 +174,6 @@ class RendermanSceneSettings(RendermanBasePropertyGroup):
         name="Statistics",
         description="Print statistics to stats.xml after render",
         default=False)
-
-    editor_override = StringProperty(
-        name="Text Editor",
-        description="The editor to open RIB file in (Overrides system default!)",
-        default="")
 
     texture_cache_size = IntProperty(
         name="Texture Cache Size (MB)",

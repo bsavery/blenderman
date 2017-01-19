@@ -4,6 +4,8 @@ from bpy.types import Panel
 from ..resources.icons.icons import load_icons
 
 # Standard panel
+
+
 class PRManPanel(Panel):
     bl_space_type = "PROPERTIES"
     bl_region_type = "WINDOW"
@@ -43,7 +45,3 @@ class PRManCollectionPanel(PRManPanel):
                 getattr(ptr, collection_index) >= 0:
             item = getattr(ptr, prop_coll)[getattr(ptr, collection_index)]
             self.draw_item(layout, context, item)
-
-    def draw_item(self, layout, context, item):
-    	pass
-
