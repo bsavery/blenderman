@@ -37,7 +37,7 @@ bl_info = {
 
 # list of modules to import to register.  Don't need to register util
 #SUBMODULES = ['engine', 'operators', 'preferences', 'properties', 'ui']
-SUBMODULES = ['engine', 'properties', 'preferences']
+SUBMODULES = ['engine', 'properties', 'preferences', 'ui']
 
 import bpy
 import importlib as imp

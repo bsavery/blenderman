@@ -4,37 +4,43 @@ from bpy.props import *
 from .rib_helpers import *
 from ..util.util import path_list_convert
 
+
 def export_searchpaths(ri, paths):
-    ''' converts the paths dictionary to a rib specific format and exports them ''' 
+    ''' converts the paths dictionary to a rib specific format and exports them '''
     ri.Option("ribparse", {"string varsubst": ["$"]})
-    ri.Option("searchpath", {"string shader": ["%s" %':'.join(path_list_convert(paths['shader'], 
-                                                                                to_unix=True))]})
-    rel_tex_paths = [os.path.relpath(path, paths['export_dir']) for path in paths['texture']]
-    ri.Option("searchpath", {"string texture": ["%s" %':'.join(path_list_convert(rel_tex_paths + \
-        ["@"], to_unix=True))]})
-    ri.Option("searchpath", {"string archive": os.path.relpath(paths['archive'], 
+    ri.Option("searchpath", {"string shader": ["%s" % ':'.join(path_list_convert(paths['shader'],
+                                                                                 to_unix=True))]})
+    rel_tex_paths = [os.path.relpath(path, paths['export_dir'])
+                     for path in paths['texture']]
+    ri.Option("searchpath", {"string texture": ["%s" % ':'.join(path_list_convert(rel_tex_paths +
+                                                                                  ["@"], to_unix=True))]})
+    ri.Option("searchpath", {"string archive": os.path.relpath(paths['archive'],
                                                                paths['export_dir'])})
 
-''' Scene Properties ''' 
+''' Scene Properties '''
+
+
 class RendermanSceneSettings(RendermanBasePropertyGroup):
     ''' Holds the main property endpoint for converting a scene to Renderman 
-        as well as the methods for caching any data under it''' 
+        as well as the methods for caching any data under it'''
     ### scene properties ###
+
+    # motion blur
     motion_blur = BoolProperty(
         name="Motion Blur",
         description="Enable motion blur",
         default=False)
-    
+
     sample_motion_blur = BoolProperty(
         name="Sample Motion Blur",
         description="Determines if motion blur is rendered in the final image.  If this is disabled the motion vectors are still calculated and can be exported with the dPdTime AOV.  This allows motion blur to be added as a post process effect",
         default=True)
-    
+
     motion_segments = IntProperty(
         name="Motion Samples",
         description="Number of motion samples to take for motion blur.  Set this higher if you notice segment artifacts in blurs",
         min=2, max=16, default=2)
-    
+
     shutter_timing = EnumProperty(
         name="Shutter Timing",
         description="Controls when the shutter opens for a given frame",
@@ -48,24 +54,173 @@ class RendermanSceneSettings(RendermanBasePropertyGroup):
         description="Fraction of time that the shutter is open (360 is one full second).  180 is typical for North America 24fps cameras, 172.8 is typical in Europe",
         default=180.0, min=0.0, max=360.0)
 
+    advanced_timing = BoolProperty(
+        name="Advanced Shutter Timing",
+        description="Enables advanced settings for shutter timing",
+        default=False)
+
+    c1 = FloatProperty(
+        name="C1",
+        default=0.0)
+
+    c2 = FloatProperty(
+        name="C2",
+        default=0.0)
+
+    d1 = FloatProperty(
+        name="D1",
+        default=0.0)
+
+    d2 = FloatProperty(
+        name="D2",
+        default=0.0)
+
+    e1 = FloatProperty(
+        name="E1",
+        default=0.0)
+
+    e2 = FloatProperty(
+        name="E2",
+        default=0.0)
+
+    f1 = FloatProperty(
+        name="F1",
+        default=0.0)
+
+    f2 = FloatProperty(
+        name="F2",
+        default=0.0)
+
+    # advanced properties
+    pixelfilter = EnumProperty(
+        name="Pixel Filter",
+        description="Filter to use to combine pixel samples",
+        items=[('box', 'Box', ''),
+               ('sinc', 'Sinc', ''),
+               ('gaussian', 'Gaussian', ''),
+               ('triangle',  'Triangle',  ''),
+               ('catmull-rom',  'Catmull-Rom', '')],
+        default='gaussian')
+
+    pixelfilter_x = IntProperty(
+        name="Filter Size X",
+        description="Size of the pixel filter in X dimension",
+        min=0, max=16, default=2)
+
+    pixelfilter_y = IntProperty(
+        name="Filter Size Y",
+        description="Size of the pixel filter in Y dimension",
+        min=0, max=16, default=2)
+
+    bucket_shape = EnumProperty(
+        name="Bucket Order",
+        description="The order buckets are rendered in",
+        items=[('HORIZONTAL', 'Horizontal', 'Render scanline from top to bottom'),
+               ('VERTICAL', 'Vertical',
+                'Render scanline from left to right'),
+               ('ZIGZAG-X', 'Reverse Horizontal',
+                'Exactly the same as Horizontal but reverses after each scan'),
+               ('ZIGZAG-Y', 'Reverse Vertical',
+                'Exactly the same as Vertical but reverses after each scan'),
+               ('SPACEFILL', 'Hilber spacefilling curve',
+                'Renders the buckets along a hilbert spacefilling curve'),
+               ('SPIRAL', 'Spiral rendering',
+                'Renders in a spiral from the center of the image or a custom defined point'),
+               ('RANDOM', 'Random', 'Renders buckets in a random order WARNING: Inefficient memory footprint')],
+        default='SPIRAL')
+
+    bucket_sprial_x = IntProperty(
+        name="X",
+        description="X coordinate of bucket spiral start",
+        min=-1, default=-1)
+
+    bucket_sprial_y = IntProperty(
+        name="Y",
+        description="Y coordinate of bucket spiral start",
+        min=-1, default=-1)
+
+    shadingrate = FloatProperty(
+        name="Micropolygon Length",
+        description="Default maximum distance between displacement samples.  This can be left at 1 unless you need more detail on displaced objects.",
+        default=1.0)
+
+    dicing_strategy = EnumProperty(
+        name="Dicing Strategy",
+        description="Sets the method that PRMan uses to tessellate objects.  Spherical may help with volume rendering",
+        items=[
+            ("planarprojection", "Planar Projection",
+             "Tessellates using the screen space coordinates of a primitive projected onto a plane"),
+            ("sphericalprojection", "Spherical Projection",
+             "Tessellates using the coordinates of a primitive projected onto a sphere"),
+            ("worlddistance", "World Distance", "Tessellation is determined using distances measured in world space units compared to the current micropolygon length")],
+        default="sphericalprojection")
+
+    worlddistancelength = FloatProperty(
+        name="World Distance Length",
+        description="If this is a value above 0, it sets the length of a micropolygon after tessellation",
+        default=-1.0)
+
+    instanceworlddistancelength = FloatProperty(
+        name="Instance World Distance Length",
+        description="Set the length of a micropolygon for tessellated instanced meshes",
+        default=1e30)
+
+    threads = IntProperty(
+        name="Rendering Threads",
+        description="Number of processor threads to use.  Note, 0 uses all cores, -1 uses all cores but one.",
+        min=-32, max=32, default=-1)
+
+    use_statistics = BoolProperty(
+        name="Statistics",
+        description="Print statistics to stats.xml after render",
+        default=False)
+
+    editor_override = StringProperty(
+        name="Text Editor",
+        description="The editor to open RIB file in (Overrides system default!)",
+        default="")
+
+    texture_cache_size = IntProperty(
+        name="Texture Cache Size (MB)",
+        description="Maximum number of megabytes to devote to texture caching.",
+        default=2048)
+
+    geo_cache_size = IntProperty(
+        name="Tesselation Cache Size (MB)",
+        description="Maximum number of megabytes to devote to tesselation cache for tracing geometry.",
+        default=2048)
+
+    opacity_cache_size = IntProperty(
+        name="Opacity Cache Size (MB)",
+        description="Maximum number of megabytes to devote to caching opacity and presence values.  0 turns this off.",
+        default=1000)
+
+    lazy_rib_gen = BoolProperty(
+        name="Cache Rib Generation",
+        description="On unchanged objects, don't re-emit rib.  Will result in faster spooling of renders.",
+        default=True)
+
+    always_generate_textures = BoolProperty(
+        name="Always Recompile Textures",
+        description="Recompile used textures at export time to the current rib folder. Leave this unchecked to speed up re-render times",
+        default=False)
 
     ### overrides of base class methods ###
-    
 
     def to_rib(self, ri, **kwargs):
         ''' Pretty simply generates the RIB for the scene and injects all the objects '''
         scene = self.id_data
         scene_rm = scene.renderman
 
-        #self.export_options(ri)
-        #self.export_displayfilters(ri)
-        #self.export_samplefilters(ri)
-        #self.export_hider(ri)
-        #self.export_integrator(ri)
+        # self.export_options(ri)
+        # self.export_displayfilters(ri)
+        # self.export_samplefilters(ri)
+        # self.export_hider(ri)
+        # self.export_integrator(ri)
 
         ri.FrameBegin(scene.frame_current)
 
-        #self.export_render_settings(ri)
+        # self.export_render_settings(ri)
         #export_default_bxdf(ri, "default")
         #export_materials_archive(ri, rpass, scene)
 
@@ -97,7 +252,7 @@ class RendermanSceneSettings(RendermanBasePropertyGroup):
         # first we sort the items in motion by motion segments
         for ob in scene.objects:
             ob_rm = ob.renderman
-            
+
             add_mb_item(ob_rm)
 
             for data in ob_rm.get_data_items():
@@ -127,10 +282,8 @@ class RendermanSceneSettings(RendermanBasePropertyGroup):
         for segs, items in motion_items.items():
             for item in items:
                 item.check_motion()
-    
-    
+
     ### scene specific methods ###
-    
 
     def clear_motion(self):
         ''' remove all the motion data on objects and datas '''
@@ -186,7 +339,7 @@ class RendermanSceneSettings(RendermanBasePropertyGroup):
             objects get exported '''
         scene = self.id_data
         ri.WorldBegin()
-        #if scene.world:
+        # if scene.world:
         #    scene.world.renderman.to_rib(ri, **kwargs)
 
         self.export_displays_for_layer(ri, render_layer, **kwargs)
@@ -204,7 +357,7 @@ class RendermanSceneSettings(RendermanBasePropertyGroup):
         scene = self.id_data
         render_settings = scene.render
 
-        #bucket order
+        # bucket order
         # bucket_order = 'spiral' if is_interactive else self.bucket_shape.lower()
         # bucket_params = {'string order': [bucket_order]}
         # if bucket_order == 'spiral':
@@ -230,7 +383,7 @@ class RendermanSceneSettings(RendermanBasePropertyGroup):
             ri.Display('null', 'null', "rgba", {})
 
         # rm_rl = self.render_layers.get(render_layer.name, None)
-        
+
         # # there's no render layer settins
         # if not rm_rl:
         #     RenderLayer.simple_to_rib(ri, render_layer)
@@ -280,5 +433,3 @@ class RendermanSceneSettings(RendermanBasePropertyGroup):
         #     ri.Display('+' + image_base + '.variance.exr', 'openexr',
         #                "Ci,a,mse,albedo,albedo_var,diffuse,diffuse_mse,specular,specular_mse,z,z_var,normal,normal_var,forward,backward",
         #                {"string storage": "tiled"})
-
-    
