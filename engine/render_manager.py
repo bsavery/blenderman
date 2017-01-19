@@ -150,6 +150,8 @@ class RenderManager(object):
         if not os.path.exists(self.paths['frame_archives']):
             os.makedirs(self.paths['frame_archives'])
         self.paths['archive'] = os.path.dirname(static_archive_dir)
+        self.paths['output_files'] = []
+        self.paths['aovs_to_denoise'] = []
 
     def update_frame_num(self, num):
         ''' When rendering an animation we may need to use the same rpass to output multiple
@@ -199,7 +201,7 @@ class RenderManager(object):
         self.rm.clear_motion()
 
         self.ri.Begin(self.paths['frame_rib'])
-        self.rm.to_rib(self.ri, paths=self.paths)
+        self.rm.to_rib(self.ri, paths=self.paths, display_driver=self.display_driver)
         self.ri.End()
 
         self.rm.clear_motion()

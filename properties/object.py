@@ -1,4 +1,5 @@
 from .base_classes import RendermanPropertyGroup
+from .rib_helpers import rib
 
 ''' Object Properties ''' 
 class RendermanObjectSettings(RendermanPropertyGroup):
@@ -12,6 +13,9 @@ class RendermanObjectSettings(RendermanPropertyGroup):
         ob = self.id_data
         ri.AttributeBegin()
         ri.Attribute("identifier", {"string name": ob.name})
+
+        m = ob.matrix_local
+        ri.ConcatTransform(rib(m))
 
         for data in self.get_data_items():
             archive_name = data.renderman.get_archive_filename(paths=kwargs['paths'], ob=ob)
