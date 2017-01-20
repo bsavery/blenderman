@@ -2,10 +2,57 @@ import bpy
 from .base_classes import PRManPanel
 from ..resources.icons.icons import load_icons
 
-# Panel for advanced render settings
+'''This file defines the panels that appear in the Render ui tab'''
+
+
+class RENDER_PT_renderman_motion_blur(PRManPanel):
+    '''This panel covers the settings for Renderman's motion blur'''
+    bl_label = "Motion Blur"
+    bl_options = {'DEFAULT_CLOSED'}
+
+    def draw(self, context):
+        rm = context.scene.renderman
+
+        icon = 'DISCLOSURE_TRI_DOWN' if rm.advanced_timing else 'DISCLOSURE_TRI_RIGHT'
+
+        layout = self.layout
+        col = layout.column()
+        col.prop(rm, "motion_blur")
+        col = layout.column()
+        col.enabled = rm.motion_blur
+        col.prop(rm, "sample_motion_blur")
+        col.prop(rm, "motion_segments")
+        col.prop(rm, "shutter_timing")
+        col.prop(rm, "shutter_angle")
+        row = col.row(align=True)
+        row.prop(rm, "shutter_efficiency_open")
+        row.prop(rm, "shutter_efficiency_close")
+        layout.separator()
+        col = layout.column()
+        col.prop(item, "show_advanced", icon=icon,
+                 text="Advanced Shutter Timing", icon_only=True, emboss=False)
+        if rm.advanced_timing:
+            row = col.row(align=True)
+            row.prop(rm, "c1")
+            row.prop(rm, "c2")
+            row.prop(rm, "d1")
+            row.prop(rm, "d2")
+            row = col.row(align=True)
+            row.prop(rm, "e1")
+            row.prop(rm, "e2")
+            row.prop(rm, "f1")
+            row.prop(rm, "f2")
 
 
 class RENDER_PT_renderman_advanced_settings(PRManPanel):
+    '''This panel covers additional render settings
+
+    # shading and tessellation
+    # geometry caches
+    # pixel filter
+    # render tiled order
+    # additional options (statistics, rib and texture generation caching,
+    thread settings)'''
     bl_label = "Advanced"
     bl_options = {'DEFAULT_CLOSED'}
 
@@ -32,7 +79,6 @@ class RENDER_PT_renderman_advanced_settings(PRManPanel):
         col.prop(rm, "texture_cache_size")
         col.prop(rm, "geo_cache_size")
         col.prop(rm, "opacity_cache_size")
-
         layout.separator()
         col = layout.column()
         col.label("Pixel Filter:")
@@ -40,11 +86,6 @@ class RENDER_PT_renderman_advanced_settings(PRManPanel):
         row = col.row(align=True)
         row.prop(rm, "pixelfilter_x", text="Size X")
         row.prop(rm, "pixelfilter_y", text="Size Y")
-
-        # layout.separator()
-        # col = layout.column()
-        # col.prop(rm, "dark_falloff")
-
         layout.separator()
         col = layout.column()
         col.label("Bucket Order:")
@@ -53,7 +94,6 @@ class RENDER_PT_renderman_advanced_settings(PRManPanel):
             row = col.row(align=True)
             row.prop(rm, "bucket_sprial_x", text="X")
             row.prop(rm, "bucket_sprial_y", text="Y")
-
         layout.separator()
         col = layout.column()
         row = col.row()

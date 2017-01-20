@@ -1,8 +1,12 @@
 import os.path
 from .base_classes import RendermanBasePropertyGroup
+import bpy
 from bpy.props import *
 from .rib_helpers import *
-from ..util.util import path_list_convert
+from ..util.util import path_list_convert, args_files_in_path
+from bpy.props import PointerProperty, StringProperty, BoolProperty, \
+    EnumProperty, IntProperty, FloatProperty, FloatVectorProperty, \
+    CollectionProperty, BoolVectorProperty
 
 
 def export_searchpaths(ri, paths):
@@ -24,6 +28,37 @@ class RendermanSceneSettings(RendermanBasePropertyGroup):
     ''' Holds the main property endpoint for converting a scene to Renderman 
         as well as the methods for caching any data under it'''
     ### scene properties ###
+
+    # sampling
+    pixel_variance = FloatProperty(
+        name="Pixel Variance",
+        description="If a pixel changes by less than this amount when updated, it will not receive further samples in adaptive mode.  Lower values lead to increased render times and higher quality images.",
+        min=0, max=1, default=.01)
+
+    dark_falloff = FloatProperty(
+        name="Dark Falloff",
+        description="Deprioritizes adaptive sampling in dark areas. Raising this can potentially reduce render times but may increase noise in dark areas.",
+        min=0, max=1, default=.025)
+
+    min_samples = IntProperty(
+        name="Min Samples",
+        description="The minimum number of camera samples per pixel.  If this is set to '0' then the min samples will be the square root of the max_samples.",
+        min=0, default=4)
+
+    max_samples = IntProperty(
+        name="Max Samples",
+        description="The maximum number of camera samples per pixel.  This should be set in 'power of two' numbers (1, 2, 4, 8, 16, etc).",
+        min=0, default=128)
+
+    incremental = BoolProperty(
+        name="Incremental Render",
+        description="When enabled every pixel is sampled once per render pass.  This allows the user to quickly see the entire image during rendering, and as each pass completes the image will become clearer.  NOTE-This mode is automatically enabled with some render integrators (PxrVCM)",
+        default=True)
+
+    show_integrator_settings = BoolProperty(
+        name="Integration Settings",
+        description="Show Integrator Settings",
+        default=False)
 
     # motion blur
     motion_blur = BoolProperty(
