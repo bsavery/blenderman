@@ -7,7 +7,7 @@ class RendermanObjectSettings(RendermanPropertyGroup):
     ''' Object Properties, also handles ribgen for mesh data '''
     ### object specific properties ###
 
-    # raytrace panel
+    # raytrace parameters
     raytrace_pixel_variance = FloatProperty(
         name="Relative Pixel Variance",
         description="Allows this object ot render to a different quality level than the main scene.  Actual pixel variance will be this number multiplied by the main pixel variance.",
@@ -39,14 +39,111 @@ class RendermanObjectSettings(RendermanPropertyGroup):
         default=True)
 
     raytrace_intersectpriority = IntProperty(
-        name="Intersect Priority",
-        description="Dictates a priority used when ray tracing overlapping materials",
+        name="Intersection Priority",
+        description="Dictates the priority used when using nested dielectrics (overlapping materials).  Objects with higher numbers will override lower ones",
         default=0)
 
     raytrace_ior = FloatProperty(
         name="Index of Refraction",
         description="When using nested dielectrics (overlapping materials), this should be set to the same value as the ior of your material",
         default=1.0)
+
+    # shading parameters
+    shading_override = BoolProperty(
+        name="Override Default Shading Rate",
+        description="Override the default shading rate for this object.",
+        default=False)
+    shadingrate = FloatProperty(
+        name="Micropolygon Length",
+        description="Maximum distance between displacement samples (lower = more detailed shading).",
+        default=1.0)
+
+    motion_segments_override = BoolProperty(
+        name="Override Motion Samples",
+        description="Override the global number of motion samples for this object.",
+        default=False)
+
+    motion_segments = IntProperty(
+        name="Motion Samples",
+        description="Number of motion samples to take for multi-segment motion blur.  This should be raised if you notice segment artifacts in blurs.",
+        min=2, max=16, default=2)
+
+    #visibility parameters
+    visibility_camera = BoolProperty(
+        name="Visible to Camera Rays",
+        description="Object visibility to Camera Rays.",
+        default=True)
+
+    visibility_trace_indirect = BoolProperty(
+        name="All Indirect Rays",
+        description="Sets all the indirect transport modes at once (specular & diffuse).",
+        default=True)
+
+    visibility_trace_transmission = BoolProperty(
+        name="Visible to Transmission Rays",
+        description="Object visibility to Transmission Rays (eg. shadow() and transmission()).",
+        default=True)
+
+    matte = BoolProperty(
+        name="Matte Object",
+        description="Render the object as a matte cutout (alpha 0.0 in final frame).",
+        default=False)
+
+    MatteID0 = FloatVectorProperty(
+        name="Matte ID 0",
+        description="Matte ID 0 Color, you also need to add the PxrMatteID node to your bxdf",
+        size=3,
+        subtype='COLOR',
+        default=[0.0, 0.0, 0.0], soft_min=0.0, soft_max=1.0)
+
+    MatteID1 = FloatVectorProperty(
+        name="Matte ID 1",
+        description="Matte ID 1 Color, you also need to add the PxrMatteID node to your bxdf",
+        size=3,
+        subtype='COLOR',
+        default=[0.0, 0.0, 0.0], soft_min=0.0, soft_max=1.0)
+
+    MatteID2 = FloatVectorProperty(
+        name="Matte ID 2",
+        description="Matte ID 2 Color, you also need to add the PxrMatteID node to your bxdf",
+        size=3,
+        subtype='COLOR',
+        default=[0.0, 0.0, 0.0], soft_min=0.0, soft_max=1.0)
+
+    MatteID3 = FloatVectorProperty(
+        name="Matte ID 3",
+        description="Matte ID 3 Color, you also need to add the PxrMatteID node to your bxdf",
+        size=3,
+        subtype='COLOR',
+        default=[0.0, 0.0, 0.0], soft_min=0.0, soft_max=1.0)
+
+    MatteID4 = FloatVectorProperty(
+        name="Matte ID 4",
+        description="Matte ID 4 Color, you also need to add the PxrMatteID node to your bxdf",
+        size=3,
+        subtype='COLOR',
+        default=[0.0, 0.0, 0.0], soft_min=0.0, soft_max=1.0)
+
+    MatteID5 = FloatVectorProperty(
+        name="Matte ID 5",
+        description="Matte ID 5 Color, you also need to add the PxrMatteID node to your bxdf",
+        size=3,
+        subtype='COLOR',
+        default=[0.0, 0.0, 0.0], soft_min=0.0, soft_max=1.0)
+
+    MatteID6 = FloatVectorProperty(
+        name="Matte ID 6",
+        description="Matte ID 6 Color, you also need to add the PxrMatteID node to your bxdf",
+        size=3,
+        subtype='COLOR',
+        default=[0.0, 0.0, 0.0], soft_min=0.0, soft_max=1.0)
+
+    MatteID7 = FloatVectorProperty(
+        name="Matte ID 7",
+        description="Matte ID 7 Color, you also need to add the PxrMatteID node to your bxdf",
+        size=3,
+        subtype='COLOR',
+        default=[0.0, 0.0, 0.0], soft_min=0.0, soft_max=1.0)
 
     ### overrides of base class methods ###
     def to_rib(self, ri, **kwargs):
