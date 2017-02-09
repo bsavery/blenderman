@@ -2962,6 +2962,10 @@ def get_channel_name(aov, layer_name):
 
     elif aov.aov_name == "color custom_lpe":
         aov_channel_name = aov.name
+        
+    else:
+        aov_channel_name = '%s_%s' % (
+            aov_name, layer_name)
 
     return aov_channel_name
 
@@ -3143,14 +3147,12 @@ def export_display(ri, rpass, scene):
             # if this is a multilayer combine em!
             if rm_rl.export_multilayer and rpass.external_render:
                 channels = []
+                channel_name = get_channel_name(aov, layer_name)
                 for aov in rm_rl.custom_aovs:
-                    channels.append("Ci,a") if aov.channel_name is 'rgba' else channels.append(
-                        aov.channel_name)
+                    channels.append(channel_name)
                 out_type, ext = ('openexr', 'exr')
-                # removes 'z' and 'zback' channels as DeepEXR will
-                # automatically add them
                 if rm_rl.use_deep:
-                    channels = [x for x in channels if x not in [
+                    channels = [x for x in channels if x.split('_')[0] not in [
                         'z_depth', 'z_back']]
                     out_type, ext = ('deepexr', 'exr')
                 params = {"string storage": rm_rl.exr_storage}
