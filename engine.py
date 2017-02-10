@@ -24,6 +24,7 @@
 # ##### END MIT LICENSE BLOCK #####
 import bpy
 import bpy_types
+from concurrent.futures import ThreadPoolExecutor, as_completed
 import math
 import os
 import time
@@ -31,6 +32,7 @@ import subprocess
 from subprocess import Popen, PIPE
 import mathutils
 from mathutils import Matrix, Vector, Quaternion
+from multiprocessing import cpu_count
 import re
 import traceback
 import glob
@@ -801,9 +803,17 @@ class RPass:
 
         files_converted = []
         texture_list = []
+        futures = []
 
         if not temp_texture_list:
             return
+
+        if self.rm.threads > 0:
+            num_threads = self.rm.threads
+        else:
+            num_threads = cpu_count() + self.rm.threads
+
+        pool = ThreadPoolExecutor(num_threads)
 
         # for UDIM textures
         for in_file, out_file, options in temp_texture_list:
@@ -838,9 +848,16 @@ class RPass:
 
                 environ = os.environ.copy()
                 environ['RMANTREE'] = self.paths['rmantree']
-                process = subprocess.Popen(cmd, cwd=Blendcdir,
-                                           stdout=subprocess.PIPE, env=environ)
-                process.communicate()
-                files_converted.append(out_file_path)
+
+                def convert(cmd, out_file_path):
+                    process = subprocess.Popen(cmd, cwd=Blendcdir,
+                                               stdout=subprocess.PIPE, env=environ)
+                    process.communicate()
+                    return out_file_path
+
+                futures.append(pool.submit(convert, cmd, out_file_path))
+
+        for f in as_completed(futures):
+            files_converted.append(f.result())
 
         return files_converted
