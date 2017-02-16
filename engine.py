@@ -25,6 +25,7 @@
 import bpy
 import bpy_types
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from itertools import chain
 import math
 import os
 import time
@@ -809,23 +810,27 @@ class RPass:
             return
 
         if self.rm.threads > 0:
-            num_threads = self.rm.threads
+            max_workers = self.rm.threads
         else:
-            num_threads = cpu_count() + self.rm.threads
+            max_workers = cpu_count() + self.rm.threads
 
-        pool = ThreadPoolExecutor(num_threads)
+        pool = ThreadPoolExecutor(max_workers)
 
-        # for UDIM textures
-        for in_file, out_file, options in temp_texture_list:
+		# for UDIM textures
+        def udim(texture):
+            in_file, out_file, options = texture
+            textures = []
             if '_MAPID_' in in_file:
                 in_file = get_real_path(in_file)
                 for udim_file in glob.glob(in_file.replace('_MAPID_', '*')):
-                    texture_list.append(
+                    textures.append(
                         (udim_file, get_tex_file_name(udim_file), options))
             else:
-                texture_list.append((in_file, out_file, options))
+                textures.append((in_file, out_file, options))
+            return textures
 
-        for in_file, out_file, options in texture_list:
+        def missing(texture):
+            in_file, out_file, options = texture
             in_file = get_real_path(in_file)
             out_file_path = os.path.join(
                 self.paths['texture_output'], out_file)
@@ -836,7 +841,23 @@ class RPass:
                     os.path.getmtime(out_file_path):
                 debug("info", "TEXTURE %s EXISTS (or is not dirty)!" %
                       out_file)
-            else:
+                return False
+            return True
+
+        texture_list = list(filter(missing, chain.from_iterable(
+                            map(udim, temp_texture_list))))
+
+        num_textures = len(texture_list)
+
+        if num_textures > 0:
+            num_threads = max(math.ceil(max_workers / num_textures), 1)
+            for in_file, out_file, options in texture_list:
+                in_file = get_real_path(in_file)
+                out_file_path = os.path.join(
+                    self.paths['texture_output'], out_file)
+
+                options += ["-t:%d" % num_threads]
+
                 cmd = [os.path.join(self.paths['rmantree'], 'bin',
                                     self.paths['path_texture_optimiser'])] + \
                     options + [in_file, out_file_path]
@@ -857,7 +878,7 @@ class RPass:
 
                 futures.append(pool.submit(convert, cmd, out_file_path))
 
-        for f in as_completed(futures):
-            files_converted.append(f.result())
+            for f in as_completed(futures):
+                files_converted.append(f.result())
 
         return files_converted
