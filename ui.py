@@ -26,6 +26,7 @@
 import bpy
 import math
 import blf
+from . import addon_updater_ops
 from bpy.types import Panel
 from .nodes import NODE_LAYOUT_SPLIT, is_renderman_nodetree, panel_node_draw
 
@@ -2453,6 +2454,8 @@ class Renderman_UI_Panel(bpy.types.Panel):
         rman_info = icons.get("info")
         layout.operator("wm.url_open", text="About Renderman",
                         icon_value=rman_info.icon_id).url = "http://renderman.pixar.com/view/non-commercial-renderman"
+
+        addon_updater_ops.update_notice_box_ui()
 
         # Reload the addon
         #rman_reload = icons.get("reload_plugin")
