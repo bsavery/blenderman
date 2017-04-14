@@ -873,7 +873,7 @@ def register(bl_info):
 	# to skip showing for udpater; see code for function above.
 	# Set the min and max versions allowed to install.
 	# Optional, default None
-	updater.version_min_update = (0,0,0) # min install (>=) will install this and higher
+	updater.version_min_update = (21,3,0) # min install (>=) will install this and higher
 	# updater.version_min_update = None  # if not wanting to define a min
 	updater.version_max_update = (999999,999999,999999) # max install (<) will install strictly anything lower
 	# updater.version_max_update = None  # if not wanting to define a max
