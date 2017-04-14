@@ -213,6 +213,7 @@ class RENDER_PT_renderman_render(PRManButtonsPanel, Panel):
         layout = self.layout
         rd = context.scene.render
         rm = context.scene.renderman
+        addon_updater_ops.check_for_update_background(context)
 
         # Render
         row = layout.row(align=True)
@@ -253,7 +254,7 @@ class RENDER_PT_renderman_render(PRManButtonsPanel, Panel):
         col = layout.column()
         col.prop(context.scene.renderman, "render_selected_objects_only")
         col.prop(rm, "do_denoise")
-
+        addon_updater_ops.update_notice_box_ui(self, context)
 
 class RENDER_PT_renderman_spooling(PRManButtonsPanel, Panel):
     bl_label = "External Rendering"
@@ -2455,7 +2456,6 @@ class Renderman_UI_Panel(bpy.types.Panel):
         layout.operator("wm.url_open", text="About Renderman",
                         icon_value=rman_info.icon_id).url = "http://renderman.pixar.com/view/non-commercial-renderman"
 
-        addon_updater_ops.update_notice_box_ui()
 
         # Reload the addon
         #rman_reload = icons.get("reload_plugin")
