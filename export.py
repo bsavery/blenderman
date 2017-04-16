@@ -1779,6 +1779,21 @@ def has_emissive_material(db):
     return False
 
 
+def export_for_bake(db):
+    export = True
+    node_names = []
+    for mat in db.material:
+        if mat and mat.node_tree:
+            nt = mat.node_tree
+            for n in nt.nodes:
+                node_names.append(n.name)
+    if node_names:
+        if 'PxrBakeTexture' not in node_names:
+            export = False
+
+    return export
+
+
 # return if a psys should be animated
 # NB:  we ALWAYS need the animating psys if the emitter is transforming,
 # not just if MB is on
@@ -1798,10 +1813,12 @@ def get_instances_and_blocks(obs, rpass):
     scene = rpass.scene
     mb_on = scene.renderman.motion_blur
     mb_segs = scene.renderman.motion_segments
+    bake = rpass.bake
 
     for ob in obs:
         inst = get_instance(ob, rpass.scene, mb_on)
         if inst:
+            do_inst = False
             ob_mb_segs = ob.renderman.motion_segments if ob.renderman.motion_segments_override else mb_segs
 
             # add the instance to the motion segs list if transforming
@@ -1813,6 +1830,7 @@ def get_instances_and_blocks(obs, rpass):
             # now get the data_blocks for the instance
             inst_data_blocks = get_data_blocks_needed(ob, rpass, mb_on)
             for db in inst_data_blocks:
+                do_block = export_for_bake(db)
                 if not db.dupli_data:
                     inst.data_block_names.append(db.name)
 
@@ -1826,9 +1844,12 @@ def get_instances_and_blocks(obs, rpass):
                         motion_segs[ob_mb_segs] = ([], [])
                     motion_segs[ob_mb_segs][1].append(db.name)
 
-                data_blocks[db.name] = db
+                if (bake and do_block) or not bake:
+                    data_blocks[db.name] = db
+                    do_inst = True
 
-            instances[inst.name] = inst
+            if do_inst:
+                instances[inst.name] = inst
 
     return instances, data_blocks, motion_segs
 

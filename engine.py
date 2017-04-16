@@ -769,7 +769,7 @@ class RPass:
         self.ri.Begin(self.paths['rib_output'])
 
         # Check if rendering select objects only.
-        if(self.scene.renderman.render_selected_objects_only):
+        if rm.render_selected_objects_only:
             visible_objects = get_Selected_Objects(self.scene)
         else:
             visible_objects = None
