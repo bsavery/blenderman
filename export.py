@@ -1822,7 +1822,7 @@ def get_instances_and_blocks(obs, rpass):
             ob_mb_segs = ob.renderman.motion_segments if ob.renderman.motion_segments_override else mb_segs
 
             # add the instance to the motion segs list if transforming
-            if inst.transforming:
+            if inst.transforming and not bake:
                 if ob_mb_segs not in motion_segs:
                     motion_segs[ob_mb_segs] = ([], [])
                 motion_segs[ob_mb_segs][0].append(inst.name)
@@ -1839,7 +1839,7 @@ def get_instances_and_blocks(obs, rpass):
                     continue
 
                 # add data_block to mb list
-                if db.deforming and mb_on:
+                if db.deforming and mb_on and not bake:
                     if ob_mb_segs not in motion_segs:
                         motion_segs[ob_mb_segs] = ([], [])
                     motion_segs[ob_mb_segs][1].append(db.name)
@@ -3411,7 +3411,8 @@ def write_rib(rpass, scene, ri, visible_objects=None, engine=None, do_objects=Tr
     # export_global_illumination_lights(ri, rpass, scene)
     # export_world_coshaders(ri, rpass, scene) # BBM addition
     export_world(ri, scene.world)
-    export_scene_lights(ri, instances)
+    if not rpass.bake:
+        export_scene_lights(ri, instances)
 
     export_default_bxdf(ri, "default")
     export_materials_archive(ri, rpass, scene)
