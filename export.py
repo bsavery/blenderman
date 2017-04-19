@@ -1780,23 +1780,18 @@ def has_emissive_material(db):
 
 
 def export_for_bake(db):
-    export = True
-    node_names = []
     for mat in db.material:
         if mat and mat.node_tree:
-            nt = mat.node_tree
-            for n in nt.nodes:
-                node_names.append(n.name)
-    if node_names:
-        if 'PxrBakeTexture' not in node_names:
-            export = False
-
-    return export
-
+            for n in mat.node_tree.nodes:
+                if n.bl_idname in ("PxrBakeTexturePatternNode", "PxrBakePointCloudPatternNode"):
+                    return True
+        return False
 
 # return if a psys should be animated
 # NB:  we ALWAYS need the animating psys if the emitter is transforming,
 # not just if MB is on
+
+
 def is_psys_animating(ob, psys, do_mb):
     return (psys.settings.frame_start != psys.settings.frame_end) or is_transforming(ob, True, recurse=True)
 
@@ -1807,13 +1802,13 @@ def is_psys_animating(ob, psys, do_mb):
 
 
 def get_instances_and_blocks(obs, rpass):
+    bake = rpass.bake
     instances = {}
     data_blocks = {}
     motion_segs = {}
     scene = rpass.scene
-    mb_on = scene.renderman.motion_blur
+    mb_on = scene.renderman.motion_blur if not bake else False
     mb_segs = scene.renderman.motion_segments
-    bake = rpass.bake
 
     for ob in obs:
         inst = get_instance(ob, rpass.scene, mb_on)
@@ -1822,7 +1817,7 @@ def get_instances_and_blocks(obs, rpass):
             ob_mb_segs = ob.renderman.motion_segments if ob.renderman.motion_segments_override else mb_segs
 
             # add the instance to the motion segs list if transforming
-            if inst.transforming and not bake:
+            if inst.transforming:
                 if ob_mb_segs not in motion_segs:
                     motion_segs[ob_mb_segs] = ([], [])
                 motion_segs[ob_mb_segs][0].append(inst.name)
@@ -1830,7 +1825,6 @@ def get_instances_and_blocks(obs, rpass):
             # now get the data_blocks for the instance
             inst_data_blocks = get_data_blocks_needed(ob, rpass, mb_on)
             for db in inst_data_blocks:
-                do_block = export_for_bake(db)
                 if not db.dupli_data:
                     inst.data_block_names.append(db.name)
 
@@ -1839,12 +1833,12 @@ def get_instances_and_blocks(obs, rpass):
                     continue
 
                 # add data_block to mb list
-                if db.deforming and mb_on and not bake:
+                if db.deforming and mb_on:
                     if ob_mb_segs not in motion_segs:
                         motion_segs[ob_mb_segs] = ([], [])
                     motion_segs[ob_mb_segs][1].append(db.name)
 
-                if (bake and do_block) or not bake:
+                if (bake and export_for_bake(db)) or not bake:
                     data_blocks[db.name] = db
                     do_inst = True
 
@@ -3395,26 +3389,30 @@ def write_rib(rpass, scene, ri, visible_objects=None, engine=None, do_objects=Tr
         ri.Display("null", "null", "rgba")
 
     export_hider(ri, rpass, scene)
-    export_integrator(ri, rpass, scene)
+
+    if not rpass.bake:
+        export_integrator(ri, rpass, scene)
 
     # export_inline_rib(ri, rpass, scene)
+
     scene.frame_set(scene.frame_current)
     ri.FrameBegin(scene.frame_current)
 
-    export_camera(ri, scene, instances)
-    export_render_settings(ri, rpass, scene)
+    if not rpass.bake:
+        export_camera(ri, scene, instances)
+        export_render_settings(ri, rpass, scene)
+
     # export_global_illumination_settings(ri, rpass, scene)
 
     ri.WorldBegin()
-    export_world_rib(ri, scene.world)
 
     # export_global_illumination_lights(ri, rpass, scene)
     # export_world_coshaders(ri, rpass, scene) # BBM addition
-    export_world(ri, scene.world)
     if not rpass.bake:
+        export_world_rib(ri, scene.world)
+        export_world(ri, scene.world)
         export_scene_lights(ri, instances)
-
-    export_default_bxdf(ri, "default")
+        export_default_bxdf(ri, "default")
     export_materials_archive(ri, rpass, scene)
     # now output the object archives
     for name, instance in instances.items():
