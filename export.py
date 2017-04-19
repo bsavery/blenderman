@@ -2973,7 +2973,7 @@ def export_samplefilters(ri, scene):
     filter_names = []
     for sf in rm.sample_filters:
         params = property_group_to_params(sf.get_filter_node())
-        ri.DisplayFilter(sf.get_filter_name(), sf.name, params)
+        ri.SampleFilter(sf.get_filter_name(), sf.name, params)
         filter_names.append(sf.name)
 
     if len(filter_names) > 1:
