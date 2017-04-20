@@ -1235,6 +1235,8 @@ class OBJECT_PT_renderman_object_render(CollectionPanel, Panel):
         row = col.row()
         row.prop(rm, "visibility_trace_transmission", text="Transmission")
         row.prop(rm, "matte")
+        row = col.row()
+        row.prop(rm, "holdout")
 
         col.separator()
 

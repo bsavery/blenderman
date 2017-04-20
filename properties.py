@@ -2192,6 +2192,12 @@ class RendermanObjectSettings(bpy.types.PropertyGroup):
         name="Matte Object",
         description="Render the object as a matte cutout (alpha 0.0 in final frame)",
         default=False)
+
+    holdout = BoolProperty(
+        name="Holdout",
+        description="Render the object as a holdout",
+        default=False)
+    
     visibility_camera = BoolProperty(
         name="Visible to Camera Rays",
         description="Object visibility to Camera Rays",

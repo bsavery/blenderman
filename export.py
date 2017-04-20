@@ -2345,6 +2345,9 @@ def export_object_attributes(ri, scene, ob, visible_objects):
             "int intersectpriority"] = ob.renderman.raytrace_intersectpriority
         shade_params["float indexofrefraction"] = ob.renderman.raytrace_ior
 
+    if ob.renderman.holdout:
+        trace_params["int holdout"] = 1
+
     if ob.renderman.raytrace_override:
         if ob.renderman.raytrace_maxdiffusedepth != 1:
             trace_params[
@@ -2968,13 +2971,42 @@ def export_displayfilters(ri, scene):
         ri.DisplayFilter('PxrDisplayFilterCombiner', 'combiner', params)
 
 
-def export_samplefilters(ri, scene):
+def export_samplefilters(ri, rpass, scene):
     rm = scene.renderman
     filter_names = []
+    display_driver = rpass.display_driver
+    addon_prefs = get_addon_prefs()
     for sf in rm.sample_filters:
         params = property_group_to_params(sf.get_filter_node())
         ri.SampleFilter(sf.get_filter_name(), sf.name, params)
         filter_names.append(sf.name)
+
+        # pxrshadowfilter aov generation
+        if sf.filter_type == 'PxrShadowFilter':
+            ri.DisplayChannel("color %s" % sf.PxrShadowFilter_settings.occludedAov, {
+                              "string source": "color lpe:holdouts;C[DS]+[LO]"})
+            dspy_name = user_path(
+                addon_prefs.path_aov_image, scene=scene, display_driver=rpass.display_driver,
+                layer_name='Shadow', pass_name='Occluded')
+            ri.Display('+' + dspy_name, display_driver,
+                       sf.PxrShadowFilter_settings.occludedAov, {"int asrgba": 1})
+
+            ri.DisplayChannel("color %s" % sf.PxrShadowFilter_settings.unoccludedAov, {
+                              "string source": "color lpe:holdouts;unoccluded;C[DS]+[LO]"})
+            dspy_name = user_path(
+                addon_prefs.path_aov_image, scene=scene, display_driver=rpass.display_driver,
+                layer_name='Shadow', pass_name='Unoccluded')
+            ri.Display('+' + dspy_name, display_driver,
+                       sf.PxrShadowFilter_settings.unoccludedAov, {"int asrgba": 1})
+
+            if sf.PxrShadowFilter_settings.shadowAov != 'a':
+                ri.DisplayChannel("color %s" %
+                                  sf.PxrShadowFilter_settings.shadowAov)
+                dspy_name = user_path(
+                    addon_prefs.path_aov_image, scene=scene, display_driver=rpass.display_driver,
+                    layer_name='Shadow', pass_name='ShadowOutput')
+                ri.Display('+' + dspy_name, display_driver,
+                           sf.PxrShadowFilter_settings.shadowAov, {"int asrgba": 1})
 
     if len(filter_names) > 1:
         params = {'reference samplefilter[%d] filter' % len(
@@ -3384,7 +3416,7 @@ def write_rib(rpass, scene, ri, visible_objects=None, engine=None, do_objects=Tr
     if not rpass.bake:
         export_display(ri, rpass, scene)
         export_displayfilters(ri, scene)
-        export_samplefilters(ri, scene)
+        export_samplefilters(ri, rpass, scene)
     else:
         ri.Display("null", "null", "rgba")
 
