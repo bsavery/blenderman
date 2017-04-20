@@ -69,7 +69,7 @@ class RendermanCameraSettings(bpy.types.PropertyGroup):
         default=4.0)
 
     dof_aspect = FloatProperty(
-        name="DOF Aspect",  default=1,  max=2,  min=0,
+        name="DOF Aspect", default=1, max=2, min=0,
         description="The ratio of blur in the 'x' and 'y' directions. Changing this value from the default will simulate anamorphic lens bokeh effects.  Values less than 1 elongate the blur on the 'y' axis.  Values greater than 1 elongate the blur on the 'x' axis")
 
     aperture_sides = IntProperty(
@@ -345,12 +345,12 @@ class RendermanAOV(bpy.types.PropertyGroup):
     aov_pixelfilter = EnumProperty(
         name="Pixel Filter",
         description="Filter to use to combine pixel samples.  If 'default' is selected the aov will use the filter set in the render panel",
-        items=[('default',  'Default',  ''),
+        items=[('default', 'Default', ''),
                ('box', 'Box', ''),
                ('sinc', 'Sinc', ''),
                ('gaussian', 'Gaussian', ''),
-               ('triangle',  'Triangle',  ''),
-               ('catmull-rom',  'Catmull-Rom', '')],
+               ('triangle', 'Triangle', ''),
+               ('catmull-rom', 'Catmull-Rom', '')],
         default='default')
     aov_pixelfilter_x = IntProperty(
         name="Filter Size X",
@@ -380,9 +380,9 @@ class RendermanRenderLayerSettings(bpy.types.PropertyGroup):
         name="EXR Bit Depth",
         description="Sets the bit depth of the .exr file.  Leaving at 'default' will use the Renderman defaults",
         items=[
-            ('default',  'Default', ''),
-            ('half',  'Half (16 bit)',  ''),
-            ('float',  'Float (32 bit)', '')],
+            ('default', 'Default', ''),
+            ('half', 'Half (16 bit)', ''),
+            ('float', 'Float (32 bit)', '')],
         default='default')
 
     use_deep = BoolProperty(
@@ -398,14 +398,14 @@ class RendermanRenderLayerSettings(bpy.types.PropertyGroup):
         name="EXR Compression",
         description="Determined the compression used on the EXR file.  Leaving at 'default' will use the Renderman defaults",
         items=[
-            ('default',  'Default',  ''),
-            ('none',  'None',  ''),
-            ('rle',  'rle',  ''),
-            ('zip',  'zip',  ''),
-            ('zips',  'zips', ''),
-            ('pixar',  'pixar',  ''),
+            ('default', 'Default', ''),
+            ('none', 'None', ''),
+            ('rle', 'rle', ''),
+            ('zip', 'zip', ''),
+            ('zips', 'zips', ''),
+            ('pixar', 'pixar', ''),
             ('b44', 'b44', ''),
-            ('piz',  'piz',  '')],
+            ('piz', 'piz', '')],
         default='default')
 
     exr_storage = EnumProperty(
@@ -503,8 +503,8 @@ class RendermanSceneSettings(bpy.types.PropertyGroup):
         items=[('box', 'Box', ''),
                ('sinc', 'Sinc', ''),
                ('gaussian', 'Gaussian', ''),
-               ('triangle',  'Triangle',  ''),
-               ('catmull-rom',  'Catmull-Rom', '')],
+               ('triangle', 'Triangle', ''),
+               ('catmull-rom', 'Catmull-Rom', '')],
         default='gaussian')
     pixelfilter_x = IntProperty(
         name="Filter Size X",
@@ -812,23 +812,23 @@ class RendermanSceneSettings(bpy.types.PropertyGroup):
         name="Bit Depth",
         description="Sets the bit depth of the main EXR file.  Leaving at 'default' will use the Renderman defaults",
         items=[
-            ('default',  'Default', ''),
-            ('half',  'Half (16 bit)',  ''),
-            ('float',  'Float (32 bit)', '')],
+            ('default', 'Default', ''),
+            ('half', 'Half (16 bit)', ''),
+            ('float', 'Float (32 bit)', '')],
         default='default')
 
     exr_compression = EnumProperty(
         name="Compression",
         description="Determined the compression used on the main EXR file.  Leaving at 'default' will use the Renderman defaults",
         items=[
-            ('default',  'Default',  ''),
-            ('none',  'None',  ''),
-            ('rle',  'rle',  ''),
-            ('zip',  'zip',  ''),
-            ('zips',  'zips', ''),
-            ('pixar',  'pixar',  ''),
+            ('default', 'Default', ''),
+            ('none', 'None', ''),
+            ('rle', 'rle', ''),
+            ('zip', 'zip', ''),
+            ('zips', 'zips', ''),
+            ('pixar', 'pixar', ''),
             ('b44', 'b44', ''),
-            ('piz',  'piz',  '')],
+            ('piz', 'piz', '')],
         default='default')
 
     render_into = EnumProperty(
@@ -1318,7 +1318,7 @@ class RendermanLightSettings(bpy.types.PropertyGroup):
         if light_type == 'FILTER':
             self.update_filter_type(context)
 
-        #setattr(node, 'renderman_portal', light_type == 'PORTAL')
+        # setattr(node, 'renderman_portal', light_type == 'PORTAL')
 
     def update_area_shape(self, context):
         lamp = self.id_data
@@ -1787,7 +1787,6 @@ class RendermanWorldSettings(bpy.types.PropertyGroup):
 
         self.light_node = light_shader + "_settings"
 
-
     def update_vis(self, context):
         lamp = context.scene.world
 
@@ -2197,7 +2196,7 @@ class RendermanObjectSettings(bpy.types.PropertyGroup):
         name="Holdout",
         description="Render the object as a holdout",
         default=False)
-    
+
     visibility_camera = BoolProperty(
         name="Visible to Camera Rays",
         description="Object visibility to Camera Rays",
@@ -2384,7 +2383,7 @@ initial_aov_channels = [("a", "alpha", ""),
                         ("z", "z_depth", "Depth from the camera in world space"),
                         ("zback", "z_back",
                          "Depth at the back of volumetric objects in world space"),
-                        ("P",  "P",  "Position of the point hit by the incident ray"),
+                        ("P", "P", "Position of the point hit by the incident ray"),
                         ("PRadius", "PRadius",
                          "Cross-sectional size of the ray at the hit point"),
                         ("cpuTime", "cpuTime", "The time taken to render a pixel"),
@@ -2428,7 +2427,7 @@ initial_aov_channels = [("a", "alpha", ""),
                         ("__Nref", "Nref", "Reference Normal primvar (if available)"),
                         ("__WPref", "WPref",
                          "Reference World Position primvar (if available)"),
-                        ("__WNref",  "WNref", "Reference World Normal primvar (if available)")]
+                        ("__WNref", "WNref", "Reference World Normal primvar (if available)")]
 
 
 class RendermanPluginSettings(bpy.types.PropertyGroup):

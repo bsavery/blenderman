@@ -108,8 +108,7 @@ def is_visible_layer(scene, ob):
 
 def is_renderable(scene, ob):
     return (is_visible_layer(scene, ob) and not ob.hide_render) or \
-        (ob.type in ['ARMATURE', 'LATTICE', 'EMPTY']
-         and ob.dupli_type not in SUPPORTED_DUPLI_TYPES)
+        (ob.type in ['ARMATURE', 'LATTICE', 'EMPTY'] and ob.dupli_type not in SUPPORTED_DUPLI_TYPES)
     # and not ob.type in ('CAMERA', 'ARMATURE', 'LATTICE'))
 
 
@@ -126,7 +125,7 @@ def is_renderable_or_parent(scene, ob):
 
 
 def is_data_renderable(scene, ob):
-    return (is_visible_layer(scene, ob) and not ob.hide_render and not ob.type in ('EMPTY', 'ARMATURE', 'LATTICE'))
+    return (is_visible_layer(scene, ob) and not ob.hide_render and ob.type not in ('EMPTY', 'ARMATURE', 'LATTICE'))
 
 
 def renderable_objects(scene):
@@ -595,7 +594,8 @@ def get_primvars_particle(scene, psys, subframes):
                         [p for p in psys.particles if valid_particle(p, subframes)]:
                     pvars.append(pa.lifetime)
             elif p.data_source == 'ID':
-                pvars = [id for id,p in psys.particles.items() if valid_particle(p, subframes)]
+                pvars = [id for id, p in psys.particles.items(
+                ) if valid_particle(p, subframes)]
 
             primvars["varying float %s" % p.name] = pvars
 
@@ -765,25 +765,27 @@ def export_light_shaders(ri, lamp, group_name='', portal_parent=''):
         if lamp.type in ['SPOT', 'POINT']:
             params['int areaNormalize'] = 1
         if rm.renderman_type == 'PORTAL' and portal_parent and portal_parent.type == 'LAMP' \
-            and portal_parent.data.renderman.renderman_type == 'ENV':
+                and portal_parent.data.renderman.renderman_type == 'ENV':
             parent_node = portal_parent.data.renderman.get_light_node()
             parent_params = property_group_to_params(parent_node)
             params['string domeSpace'] = portal_parent.name
             params['string portalName'] = handle
-            params['string domeColorMap'] = parent_params['string lightColorMap']
-            params['float intensity'] = parent_params['float intensity'] * params['float intensityMult']
+            params['string domeColorMap'] = parent_params[
+                'string lightColorMap']
+            params['float intensity'] = parent_params[
+                'float intensity'] * params['float intensityMult']
             del params['float intensityMult']
             params['float exposure'] = parent_params['float exposure']
-            params['color lightColor'] = [i*j for i,j in zip(parent_params['color lightColor'],params['color tint'])]
+            params['color lightColor'] = [
+                i * j for i, j in zip(parent_params['color lightColor'], params['color tint'])]
             del params['color tint']
             if not params['int enableTemperature']:
-                params['int enableTemperature'] = parent_params['int enableTemperature']
-                params['float temperature'] = parent_params['float temperature']
+                params['int enableTemperature'] = parent_params[
+                    'int enableTemperature']
+                params['float temperature'] = parent_params[
+                    'float temperature']
             params['float specular'] *= parent_params['float specular']
             params['float diffuse'] *= parent_params['float diffuse']
-
-
-
 
         primary_vis = rm.light_primary_visibility
         ri.Attribute("visibility", {'int transmission': 0, 'int indirect': 0,
@@ -870,17 +872,18 @@ def export_light(ri, instance, instances):
         ri.Attribute("identifier", {"string name": lamp.name})
 
         if rm.renderman_type == 'PORTAL' and ob.parent and ob.parent.type == 'LAMP' and \
-            ob.parent.data.renderman.renderman_type == 'ENV':
+                ob.parent.data.renderman.renderman_type == 'ENV':
             export_transform(ri, instances[ob.parent.name])
-        
+
         export_transform(ri, instance)
 
         export_light_filters(ri, lamp)
         child_portals = []
         if rm.renderman_type == 'ENV' and ob.children:
-            child_portals = [child for child in ob.children if child.type == 'LAMP' and \
-                child.data.renderman.renderman_type == 'PORTAL']
-        # if this is an env light and there are portals just do those instead of shader
+            child_portals = [child for child in ob.children if child.type == 'LAMP' and
+                             child.data.renderman.renderman_type == 'PORTAL']
+        # if this is an env light and there are portals just do those instead
+        # of shader
         if not child_portals:
             export_light_shaders(ri, lamp, get_light_group(ob), ob.parent)
 
@@ -1024,7 +1027,8 @@ def export_blobby_particles(ri, scene, psys, ob, motion_data):
 def export_particle_instances(ri, scene, rpass, psys, ob, motion_data, type='OBJECT'):
     rm = psys.settings.renderman
 
-    params = get_primvars_particle(scene, psys, [scene.frame_current + i for (i, data) in motion_data])
+    params = get_primvars_particle(
+        scene, psys, [scene.frame_current + i for (i, data) in motion_data])
 
     if type == 'OBJECT':
         master_ob = bpy.data.objects[rm.particle_instance_object]
@@ -1086,7 +1090,8 @@ def export_particle_points(ri, scene, psys, ob, motion_data, objectCorrectionMat
         export_motion_begin(ri, motion_data)
 
     for (i, (P, rot, width)) in motion_data:
-        params = get_primvars_particle(scene, psys, [scene.frame_current + i for (i, data) in motion_data])
+        params = get_primvars_particle(
+            scene, psys, [scene.frame_current + i for (i, data) in motion_data])
         params[ri.P] = rib(P)
         params["uniform string type"] = rm.particle_type
         if rm.constant_width:
@@ -1395,7 +1400,7 @@ def split_multi_mesh(nverts, verts, primvars):
                                                         vert_index * 2 + num_verts * 2])
             if "facevarying normal N" in primvars:
                 meshes[mat_id][2]['facevarying normal N'].extend(
-                        primvars['facevarying normal N'][vert_index * 3:
+                    primvars['facevarying normal N'][vert_index * 3:
                                                      vert_index * 3 + num_verts * 3])
             vert_index += num_verts
 
@@ -1407,7 +1412,6 @@ def split_multi_mesh(nverts, verts, primvars):
                 vert_mapping[v_index] = i
                 mat_mesh[2]['P'].extend(
                     primvars['P'][int(v_index * 3):int(v_index * 3) + 3])
-                
 
             for i, vert_old in enumerate(mat_mesh[1]):
                 mat_mesh[1][i] = vert_mapping[vert_old]
@@ -2131,7 +2135,7 @@ def export_RIBArchive_data_archive(ri, scene, rpass, data_blocks, exportMaterial
         if db.type == "MESH":
             # Gets the world location and uses the ri transform to set it in
             # the archive.
-            if(objectMatrix == True):
+            if objectMatrix:
                 ri.Transform(rib(db.data.matrix_world))
                 ri.CoordinateSystem(db.name)
             export_mesh_archive(ri, scene, db)
@@ -2178,7 +2182,7 @@ def export_data_read_archive(ri, data_block, rpass):
         export_material_archive(ri, mat)
 
     archive_filename = relpath_archive(data_block.archive_filename, rpass)
-    
+
     # we want these relative paths of the archive
     if data_block.type == 'MESH' and not rpass.bake:
         # PxrMeshLight can't be in DRA
@@ -2496,12 +2500,11 @@ def export_dupli_archive(ri, scene, rpass, data_block, data_blocks):
                 export_material_archive(ri, mat)
             ri.Transform(rib(Matrix.Identity(4)))
             ri.CoordinateSystem(dupob.object.name)
-            
-
 
             if dupob.object.renderman.geometry_source == 'ARCHIVE':
                 dupob_rm = dupob.object.renderman
-                relPath = os.path.splitext(get_real_path(dupob_rm.path_archive))[0]
+                relPath = os.path.splitext(
+                    get_real_path(dupob_rm.path_archive))[0]
                 archiveFileExtention = ".zip"
                 objectName = os.path.split(os.path.splitext(relPath)[0])[1]
                 if dupob_rm.archive_anim_settings.animated_sequence:
@@ -2538,7 +2541,7 @@ def export_materials_archive(ri, rpass, scene):
     ri.Begin(archive_filename)
     for mat_name, mat in bpy.data.materials.items():
         ri.ArchiveBegin('material.' + mat_name)
-        #ri.Attribute("identifier", {"name": mat_name})
+        # ri.Attribute("identifier", {"name": mat_name})
         export_material(ri, mat)
         ri.ArchiveEnd()
     ri.End()
@@ -2825,8 +2828,8 @@ def export_camera_render_preview(ri, scene):
     ri.ScreenWindow(-xaspect, xaspect, -yaspect, yaspect)
     resolution = render_get_resolution(scene.render)
     ri.Format(resolution[0], resolution[1], 1.0)
-    ri.Transform([0, -0.25, -1, 0,  1, 0, 0, 0, 0,
-                  1, -0.25, 0,  0, -.75, 3.25, 1])
+    ri.Transform([0, -0.25, -1, 0, 1, 0, 0, 0, 0,
+                  1, -0.25, 0, 0, -.75, 3.25, 1])
 
 
 def export_options(ri, scene):
@@ -2934,7 +2937,7 @@ def preview_model(ri, scene, mat):
         # ri.Translate(0.0, 0.0, 0.01)
         ri.PointsPolygons([4, ],
                           [0, 1, 2, 3],
-                          {ri.P: [0, -1, -1,  0, 1, -1,  0, 1, 1,  0, -1, 1]})
+                          {ri.P: [0, -1, -1, 0, 1, -1, 0, 1, 1, 0, -1, 1]})
     elif mat.preview_render_type == 'CUBE':
         ri.Scale(.75, .75, .75)
         export_geometry_data(ri, scene, scene.objects[
@@ -3117,7 +3120,7 @@ def export_display(ri, rpass, scene):
         from time import gmtime, strftime
         ts = strftime("%a %b %d %H:%M:%S %Z %Y", gmtime())
         ts = bytes(ts, 'ascii', 'ignore').decode('utf-8', 'ignore')
-        dspy_notes = "(%s)\nSamples: %d-%d@%f  %s  " % (ts, 
+        dspy_notes = "(%s)\nSamples: %d-%d@%f  %s  " % (ts,
                                                         rm.min_samples, rm.max_samples, rm.pixel_variance,
                                                         rm.integrator)
         if rm.integrator == 'PxrPathTracer':
@@ -3129,16 +3132,16 @@ def export_display(ri, rpass, scene):
                 dspy_notes += "Indirect: %d" % integrator.numIndirectSamples
             else:
                 dspy_notes += "Diffuse: %d  Specular: %d  Subsurface: %d  Refraction: %d" % (integrator.numDiffuseSamples,
-                    integrator.numSpecularSamples, integrator.numSubsurfaceSamples, integrator.numRefractionSamples)
+                                                                                             integrator.numSpecularSamples, integrator.numSubsurfaceSamples, integrator.numRefractionSamples)
         elif rm.integrator == "PxrVCM":
             integrator = getattr(rm, "%s_settings" % rm.integrator)
             dspy_notes += "Light: %d  Bxdf: %d  " % (integrator.numLightSamples,
                                                      integrator.numBxdfSamples)
-            
-        params["string dspyParams"] = """ itOpenHandler {::ice::startTimer;};;; itCloseHandler {::ice::endTimer %%arglist; };;; 
-                                        dspyRender -renderer preview -time %d -crop %f %f %f %f  
-                                        -notes \"%s\"""" % (scene.frame_current, scene.render.border_min_x, 
-                                                            scene.render.border_max_x, 1.0 - scene.render.border_min_y, 
+
+        params["string dspyParams"] = """ itOpenHandler {::ice::startTimer;};;; itCloseHandler {::ice::endTimer %%arglist; };;;
+                                        dspyRender -renderer preview -time %d -crop %f %f %f %f
+                                        -notes \"%s\"""" % (scene.frame_current, scene.render.border_min_x,
+                                                            scene.render.border_max_x, 1.0 - scene.render.border_min_y,
                                                             1.0 - scene.render.border_max_y, dspy_notes)
     ri.Display(main_display, display_driver, "rgba", params)
     rpass.output_files.append(main_display)
@@ -3265,7 +3268,7 @@ def export_display(ri, rpass, scene):
                 if source == 'rgba':
                     del params['string source']
                     ri.DisplayChannel("color Ci", params)
-                    ri.DisplayChannel("float a",  params)
+                    ri.DisplayChannel("float a", params)
                 else:
                     ri.DisplayChannel(source_type + ' %s' %
                                       channel_name, params)
@@ -3358,7 +3361,7 @@ def export_display(ri, rpass, scene):
 def export_hider(ri, rpass, scene, preview=False):
     if rpass.bake:
         ri.Hider("bake")
-    
+
     else:
         rm = scene.renderman
 
@@ -3366,31 +3369,31 @@ def export_hider(ri, rpass, scene, preview=False):
         hider_params = {'int maxsamples': rm.max_samples,
                         'int minsamples': rm.min_samples,
                         'int incremental': int(rm.incremental)}
-    
+
         if preview or rpass.is_interactive:
             hider_params['int maxsamples'] = rm.preview_max_samples
             hider_params['int minsamples'] = rm.preview_min_samples
             hider_params['int incremental'] = 1
             pv = rm.preview_pixel_variance
-    
+
         if (not rpass.external_render and rm.render_into == 'blender') or (rm.integrator in ['PxrVCM', 'PxrUPBP']) or rm.enable_checkpoint:
             hider_params['int incremental'] = 1
-    
+
         if not preview:
             cam = scene.camera.data.renderman
             hider_params["float[4] aperture"] = [cam.aperture_sides,
                                                  cam.aperture_angle, cam.aperture_roundness, cam.aperture_density]
             hider_params["float dofaspect"] = [cam.dof_aspect]
             hider_params["float darkfalloff"] = [rm.dark_falloff]
-    
+
         if not rm.sample_motion_blur:
             hider_params["samplemotion"] = 0
-    
+
         ri.PixelVariance(pv)
-    
+
         if rm.do_denoise and not rpass.external_render or rm.external_denoise and rpass.external_render:
             hider_params['string pixelfiltermode'] = 'importance'
-    
+
         ri.Hider("raytrace", hider_params)
 
 
@@ -3531,7 +3534,7 @@ def write_archive_RIB(rpass, scene, ri, object, overridePath, exportMats, export
     else:
         success = False
 
-    if(success == True):
+    if success:
         # export rib archives of objects
         if(exportRange):
             # Get range numbers from the timeline and use that as our range.
@@ -3867,12 +3870,14 @@ def issue_shader_edits(rpass, ri, prman, nt=None, node=None, ob=None):
         # for obj in objs:
         if mat in rpass.material_dict:
             if ob:
-                ri.EditBegin('attribute', {'string scopename': "^" + ob.name + "$"})
+                ri.EditBegin(
+                    'attribute', {'string scopename': "^" + ob.name + "$"})
                 export_material(ri, mat, iterate_instance=True)
                 ri.EditEnd()
             else:
                 for obj in rpass.material_dict[mat]:
-                    ri.EditBegin('attribute', {'string scopename': "^" + obj.name + "$"})
+                    ri.EditBegin(
+                        'attribute', {'string scopename': "^" + obj.name + "$"})
                     export_material(ri, mat, iterate_instance=True)
                     ri.EditEnd()
         elif lamp:
