@@ -3045,6 +3045,7 @@ channel_name_map = {
     "indirectSpecularFuzzLobe": "indirectspecular",
     "indirectSpecularGlassLobe": "indirectspecular",
     "Shadows": "emission",
+    "All Lighting": "emission",
     "Emission": "emission"
 }
 
