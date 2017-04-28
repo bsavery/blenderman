@@ -1507,7 +1507,7 @@ def export_openVDB(ri, ob):
         debug('error', "Please save and export OpenVDB files before rendering.")
         return
     params = {"constant string[2] blobbydso:stringargs": [cacheFile, "density:fogvolume"], "varying float density": [],
-              "varying float flame": [], "varying color color": []}
+              "varying float flame": []}
     ri.Volume("blobbydso:impl_openvdb", rib_ob_bounds(ob.bound_box), [0, 0, 0],
               params)
 
