@@ -1817,10 +1817,6 @@ def get_instances_and_blocks(obs, rpass):
     for ob in obs:
         inst = get_instance(ob, rpass.scene, mb_on)
         if inst:
-<<<<<<< HEAD
-            do_inst = False if inst.type not in ('EMPTY', 'ARMATURE', 'LATTICE') else True
-=======
->>>>>>> refs/remotes/bsavery/master
             ob_mb_segs = ob.renderman.motion_segments if ob.renderman.motion_segments_override else mb_segs
 
             # add the instance to the motion segs list if transforming
@@ -1849,7 +1845,7 @@ def get_instances_and_blocks(obs, rpass):
 
                 if do_db:
                     data_blocks[db.name] = db
-                    
+
             instances[inst.name] = inst
 
     return instances, data_blocks, motion_segs

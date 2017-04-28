@@ -1932,6 +1932,9 @@ def shader_node_rib(ri, node, mat_name, disp_bound=0.0, portal=False):
 
     params['__instanceid'] = instance
 
+    if 'string filename' in params:
+        params['string filename'] = bpy.path.abspath(params['string filename'])
+
     if node.renderman_node_type == "pattern":
         if node.bl_label == 'PxrOSL':
             shader = node.plugin_name
