@@ -858,7 +858,7 @@ def register(bl_info):
 
 	# allow 'master' as an option to update to, skipping any releases.
 	# releases are still accessible from re-install menu
-	updater.include_master = False
+	updater.include_master = True
 
 	# only allow manual install, thus prompting the user to open
 	# the webpage to download but not auto-installing. Useful if
