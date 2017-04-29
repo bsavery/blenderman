@@ -48,6 +48,7 @@ from .util import debug, get_addon_prefs
 from .util import find_it_path
 from .nodes import export_shader_nodetree, get_textures, get_textures_for_node, get_tex_file_name
 from .nodes import shader_node_rib
+from .nodes import replace_frame_num
 
 addon_version = bl_info['version']
 
@@ -978,8 +979,7 @@ def geometry_source_rib(ri, scene, ob):
                           rib(bounds))
 
         elif rm.geometry_source == 'OPENVDB':
-            openvdb_file = rib_path(get_sequence_path(rm.path_archive,
-                                                      blender_frame, anim))
+            openvdb_file = rib_path(replace_frame_num(rm.path_archive))
             params = {"constant string[2] blobbydso:stringargs": [
                 openvdb_file, "density"]}
             for channel in rm.openvdb_channels:
