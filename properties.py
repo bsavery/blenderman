@@ -567,6 +567,11 @@ class RendermanSceneSettings(bpy.types.PropertyGroup):
         description="Render only the selected object(s)",
         default=False)
 
+    clay_render = BoolProperty(
+        name="Clay Render",
+        description="Export all objects with a flat clay material",
+        default=False)
+
     shadingrate = FloatProperty(
         name="Micropolygon Length",
         description="Default maximum distance between displacement samples.  This can be left at 1 unless you need more detail on displaced objects",

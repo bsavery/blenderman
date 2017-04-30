@@ -2181,8 +2181,11 @@ def export_instance_read_archive(ri, instance, instances, data_blocks, rpass, is
 def export_data_read_archive(ri, data_block, rpass):
     ri.AttributeBegin()
 
-    for mat in data_block.material:
-        export_material_archive(ri, mat)
+    if rpass.clay:
+        ri.ReadArchive('material.clay')
+    else:
+        for mat in data_block.material:
+            export_material_archive(ri, mat)
 
     archive_filename = relpath_archive(data_block.archive_filename, rpass)
 
@@ -2211,8 +2214,11 @@ def export_data_rib_archive(ri, data_block, instance, rpass):
     ob = instance.ob
     rm = ob.renderman
 
-    for mat in data_block.material:
-        export_material_archive(ri, mat)
+    if rpass.clay:
+        ri.ReadArchive('material.' + 'clay')
+    else:
+        for mat in data_block.material:
+            export_material_archive(ri, mat)
 
     if rm.geometry_source == "ARCHIVE":
         arvhiveInfo = instance.ob.renderman
@@ -2542,11 +2548,18 @@ def export_materials_archive(ri, rpass, scene):
     archive_filename = user_path(scene.renderman.path_object_archive_static,
                                  scene).replace('{object}', 'materials')
     ri.Begin(archive_filename)
-    for mat_name, mat in bpy.data.materials.items():
-        ri.ArchiveBegin('material.' + mat_name)
-        # ri.Attribute("identifier", {"name": mat_name})
-        export_material(ri, mat)
+    if rpass.clay:
+        ri.ArchiveBegin('material.' + 'clay')
+        ri.Bxdf("PxrDiffuse", "clay", {
+            'color baseColor': [0.6, 0.6, 0.6], 'string __instanceid': 'clay'})
         ri.ArchiveEnd()
+    else:
+        for mat_name, mat in bpy.data.materials.items():
+            ri.ArchiveBegin('material.' + mat_name)
+            # ri.Attribute("identifier", {"name": mat_name})
+            export_material(ri, mat)
+            ri.ArchiveEnd()
+
     ri.End()
 
     ri.ReadArchive(os.path.relpath(archive_filename, rpass.paths['archive']))

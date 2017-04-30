@@ -214,6 +214,7 @@ class RENDER_PT_renderman_render(PRManButtonsPanel, Panel):
         layout.separator()
         col = layout.column()
         col.prop(context.scene.renderman, "render_selected_objects_only")
+        col.prop(rm, "clay_render")
         col.prop(rm, "do_denoise")
         addon_updater_ops.update_notice_box_ui(self, context)
 

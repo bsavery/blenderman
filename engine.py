@@ -198,6 +198,7 @@ class RPass:
         self.do_render = (scene.renderman.output_action == 'EXPORT_RENDER')
         self.is_interactive = interactive
         self.is_interactive_ready = False
+        self.clay = scene.renderman.clay_render
         self.options = []
         # check if prman is imported
         if not prman_inited:
