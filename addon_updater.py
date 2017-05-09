@@ -76,7 +76,9 @@ class Singleton_updater(object):
 		self._tag_latest = None
 		self._tag_names = []
 		self._latest_release = None
-		self._include_master = True
+		self._include_branches = False
+		self._include_branch_list = ['master']
+		self._include_branch_autocheck = False
 		self._manual_only = False
 		self._version_min_update = None
 		self._version_max_update = None
@@ -143,14 +145,41 @@ class Singleton_updater(object):
 			raise ValueError("Verbose must be a boolean value")
 
 	@property
-	def include_master(self):
-		return self._include_master
-	@include_master.setter
-	def include_master(self, value):
+	def include_branches(self):
+		return self._include_branches
+	@include_branches.setter
+	def include_branches(self, value):
 		try:
-			self._include_master = bool(value)
+			self._include_branches = bool(value)
 		except:
-			raise ValueError("include_master must be a boolean value")
+			raise ValueError("include_branches must be a boolean value")
+
+	@property
+	def include_branch_list(self):
+		return self._include_branch_list
+	@include_branch_list.setter
+	def include_branch_list(self, value):
+		try:
+			if value == None:
+				self._include_branch_list = ['master']
+			elif type(value) != type(['master']):
+				raise ValueError("include_branch_list should be a list of valid branches")
+			else:
+				self._include_branch_list = value
+		except:
+			raise ValueError("include_branch_list should be a list of valid branches")
+
+	# not currently used
+	@property
+	def include_branch_autocheck(self):
+		return self._include_branch_autocheck
+	@include_branch_autocheck.setter
+	def include_branch_autocheck(self, value):
+		try:
+			self._include_branch_autocheck = bool(value)
+		except:
+			raise ValueError("include_branch_autocheck must be a boolean value")
+
 
 	@property
 	def manual_only(self):
@@ -243,7 +272,6 @@ class Singleton_updater(object):
 			except:
 				if self._verbose:print("Error trying to staging path")
 				return
-			# definitely check for errors here, user issues
 		self._updater_path = value
 
 
@@ -420,37 +448,49 @@ class Singleton_updater(object):
 		else:
 			self._tags = all_tags
 
-		# get master too, if needed, and place in front but not actively
-		if self._include_master == True:
-			request = self._api_url +"/repos/" \
-					+self.user+"/"+self.repo+"/zipball/master"
-			master = {
-				"name":"Master",
-				"zipball_url":request
-			}
-			self._tags = [master] + self._tags # append to front
+		# get additional branches too, if needed, and place in front
+		# does NO checking here whether branch is valid
+		if self._include_branches == True:
+			temp_branches = self._include_branch_list.copy()
+			temp_branches.reverse()
+			for branch in temp_branches:
+				request = self._api_url +"/repos/" \
+						+self.user+"/"+self.repo+"/zipball/"+branch
+				include = {
+					"name":branch.title(),
+					"zipball_url":request
+				}
+				self._tags = [include] + self._tags # append to front
 
 		if self._tags == None:
-			# some error occured
+			# some error occurred
 			self._tag_latest = None
 			self._tags = []
 			return
-		elif self._prefiltered_tag_count == 0 and self._include_master == False:
+		elif self._prefiltered_tag_count == 0 and self._include_branches == False:
 			self._tag_latest = None
 			self._error = "No releases found"
 			self._error_msg = "No releases or tags found on this repository"
 			if self.verbose:print("No releases or tags found on this repository")
-		elif self._prefiltered_tag_count == 0 and self._include_master == True:
+		elif self._prefiltered_tag_count == 0 and self._include_branches == True:
 			self._tag_latest = self._tags[0]
-			if self.verbose:print("Only master branch found:",self._tags[0])
+			if self.verbose:
+				branch = self._include_branch_list[0]
+				print("{} branch found, no releases".format(branch),self._tags[0])
 		elif len(self._tags) == 0 and self._prefiltered_tag_count > 0:
 			self._tag_latest = None
 			self._error = "No releases available"
 			self._error_msg = "No versions found within compatible version range"
 			if self.verbose:print("No versions found within compatible version range")
 		else:
-			self._tag_latest = self._tags[0]
-			if self.verbose:print("Most recent tag found:",self._tags[0])
+			if self._include_branches == False:
+				self._tag_latest = self._tags[0]
+				if self.verbose:print("Most recent tag found:",self._tags[0])
+			else:
+				# don't return branch if in list
+				n = len(self._include_branch_list)
+				self._tag_latest = self._tags[n] # guarenteed at least len()=n+1
+				if self.verbose:print("Most recent tag found:",self._tags[n])
 
 
 	# all API calls to base url
@@ -517,7 +557,15 @@ class Singleton_updater(object):
 		self._source_zip = os.path.join(local,"source.zip")
 		
 		if self._verbose:print("Starting download update zip")
-		urllib.request.urlretrieve(url, self._source_zip)
+		try:
+			urllib.request.urlretrieve(url, self._source_zip)
+		except Exception as e:
+			self._error = "Error retreiving download, bad link?"
+			self._error_msg = "Error: {}".format(e)
+			if self._verbose:
+				print("Error retreiving download, bad link?")
+				print("Error: {}".format(e))
+			return
 		if self._verbose:print("Successfully downloaded update zip")
 
 	def create_backup(self):
@@ -597,9 +645,10 @@ class Singleton_updater(object):
 				unpath = os.path.join(unpath,dirlist[0])
 
 			if os.path.isfile(os.path.join(unpath,"__init__.py")) == False:
-				if self._verbose:print("not a valid addon found")
-				if self._verbose:print("Paths:")
-				if self._verbose:print(dirlist)
+				if self._verbose:
+					print("not a valid addon found")
+					print("Paths:")
+					print(dirlist)
 
 				raise ValueError("__init__ file not found in new source")
 
@@ -694,10 +743,10 @@ class Singleton_updater(object):
 
 		if len(segments)==0:
 			if self._verbose:print("No version strings found text: ",text)
-			if self._include_master == False:
+			if self._include_branches == False:
 				return ()
 			else:
-				return ('master')
+				return (text)
 		return tuple(segments)
 
 	# called for running check in a background thread
@@ -783,19 +832,7 @@ class Singleton_updater(object):
 		self._json["last_check"] = str(datetime.now())
 		self.save_updater_json()
 
-
-		# if (len(self._tags) == 0 and self._include_master == False) or\
-		# 		(len(self._tags) < 2 and self._include_master == True):
-		# 	if self._verbose:print("No tag found on this repository")
-		# 	self._update_ready = False
-		# 	self._error = "No online versions found"
-		# 	if self._include_master == True:
-		# 		self._error_msg = "Try installing master from Reinstall"
-		# 	else:
-		# 		self._error_msg = "No repository tags found for version comparison"
-		# 	return (False, None, None)
-
-		# can be () or ('master') in addition to version tag
+		# can be () or ('master') in addition to branchs, and version tag
 		new_version = self.version_tuple_from_text(self.tag_latest)
 
 		if len(self._tags)==0:
@@ -803,28 +840,52 @@ class Singleton_updater(object):
 			self._update_version = None
 			self._update_link = None
 			return (False, None, None)
-		elif self._include_master == False:
+		elif self._include_branches == False:
 			link = self._tags[0]["zipball_url"] # potentially other sources
 		else:
-			link = self._tags[1]["zipball_url"] # potentially other sources
+			n = len(self._include_branch_list)
+			if len(self._tags)==n:
+				# effectively means no tags found on repo
+				# so provide the first one as default
+				link = self._tags[0]["zipball_url"] # potentially other sources
+			else:
+				link = self._tags[n]["zipball_url"] # potentially other sources
 		
 		if new_version == ():
 			self._update_ready = False
 			self._update_version = None
 			self._update_link = None
 			return (False, None, None)
-		elif str(new_version).lower() == "master":
-			self._update_ready = True
-			self._update_version = new_version
-			self._update_link = link
-			self.save_updater_json()
-			return (True, new_version, link)
-		elif new_version > self._current_version:
-			self._update_ready = True
-			self._update_version = new_version
-			self._update_link = link
-			self.save_updater_json()
-			return (True, new_version, link)
+		elif str(new_version).lower() in self._include_branch_list:
+			# handle situation where master/whichever branch is included
+			# however, this code effectively is not triggered now
+			# as new_version will only be tag names, not branch names
+			if self._include_branch_autocheck == False:
+				# don't offer update as ready,
+				# but set the link for the default
+				# branch for installing
+				self._update_ready = True
+				self._update_version = new_version
+				self._update_link = link
+				self.save_updater_json()
+				return (True, new_version, link)
+			else:
+				raise ValueError("include_branch_autocheck: NOT YET DEVELOPED")
+				# bypass releases and look at timestamp of last update
+				# from a branch compared to now, see if commit values
+				# match or not.
+
+		else:
+			# situation where branches not included
+
+			if new_version > self._current_version:
+
+				self._update_ready = True
+				self._update_version = new_version
+				self._update_link = link
+				self.save_updater_json()
+				return (True, new_version, link)
+
 		# elif new_version != self._current_version:
 		# 	self._update_ready = False
 		# 	self._update_version = new_version
@@ -873,7 +934,7 @@ class Singleton_updater(object):
 			# change to True, to trigger the reload/"update installed" handler
 			if self._verbose:
 				print("fake_install=True")
-				print("Just reloading and running any trigger")
+				print("Just reloading and running any handler triggers")
 			self._json["just_updated"] = True
 			self.save_updater_json()
 			if self._backup_current == True:
@@ -936,11 +997,11 @@ class Singleton_updater(object):
 			delta = (now - offset) - last_check
 			if delta.total_seconds() > 0:
 				if self._verbose:
-					print("Determined it's time to check for updates")
+					print("{} Updater: Time to check for updates!".format(self._addon))
 				return True
 			else:
 				if self._verbose:
-					print("Determined it's not yet time to check for updates")
+					print("{} Updater: Determined it's not yet time to check for updates".format(self._addon))
 				return False
 
 
@@ -954,7 +1015,7 @@ class Singleton_updater(object):
 		if os.path.isfile(jpath):
 			with open(jpath) as data_file:
 				self._json = json.load(data_file)
-				if self._verbose:print("Read in json settings from file")
+				if self._verbose:print("{} Updater: Read in json settings from file".format(self._addon))
 		else:
 			# set data structure
 			self._json = {
@@ -973,9 +1034,13 @@ class Singleton_updater(object):
 
 		# first save the state
 		if self._update_ready == True:
-			self._json["update_ready"] = True
-			self._json["version_text"]["link"]=self._update_link
-			self._json["version_text"]["version"]=self._update_version
+			if type(self._update_version) == type((0,0,0)):
+				self._json["update_ready"] = True
+				self._json["version_text"]["link"]=self._update_link
+				self._json["version_text"]["version"]=self._update_version
+			else:
+				self._json["update_ready"] = False
+				self._json["version_text"] = {}
 		else:
 			self._json["update_ready"] = False
 			self._json["version_text"] = {}
@@ -1012,7 +1077,7 @@ class Singleton_updater(object):
 	def start_async_check_update(self, now=False,callback=None):
 		if self._async_checking == True:
 			return
-		if self._verbose: print("Starting background checking thread")
+		if self._verbose: print("{} updater: Starting background checking thread".format(self._addon))
 		check_thread = threading.Thread(target=self.async_check_update,
 										args=(now,callback,))
 		check_thread.daemon = True
@@ -1023,7 +1088,7 @@ class Singleton_updater(object):
 
 	def async_check_update(self, now, callback=None):
 		self._async_checking = True
-		if self._verbose:print("BG: Checking for update now in background")
+		if self._verbose:print("{} BG thread: Checking for update now in background".format(self._addon))
 		# time.sleep(3) # to test background, in case internet too fast to tell
 		# try:
 		self.check_for_update(now=now)
@@ -1037,7 +1102,7 @@ class Singleton_updater(object):
 		# 	self._error_msg = "Encountered an error while checking for updates"
 
 		if self._verbose:
-			print("BG: Finished checking for update, doing callback")
+			print("{} BG thread: Finished checking for update, doing callback".format(self._addon))
 		if callback != None:callback(self._update_ready)
 		self._async_checking = False
 		self._check_thread = None
@@ -1055,6 +1120,7 @@ class Singleton_updater(object):
 		self._async_checking = False
 		self._error = None
 		self._error_msg = None
+
 
 
 

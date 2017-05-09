@@ -39,7 +39,7 @@ except Exception as e:
 	updater.error_msg = str(e)
 
 # Must declare this before classes are loaded
-# otherwise the bl_idnames will not match and have errors.
+# otherwise the bl_idname's will not match and have errors.
 # Must be all lowercase and no spaces
 updater.addon = "renderman_for_blender"
 
@@ -62,20 +62,24 @@ class addon_updater_install_popup(bpy.types.Operator):
 	def draw(self, context):
 		layout = self.layout
 		if updater.invalidupdater == True:
-			layout.label("Updater error")
+			layout.label("Updater module error")
 			return
 		if updater.update_ready == True:
-			layout.label("Update ready! Press OK to install v"\
+			col = layout.column()
+			col.scale_y = 0.7
+			col.label("Update ready! Press OK to install "\
 						+str(updater.update_version))
-			layout.label("or click outside window to defer")
+			col.label("or click outside window to defer")
 			# could offer to remove popups here, but window will not redraw
 			# so may be confusing to the user/look like a bug
 			# row = layout.row()
 			# row.label("Prevent future popups:")
 			# row.operator(addon_updater_ignore.bl_idname,text="Ignore update")
 		elif updater.update_ready == False:
-			layout.label("No updates available")
-			layout.label("Press okay to dismiss dialog")
+			col = layout.column()
+			col.scale_y = 0.7
+			col.label("No updates available")
+			col.label("Press okay to dismiss dialog")
 			# add option to force install
 		else:
 			# case: updater.update_ready = None
@@ -91,21 +95,21 @@ class addon_updater_install_popup(bpy.types.Operator):
 		if updater.invalidupdater == True:
 			return {'CANCELLED'}
 
-		if updater.update_ready == True:
+		if updater.manual_only==True:
+			row.operator("wm.url_open",text="Open website").url=\
+						updater.website
+		elif updater.update_ready == True:
 			res = updater.run_update(force=False, callback=post_update_callback)
 			# should return 0, if not something happened
 			if updater.verbose:
 				if res==0: print("Updater returned successful")
 				else: print("Updater returned "+str(res)+", error occurred")
-
 		elif updater.update_ready == None:
 			(update_ready, version, link) = updater.check_for_update(now=True)
 			
 			# re-launch this dialog
 			atr = addon_updater_install_popup.bl_idname.split(".")
 			getattr(getattr(bpy.ops, atr[0]),atr[1])('INVOKE_DEFAULT')
-			#bpy.ops.retopoflow.updater_install_popup('INVOKE_DEFAULT')
-
 		else:
 			if updater.verbose:print("Doing nothing, not ready for update")
 		return {'FINISHED'}
@@ -160,6 +164,9 @@ class addon_updater_update_now(bpy.types.Operator):
 		if updater.invalidupdater == True:
 			return {'CANCELLED'}
 
+		if updater.manual_only == True:
+			row.operator("wm.url_open",text="Open website").url=\
+						updater.website
 		if updater.update_ready == True:
 			# if it fails, offer to open the website instead
 			try:
@@ -202,7 +209,7 @@ class addon_updater_update_target(bpy.types.Operator):
 		ret = []
 		i=0
 		for tag in updater.tags:
-			ret.append( (tag,tag,"Select to install version "+tag) )
+			ret.append( (tag,tag,"Select to install "+tag) )
 			i+=1
 		return ret
 
@@ -276,9 +283,11 @@ class addon_updater_install_manually(bpy.types.Operator):
 		if False:
 			layout.label("There was an issue trying to auto-install")
 		else:
-			layout.label("Install the addon manually")
-			layout.label("Press the download button below and install")
-			layout.label("the zip file like a normal addon.")
+			col = layout.column()
+			col.scale_y = 0.7
+			col.label("Install the addon manually")
+			col.label("Press the download button below and install")
+			col.label("the zip file like a normal addon.")
 
 		# if check hasn't happened, ie accidentally called this menu
 		# allow to check here
@@ -294,13 +303,10 @@ class addon_updater_install_manually(bpy.types.Operator):
 
 			if updater.website != None:
 				row = layout.row()
-				row.label("Grab update from account")
-
 				row.operator("wm.url_open",text="Open website").url=\
 						updater.website
 			else:
 				row = layout.row()
-
 				row.label("See source website to download the update")
 
 	def execute(self,context):
@@ -330,22 +336,30 @@ class addon_updater_updated_successful(bpy.types.Operator):
 		if updater.auto_reload_post_update == False:
 			# tell user to restart blender
 			if "just_restored" in saved and saved["just_restored"] == True:
-				layout.label("Addon restored")
-				layout.label("Restart blender to reload.")
+				col = layout.column()
+				col.scale_y = 0.7
+				col.label("Addon restored")
+				col.label("Restart blender to reload.")
 				updater.json_reset_restore()
 			else:
-				layout.label("Addon successfully installed")
-				layout.label("Restart blender to reload.")
+				col = layout.column()
+				col.scale_y = 0.7
+				col.label("Addon successfully installed")
+				col.label("Restart blender to reload.")
 
 		else:
 			# reload addon, but still recommend they restart blender
 			if "just_restored" in saved and saved["just_restored"] == True:
-				layout.label("Addon restored")
-				layout.label("Consider restarting blender to fully reload.")
+				col = layout.column()
+				col.scale_y = 0.7
+				col.label("Addon restored")
+				col.label("Consider restarting blender to fully reload.")
 				updater.json_reset_restore()
 			else:
-				layout.label("Addon successfully installed.")
-				layout.label("Consider restarting blender to fully reload.")
+				col = layout.column()
+				col.scale_y = 0.7
+				col.label("Addon successfully installed.")
+				col.label("Consider restarting blender to fully reload.")
 	
 	def execut(self, context):
 		return {'FINISHED'}
@@ -465,6 +479,22 @@ def updater_run_install_popup_handler(scene):
 
 	if "ignore" in updater.json and updater.json["ignore"] == True:
 		return # don't do popup if ignore pressed
+	elif type(updater.update_version) != type((0,0,0)):
+		# likely was from master or another branch, shouldn't trigger popup
+		updater.json_reset_restore()
+		return
+	elif "version_text" in updater.json and "version" in updater.json["version_text"]:
+		version = updater.json["version_text"]["version"]
+		ver_tuple = updater.version_tuple_from_text(version)
+		
+		if ver_tuple < updater.current_version:
+			# user probably manually installed to get the up to date addon
+			# in here. Clear out the update flag using this function
+			if updater.verbose:
+				print("{} updater: appears user updated, clearing flag".format(\
+						updater.addon))
+			updater.json_reset_restore()
+			return
 	atr = addon_updater_install_popup.bl_idname.split(".")
 	getattr(getattr(bpy.ops, atr[0]),atr[1])('INVOKE_DEFAULT')
 	
@@ -500,7 +530,7 @@ def post_update_callback():
 
 	# this is the same code as in conditional at the end of the register function
 	# ie if "auto_reload_post_update" == True, comment out this code
-	if updater.verbose: print("Running post update callback")
+	if updater.verbose: print("{} updater: Running post update callback".format(updater.addon))
 	#bpy.app.handlers.scene_update_post.append(updater_run_success_popup_handler)
 
 	atr = addon_updater_updated_successful.bl_idname.split(".")
@@ -538,7 +568,9 @@ def check_for_update_background(context):
 	# input is an optional callback function
 	# this function should take a bool input, if true: update ready
 	# if false, no update ready
-	if updater.verbose: print("Running background check for update")
+	if updater.verbose:
+		print("{} updater: Running background check for update".format(\
+				updater.addon))
 	updater.check_for_update_async(background_update_callback)
 	ran_background_check = True
 
@@ -615,8 +647,10 @@ def update_notice_box_ui(self, context):
 		if "just_updated" in saved_state and saved_state["just_updated"] == True:
 			layout = self.layout
 			box = layout.box()
-			box.label("Restart blender", icon="ERROR")
-			box.label("to complete update")
+			col = box.column()
+			col.scale_y = 0.7
+			col.label("Restart blender", icon="ERROR")
+			col.label("to complete update")
 			return
 
 	# if user pressed ignore, don't draw the box
@@ -629,13 +663,17 @@ def update_notice_box_ui(self, context):
 	layout = self.layout
 	box = layout.box()
 	col = box.column(align=True)
-	col.label("Update ready!",icon="ERROR")
-	col.operator("wm.url_open", text="Open website").url = updater.website
-	#col.operator("wm.url_open",text="Direct download").url=updater.update_link
-	col.operator(addon_updater_install_manually.bl_idname, "Install manually")
+	
 	if updater.manual_only==False:
+		col.label("Update ready!",icon="ERROR")
+		col.operator("wm.url_open", text="Open website").url = updater.website
+		#col.operator("wm.url_open",text="Direct download").url=updater.update_link
+		col.operator(addon_updater_install_manually.bl_idname, "Install manually")
 		col.operator(addon_updater_update_now.bl_idname,
 						"Update now", icon="LOOP_FORWARDS")
+	else:
+		col.operator("wm.url_open", text="Get update", icon="ERROR").url = \
+				updater.website
 	col.operator(addon_updater_ignore.bl_idname,icon="X")
 
 
@@ -719,6 +757,21 @@ def update_settings_ui(self, context):
 		split.operator(addon_updater_end_background.bl_idname,
 						text = "", icon="X")
 		
+	elif updater.include_branches==True and \
+			len(updater.tags)==len(updater.include_branch_list) and \
+			updater.manual_only==False:
+		# no releases found, but still show the appropriate branch
+		subcol = col.row(align=True)
+		subcol.scale_y = 1
+		split = subcol.split(align=True)
+		split.scale_y = 2
+		split.operator(addon_updater_update_now.bl_idname,
+					"Update directly to "+str(updater.include_branch_list[0]))
+		split = subcol.split(align=True)
+		split.scale_y = 2
+		split.operator(addon_updater_check_now.bl_idname,
+						text = "", icon="FILE_REFRESH")
+
 	elif updater.update_ready==True and updater.manual_only==False:
 		subcol = col.row(align=True)
 		subcol.scale_y = 1
@@ -750,8 +803,14 @@ def update_settings_ui(self, context):
 
 	if updater.manual_only == False:
 		col = row.column(align=True)
-		col.operator(addon_updater_update_target.bl_idname,
-					"Reinstall / install old verison")
+		#col.operator(addon_updater_update_target.bl_idname,
+		if updater.include_branches == True and len(updater.include_branch_list)>0:
+			branch = updater.include_branch_list[0]
+			col.operator(addon_updater_update_target.bl_idname,
+					"Install latest {} / old version".format(branch))
+		else:
+			col.operator(addon_updater_update_target.bl_idname,
+					"Reinstall / install old version")
 		lastdate = "none found"
 		backuppath = os.path.join(updater.stage_path,"backup")
 		if "backup_date" in updater.json and os.path.isdir(backuppath):
@@ -759,10 +818,11 @@ def update_settings_ui(self, context):
 				lastdate = "Date not found"
 			else:
 				lastdate = updater.json["backup_date"]
-		backuptext = "Restore addon backup ({x})".format(x=lastdate)
+		backuptext = "Restore addon backup ({})".format(lastdate)
 		col.operator(addon_updater_restore_backup.bl_idname, backuptext)
 
 	row = box.row()
+	row.scale_y = 0.7
 	lastcheck = updater.json["last_check"]
 	if updater.error != None and updater.error_msg != None:
 		row.label(updater.error_msg)
@@ -794,12 +854,13 @@ def skip_tag_function(tag):
 	#	return True
 	# ---- write any custom code above, return true to disallow version --- #
 
-	if tag["name"].lower() == 'master' and updater.include_master == True:
-		return False
+	if updater.include_branches == True:
+		for branch in updater.include_branch_list:
+			if tag["name"].lower() == branch: return False
 
 	# function converting string to tuple, ignoring e.g. leading 'v'
 	tupled = updater.version_tuple_from_text(tag["name"])
-	if type(tupled) != type( (1,2,3) ): return True # master
+	if type(tupled) != type( (1,2,3) ): return True
 	
 	# select the min tag version - change tuple accordingly
 	if updater.version_min_update != None:
@@ -832,51 +893,68 @@ def register(bl_info):
 	# choose your own repository, must match github name
 	updater.repo = "PRMan-for-Blender"
 
-	#updater.addon = # define at top of module, must be done first
+	#updater.addon = # define at top of module, MUST be done first
 
-	# Website for manual addon download, optional 
+	# Website for manual addon download, optional but reocmmended to set
 	updater.website = "https://github.com/bsavery/PRMan-for-Blender/"
 	
 	# used to check/compare versions
 	updater.current_version = bl_info["version"] 
 
-	# to hard-set udpate frequency, use this here - however, this demo
+	# to hard-set update frequency, use this here - however, this demo
 	# has this set via UI properties. Optional 
-	# updater.set_check_interval(enable=False,months=0,days=1,hours=0,minutes=0)
+	# updater.set_check_interval(
+	# 		enable=False,months=0,days=0,hours=0,minutes=2)
 	
-	# optional, consider turning off for production or allow as an option
+	# Optional, consider turning off for production or allow as an option
 	# This will print out additional debugging info to the console
 	updater.verbose = True # make False for production default
 
-	# optional, customize where the addon updater processing subfolder is,
-	# needs to be within the same folder as the addon itself
+	# Optional, customize where the addon updater processing subfolder is,
+	# essentially a staging folder used by the updater on its own
+	# Needs to be within the same folder as the addon itself
 	# updater.updater_path = # set path of updater folder, by default:
 	#			/addons/{__package__}/{__package__}_updater
 
 	# auto create a backup of the addon when installing other versions
 	updater.backup_current = True # True by default
 
-	# allow 'master' as an option to update to, skipping any releases.
-	# releases are still accessible from re-install menu
-	updater.include_master = True
+	# Allow branches like 'master' as an option to update to, regardless
+	# of release or version.
+	# Default behavior: releases will still be used for auto check (popup),
+	# but the user has the option from user preferences to directly 
+	# update to the master branch or any other branches specified using
+	# the "install {branch}/older version" operator.
+	updater.include_branches = True
 
-	# only allow manual install, thus prompting the user to open
-	# the webpage to download but not auto-installing. Useful if
-	# only wanting to get notification of updates
-	# updater.manual_only = True
+	# if using "include_branches", 
+	# updater.include_branch_list defaults to ['master'] branch if set to none
+	# example targeting another multiple branches allowed to pull from
+	# updater.include_branch_list = ['master', 'dev'] # example with two branches
+	updater.include_branch_list = None  # is the equvalent to setting ['master']
 
-	# used for development only, "pretend" to install an update to test
+	# Only allow manual install, thus prompting the user to open
+	# the addon's webpage to download, specifically: updater.website
+	# Useful if only wanting to get notification of updates but not
+	# directly install.
+	updater.manual_only = False
+
+	# Used for development only, "pretend" to install an update to test
 	# reloading conditions
 	updater.fake_install = False # Set to true to test callback/reloading
 
 	# Override with a custom function on what tags
-	# to skip showing for udpater; see code for function above.
+	# to skip showing for updater; see code for function above.
 	# Set the min and max versions allowed to install.
 	# Optional, default None
-	updater.version_min_update = (21,3,0) # min install (>=) will install this and higher
+	# min install (>=) will install this and higher
+	updater.version_min_update = (21,3,0) 
 	# updater.version_min_update = None  # if not wanting to define a min
-	updater.version_max_update = (999999,999999,999999) # max install (<) will install strictly anything lower
-	# updater.version_max_update = None  # if not wanting to define a max
+	
+	# max install (<) will install strictly anything lower
+	# updater.version_max_update = (9,9,9)
+	updater.version_max_update = None  # if not wanting to define a max
+	
 	updater.skip_tag = skip_tag_function # min and max used in this function
 
 	# The register line items for all operators/panels
@@ -918,4 +996,3 @@ def unregister():
 
 	global ran_background_check
 	ran_background_check = False
-
