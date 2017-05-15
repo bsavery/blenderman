@@ -891,12 +891,12 @@ def register(bl_info):
 	updater.user = "bsavery"
 
 	# choose your own repository, must match github name
-	updater.repo = "PRMan-for-Blender"
+	updater.repo = "RenderManForBlender"
 
 	#updater.addon = # define at top of module, MUST be done first
 
 	# Website for manual addon download, optional but reocmmended to set
-	updater.website = "https://github.com/bsavery/PRMan-for-Blender/"
+	updater.website = "https://github.com/bsavery/RenderManForBlender/"
 	
 	# used to check/compare versions
 	updater.current_version = bl_info["version"] 
