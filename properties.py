@@ -130,7 +130,7 @@ class RendermanAOV(bpy.types.PropertyGroup):
             # Basic lpe
             ("", "Basic LPE's", "Basic LPE's", "", 0),
             ("color rgba", "rgba", "Combined (beauty)", "", 1),
-            ("color lpe:C[<.D%G><.S%G>]*[<L.%LG>O]",
+            ("color lpe:C[<.D%G><.S%G>][DS]*[<L.%LG>O]",
              "All Lighting", "All Lighting", "", 2),
             ("color lpe:C<.D%G><L.%LG>", "Diffuse", "Diffuse", "", 3),
             ("color lpe:(C<RD%G>[DS]+<L.%LG>)|(C<RD%G>[DS]*O)",
