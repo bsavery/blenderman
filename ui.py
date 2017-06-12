@@ -633,11 +633,27 @@ class MATERIAL_PT_renderman_preview(Panel):
         mat = context.material
         row = layout.row()
         if mat:
-            row.template_preview(context.material, show_buttons=1)
+            row.template_preview(context.material, show_buttons=0)
             # if mat.node_tree:
             #    layout.prop_search(
             #        mat, "node_tree", bpy.data, "node_groups")
 
+        layout.separator()
+        split = layout.split()
+
+        col = split.column(align=True)
+        col.label("Viewport Color:")
+        col.prop(mat, "diffuse_color", text="")
+        #col.prop(mat, "alpha")
+
+        #col.separator()
+        #col.label("Viewport Alpha:")
+        #col.prop(mat.game_settings, "alpha_blend", text="")
+
+        col = split.column(align=True)
+        col.label("Viewport Specular:")
+        col.prop(mat, "specular_color", text="")
+        col.prop(mat, "specular_hardness", text="Hardness")
 
 class ShaderNodePanel():
     bl_space_type = 'PROPERTIES'
