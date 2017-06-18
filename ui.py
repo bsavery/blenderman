@@ -633,7 +633,7 @@ class MATERIAL_PT_renderman_preview(Panel):
         mat = context.material
         row = layout.row()
         if mat:
-            row.template_preview(context.material, show_buttons=0)
+            row.template_preview(context.material, show_buttons=1)
             # if mat.node_tree:
             #    layout.prop_search(
             #        mat, "node_tree", bpy.data, "node_groups")
