@@ -23,20 +23,23 @@
 #
 # ##### END MIT LICENSE BLOCK #####
 
-""" This module has the RenderMan ui panels."""
-
-from os.path import dirname, basename, isfile
-import glob
 import bpy
-import importlib as imp
+from .base_classes import PRManPanel
+from bpy.types import Panel
+from ..resources.icons.icons import load_icons
 
-# load icons
-import os
 
-# get all .py files in directory
-__all__ = [basename(f)[:-3] for f in glob.glob(dirname(__file__) + "/*.py")
-           if isfile(f) and basename(f) != '__init__.py']
+class RENDER_PT_renderman_baking(PRManPanel, Panel):
 
-# try and reload modules if already loaded
-for module in __all__:
-    imp.import_module('.' + module, package=__name__)
+    '''this panel covers the baking option for exporting pattern networks as textures'''
+    bl_context = "render"
+    bl_label = "Baking"
+    bl_options = {'DEFAULT_CLOSED'}
+
+    def draw(self, context):
+        layout = self.layout
+        row = layout.row()
+        icons = load_icons()
+        rman_batch = icons.get("batch_render")
+        row.operator("renderman.bake", text="Bake",
+                     icon_value=rman_batch.icon_id)
