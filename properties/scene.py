@@ -8,6 +8,9 @@ from bpy.props import PointerProperty, StringProperty, BoolProperty, \
     EnumProperty, IntProperty, FloatProperty, FloatVectorProperty, \
     CollectionProperty, BoolVectorProperty
 from .render_layer import RendermanRenderLayerSettings
+from ..ui.base_classes import PRManPanel
+from bpy.types import Panel
+from ..resources.icons.icons import load_icons
 
 
 def export_searchpaths(ri, paths):
@@ -22,11 +25,12 @@ def export_searchpaths(ri, paths):
     ri.Option("searchpath", {"string archive": os.path.relpath(paths['archive'],
                                                                paths['export_dir'])})
 
+
 ''' Scene Properties '''
 
 
 class RendermanSceneSettings(RendermanBasePropertyGroup):
-    ''' Holds the main property endpoint for converting a scene to Renderman 
+    ''' Holds the main property endpoint for converting a scene to Renderman
         as well as the methods for caching any data under it'''
     ### scene properties ###
 
@@ -142,8 +146,8 @@ class RendermanSceneSettings(RendermanBasePropertyGroup):
         items=[('box', 'Box', ''),
                ('sinc', 'Sinc', ''),
                ('gaussian', 'Gaussian', ''),
-               ('triangle',  'Triangle',  ''),
-               ('catmull-rom',  'Catmull-Rom', '')],
+               ('triangle', 'Triangle', ''),
+               ('catmull-rom', 'Catmull-Rom', '')],
         default='gaussian')
 
     pixelfilter_x = IntProperty(
@@ -269,13 +273,13 @@ class RendermanSceneSettings(RendermanBasePropertyGroup):
 
         # self.export_render_settings(ri)
         self.export_camera(ri, **kwargs)
-        #export_default_bxdf(ri, "default")
-        #export_materials_archive(ri, rpass, scene)
+        # export_default_bxdf(ri, "default")
+        # export_materials_archive(ri, rpass, scene)
 
         # each render layer gets it's own display and world rib
         for render_layer in scene.render.layers:
             self.export_displays_for_layer(ri, render_layer, **kwargs)
-            #self.export_render_layer_camera(ri, render_layer, **kwargs)
+            # self.export_render_layer_camera(ri, render_layer, **kwargs)
             ri.WorldBegin()
             # if scene.world:
             #    scene.world.renderman.to_rib(ri, **kwargs)
@@ -290,10 +294,10 @@ class RendermanSceneSettings(RendermanBasePropertyGroup):
         ri.FrameEnd()
 
     def cache_motion(self, ri, mgr=None):
-        ''' Since objects can override the motion segments for the scene, we need to 
-            collect all the objects in motion and group them by number of segments.  
-            Only then can we update the frame number in the scene and cache the motion. 
-            Finally, check that the objects/datas are actually in motion before writing their 
+        ''' Since objects can override the motion segments for the scene, we need to
+            collect all the objects in motion and group them by number of segments.
+            Only then can we update the frame number in the scene and cache the motion.
+            Finally, check that the objects/datas are actually in motion before writing their
             caches '''
         if not self.motion_blur:
             return
@@ -413,3 +417,330 @@ class RendermanSceneSettings(RendermanBasePropertyGroup):
         # else we have custom rman render layer settings
         else:
             rm_rl.to_rib(ri)
+
+
+class RENDER_PT_renderman_render(PRManPanel, Panel):
+    '''This panel covers the settings for Renderman's motion blur'''
+    bl_context = "render"
+    bl_label = "Render"
+
+    def draw(self, context):
+        # icons = load_icons()
+        layout = self.layout
+        rd = context.scene.render
+        rm = context.scene.renderman
+
+        # # Render
+        # row = layout.row(align=True)
+        # rman_render = icons.get("render")
+        # row.operator("render.render", text="Render",
+        #              icon_value=rman_render.icon_id)
+
+        # # IPR
+        # if engine.ipr:
+        #     # Stop IPR
+        #     rman_batch_cancel = icons.get("stop_ipr")
+        #     row.operator('lighting.start_interactive',
+        #                  text="Stop IPR", icon_value=rman_batch_cancel.icon_id)
+        # else:
+        #     # Start IPR
+        #     rman_rerender_controls = icons.get("start_ipr")
+        #     row.operator('lighting.start_interactive', text="Start IPR",
+        #                  icon_value=rman_rerender_controls.icon_id)
+
+        # # Batch Render
+        # rman_batch = icons.get("batch_render")
+        # row.operator("render.render", text="Render Animation",
+        #              icon_value=rman_batch.icon_id).animation = True
+
+        # layout.separator()
+
+        split = layout.split(percentage=0.33)
+
+        split.label(text="Display:")
+        row = split.row(align=True)
+        row.prop(rd, "display_mode", text="")
+        row.prop(rd, "use_lock_interface", icon_only=True)
+        col = layout.column()
+        row = col.row()
+        row.prop(rm, "render_into", text="Render To")
+
+        # layout.separator()
+        # col = layout.column()
+        # col.prop(context.scene.renderman, "render_selected_objects_only")
+        # col.prop(rm, "do_denoise")
+
+
+class RENDER_PT_renderman_sampling(PRManPanel, Panel):
+    bl_label = "Sampling"
+    bl_options = {'DEFAULT_CLOSED'}
+
+    def draw(self, context):
+
+        layout = self.layout
+        scene = context.scene
+        rm = scene.renderman
+        col = layout.column()
+        row = col.row(align=True)
+        row.menu("presets", text=bpy.types.presets.bl_label)
+        row.operator("render.renderman_preset_add", text="", icon='ZOOMIN')
+        row.operator("render.renderman_preset_add", text="",
+                     icon='ZOOMOUT').remove_active = True
+        col.prop(rm, "pixel_variance")
+        row = col.row(align=True)
+        row.prop(rm, "min_samples", text="Min Samples")
+        row.prop(rm, "max_samples", text="Max Samples")
+        row = col.row(align=True)
+        row.prop(rm, "max_specular_depth", text="Specular Depth")
+        row.prop(rm, "max_diffuse_depth", text="Diffuse Depth")
+        row = col.row(align=True)
+        row.prop(rm, 'incremental')
+        row = col.row(align=True)
+        layout.separator()
+        col.prop(rm, "integrator")
+        # find args for integrators here!
+        integrator_settings = getattr(rm, "%s_settings" % rm.integrator)
+
+        icon = 'DISCLOSURE_TRI_DOWN' if rm.show_integrator_settings \
+            else 'DISCLOSURE_TRI_RIGHT'
+        text = rm.integrator + " Settings:"
+
+        row = col.row()
+        row.prop(rm, "show_integrator_settings", icon=icon, text=text,
+                 emboss=False)
+        if rm.show_integrator_settings:
+            draw_props(integrator_settings,
+                       integrator_settings.prop_names, col)
+
+
+class RENDER_PT_renderman_spooling(PRManPanel, Panel):
+
+    '''this panel covers the options for spooling a render to an external queue manager'''
+    bl_context = "render"
+    bl_label = "External Rendering"
+    bl_options = {'DEFAULT_CLOSED'}
+
+    def draw(self, context):
+        layout = self.layout
+        scene = context.scene
+        rm = scene.renderman
+
+        # if external rendering is disabled, the panel will not appear
+        row = layout.row()
+        row.label(
+            'Note:  External Rendering will render outside of Blender, images will not show up in the Image Editor.')
+
+        row = layout.row()
+        row.prop(rm, 'enable_external_rendering')
+        if not rm.enable_external_rendering:
+            return
+        icons = load_icons()
+        row = layout.row()
+        rman_batch = icons.get("batch_render")
+        row.operator("renderman.external_render",
+                     text="Export", icon_value=rman_batch.icon_id)
+
+        layout.separator()
+        col = layout.column()
+        col.prop(rm, "display_driver", text='Render To')
+
+        layout.separator()
+        split = layout.split(percentage=0.33)
+        # do animation
+        split.prop(rm, "external_animation")
+
+        sub_row = split.row()
+        sub_row.enabled = rm.external_animation
+        sub_row.prop(scene, "frame_start", text="Start")
+        sub_row.prop(scene, "frame_end", text="End")
+        col = layout.column()
+        col.enabled = rm.generate_alf
+        col.prop(rm, 'external_denoise')
+        row = col.row()
+        row.enabled = rm.external_denoise and rm.external_animation
+        row.prop(rm, 'crossframe_denoise')
+
+        # render steps
+        layout.separator()
+        col = layout.column()
+        icon_export = 'DISCLOSURE_TRI_DOWN' if rm.export_options else 'DISCLOSURE_TRI_RIGHT'
+        col.prop(rm, "export_options", icon=icon_export,
+                 text="Export Options:", emboss=False)
+        if rm.export_options:
+            col.prop(rm, "generate_rib")
+            row = col.row()
+            row.enabled = rm.generate_rib
+            row.prop(rm, "generate_object_rib")
+            col.prop(rm, "generate_alf")
+            split = col.split(percentage=0.33)
+            split.enabled = rm.generate_alf and rm.generate_render
+            split.prop(rm, "do_render")
+            sub_row = split.row()
+            sub_row.enabled = rm.do_render and rm.generate_alf and rm.generate_render
+            sub_row.prop(rm, "queuing_system")
+
+        # options
+        layout.separator()
+        if rm.generate_alf:
+            icon_alf = 'DISCLOSURE_TRI_DOWN' if rm.alf_options else 'DISCLOSURE_TRI_RIGHT'
+            col = layout.column()
+            col.prop(rm, "alf_options", icon=icon_alf, text="ALF Options:",
+                     emboss=False)
+            if rm.alf_options:
+                col.prop(rm, 'custom_alfname')
+                col.prop(rm, "convert_textures")
+                col.prop(rm, "generate_render")
+                row = col.row()
+                row.enabled = rm.generate_render
+                row.prop(rm, 'custom_cmd')
+                split = col.split(percentage=0.33)
+                split.enabled = rm.generate_render
+                split.prop(rm, "override_threads")
+                sub_row = split.row()
+                sub_row.enabled = rm.override_threads
+                sub_row.prop(rm, "external_threads")
+
+                row = col.row()
+                row.enabled = rm.external_denoise
+                row.prop(rm, 'denoise_cmd')
+                row = col.row()
+                row.enabled = rm.external_denoise
+                row.prop(rm, 'spool_denoise_aov')
+                row = col.row()
+                row.enabled = rm.external_denoise and not rm.spool_denoise_aov
+                row.prop(rm, "denoise_gpu")
+
+                col = layout.column()
+                col.enabled = rm.generate_render
+                row = col.row()
+                row.prop(rm, 'recover')
+                row = col.row()
+                row.prop(rm, 'enable_checkpoint')
+                row = col.row()
+                row.enabled = rm.enable_checkpoint
+                row.prop(rm, 'asfinal')
+                row = col.row()
+                row.enabled = rm.enable_checkpoint
+                row.prop(rm, 'checkpoint_type')
+                row = col.row(align=True)
+                row.enabled = rm.enable_checkpoint
+                row.prop(rm, 'checkpoint_interval')
+                row.prop(rm, 'render_limit')
+
+
+class RENDER_PT_renderman_baking(PRManPanel, Panel):
+
+    '''this panel covers the baking option for exporting pattern networks as textures'''
+    bl_context = "render"
+    bl_label = "Baking"
+    bl_options = {'DEFAULT_CLOSED'}
+
+    def draw(self, context):
+        layout = self.layout
+        row = layout.row()
+        icons = load_icons()
+        rman_batch = icons.get("batch_render")
+        row.operator("renderman.bake", text="Bake",
+                     icon_value=rman_batch.icon_id)
+
+
+class RENDER_PT_renderman_motion_blur(PRManPanel, Panel):
+    '''This panel covers the settings for Renderman's motion blur'''
+    bl_context = "render"
+    bl_label = "Motion Blur"
+    bl_options = {'DEFAULT_CLOSED'}
+
+    def draw(self, context):
+        rm = context.scene.renderman
+
+        icon = 'DISCLOSURE_TRI_DOWN' if rm.advanced_timing else 'DISCLOSURE_TRI_RIGHT'
+
+        layout = self.layout
+        col = layout.column()
+        col.prop(rm, "motion_blur")
+        col = layout.column()
+        col.enabled = rm.motion_blur
+        col.prop(rm, "sample_motion_blur")
+        col.prop(rm, "motion_segments")
+        col.prop(rm, "shutter_timing")
+        col.prop(rm, "shutter_angle")
+        row = col.row(align=True)
+        row.prop(rm, "shutter_efficiency_open")
+        row.prop(rm, "shutter_efficiency_close")
+        layout.separator()
+        col = layout.column()
+        col.prop(item, "show_advanced", icon=icon,
+                 text="Advanced Shutter Timing", icon_only=True, emboss=False)
+        if rm.advanced_timing:
+            row = col.row(align=True)
+            row.prop(rm, "c1")
+            row.prop(rm, "c2")
+            row.prop(rm, "d1")
+            row.prop(rm, "d2")
+            row = col.row(align=True)
+            row.prop(rm, "e1")
+            row.prop(rm, "e2")
+            row.prop(rm, "f1")
+            row.prop(rm, "f2")
+
+
+class RENDER_PT_renderman_advanced_settings(PRManPanel, Panel):
+    '''This panel covers additional render settings
+
+    # shading and tessellation
+    # geometry caches
+    # pixel filter
+    # render tiled order
+    # additional options (statistics, rib and texture generation caching,
+    thread settings)'''
+    bl_context = "render"
+    bl_label = "Advanced"
+    bl_options = {'DEFAULT_CLOSED'}
+
+    def draw(self, context):
+        layout = self.layout
+        scene = context.scene
+        rm = scene.renderman
+
+        layout.separator()
+
+        col = layout.column()
+        col.label("Shading and Tessellation:")
+        col.prop(rm, "micropoly_length")
+        col.prop(rm, "dicing_strategy")
+        row = col.row()
+        row.enabled = rm.dicing_strategy == "worlddistance"
+        row.prop(rm, "worlddistancelength")
+        col.prop(rm, "instanceworlddistancelength")
+
+        layout.separator()
+
+        col = layout.column()
+        col.label("Cache Settings:")
+        col.prop(rm, "texture_cache_size")
+        col.prop(rm, "geo_cache_size")
+        col.prop(rm, "opacity_cache_size")
+        layout.separator()
+        col = layout.column()
+        col.label("Pixel Filter:")
+        col.prop(rm, "pixelfilter")
+        row = col.row(align=True)
+        row.prop(rm, "pixelfilter_x", text="Size X")
+        row.prop(rm, "pixelfilter_y", text="Size Y")
+        layout.separator()
+        col = layout.column()
+        col.label("Bucket Order:")
+        col.prop(rm, "bucket_shape")
+        if rm.bucket_shape == 'SPIRAL':
+            row = col.row(align=True)
+            row.prop(rm, "bucket_sprial_x", text="X")
+            row.prop(rm, "bucket_sprial_y", text="Y")
+        layout.separator()
+        col = layout.column()
+        row = col.row()
+        row.prop(rm, "use_statistics", text="Output stats")
+        col.operator('rman.open_rib')
+        row = col.row()
+        col.prop(rm, "always_generate_textures")
+        col.prop(rm, "lazy_rib_gen")
+        col.prop(rm, "threads")
