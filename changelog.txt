@@ -1,3 +1,18 @@
+v21.5.0 8/18/17
+* Heat grid now available for Blender smoke sims cached with OpenVDB
+* RIB formatting now works with IPR renders
+* Icons have been added to all ui panels that contain RenderMan settings
+* Numerous fixes to the preset browser
+* Light rig presets now have correct world rotation
+* Can now update crop window during IPR
+* Viewport diffuse and specular color controls now work
+* Auto updater has been temporarily removed
+* Materials can now be linked directly to an object instance
+* Update a few paths, URLs, and other details
+* Spell RenderMan with bi-caps in user visible strings
+* RenderManForBlender is now being released under the MIT license
+* Code contributed by adminradio, a-e-k, bsavery, jdent02, and Lightye
+
 v21.4.0 5/16/17
 * Support for PxrHairColor (per strand index)
 * Preset browser integration.  Found under the RenderMan tab in the View3D menu (press T).  This is an implementation of the same preset browser in RfM.  Allows you to share shader networks with RfM, and save and import your favorite materials, and apply them to selected objects.
@@ -31,14 +46,14 @@ v21.2.0 11/8/16
 * NOTE SIGNIFICANT CHANGE - Nodetrees are moved to use the built in cycles nodetree!
   * This will help file linking and allow node groups.
   * However you will have to redo your nodetrees.
-  * Cycles nodes can be used with Renderman shaders.
-     * this is still a work in progress.  Some Cycles nodes will not function properly (or at all) with Renderman.
+  * Cycles nodes can be used with RenderMan shaders.
+     * this is still a work in progress.  Some Cycles nodes will not function properly (or at all) with RenderMan.
   * Using "add renderman nodetree" will attempt to convert and hook up your cycles nodetree.
      * this is still a work in progress and won't give you an exact conversion.
 * New PxrSurface lobe AOV's.  Due to changes in codebase you will have to reassign any existing AOV's to avoid export errors.
-* Support for PRMan 21 features - specifically new shaders and lights.
+* Support for RenderMan 21 features - specifically new shaders and lights.
 * Portal lights are supported.
-* Light filters are added - using a light and set it to "Filter type", then link the filters to your lights. 
+* Light filters are added - using a light and set it to "Filter type", then link the filters to your lights.
 * Sample and display filters are now under the scene properties.
 * Support for all Projection plugins (VR rendering with OmniDirectional!) under the camera props.
 * Icons are updated to renderman 21 icons.
@@ -64,13 +79,13 @@ v0.9.0 7/13/16
 * Render Selected button - quickly lets you render only a set of objects selected
 * Sampling presets to quickly change sampling settings (thanks rgordon)
 * Incremental rendering can now be disabled (it's on by default)
-* Rib generation should be more stable 
+* Rib generation should be more stable
 * default OUT directory is now /tmp
 * cache sizes options are now available in advanced scene settings
 * curves can render as ribbons now or round curves (default)
 * hair width correctly uses the Cycles settings rather than duplicating
 * High resolution smoke is supported (finally)
-* Darkfalloff is supported (thanks jdent) PRMan 20.9 feature
+* Darkfalloff is supported (thanks jdent) RenderMan 20.9 feature
 * Openexr renders can go to multilayer exrs for compositing (thanks Jdent)
 * some example files are provided - accesible though toolbar
 * Inline RIB boxes can now be inserted into the rib stream in various places (scene, world, object settings)
@@ -98,7 +113,7 @@ v0.8.0 03/22/2016
 * !!! Longstanding IPR bug, the initial rendering with IPR no longer locks up Blender.
 
 v0.7.0 11/06/2015
-* Light shapes for area lights area now a selector control not on the shader.  The shader setting will happen automagically.  Also the shape for distant/point/spot lights should be correct now. 
+* Light shapes for area lights area now a selector control not on the shader.  The shader setting will happen automagically.  Also the shape for distant/point/spot lights should be correct now.
 
 v0.6.0 8/20/2015
 * Light linking!
@@ -110,14 +125,14 @@ v0.5.0 8/20/2015
 * Backed out some multi-material changes until we have a proper bxdf switch node
 * Custom AOVs as well as specifying a lpe light group or object group works (please let me know any issues with this)
 * Little prettier shader swatch previews
-* Crop windows/borders work.  
+* Crop windows/borders work.
 
 v0.4.0 8/3/2015
 * OSL should now support IPR
 * more example files
 * RIB generation rewrite.  ~6x speedup creating rib for gooseberry benchmark
     * uv's across multi-material objects should now work
-    * multi-material objects now use the same geometry instead of splitting it. 
+    * multi-material objects now use the same geometry instead of splitting it.
     * however the current limitation is that multi-material objects can't be emissive
 * Metaball support (Thanks to @rendermouse!)
 * better deformation and multi-segment motion blur ribs.
@@ -143,7 +158,7 @@ v0.2.6 7/13/2015
 * Objects Geometry is output to a rib archive either under $SCENE/archives/static or $SCENE/archives/$FRAME_NUM if animated.
 * Objects Geometry is only output if the object is updated.  For example if a scene is created, rendered, then
 re-rendered, the geometry would not be re-ribgenned.  However if the object was updated in blender, it would update the rib.  This will greatly speed ribgens but may cause issues if somehow an object is updated but the timestamp not updated.
-In this case the archives directory can simply be removed, or the objects rib archive individually.  
+In this case the archives directory can simply be removed, or the objects rib archive individually.
 
 v0.2.5 7/13/2015
 * INTERACTIVE RENDERING IS HERE!!!!
@@ -183,7 +198,7 @@ v0.1.1 25/03/2015
 * Changed RIB output for 19.0 specific construct (integrator, bxdf, etc)
 * TODO - proper shader network support of bxdf/pattern via args files
         - integrator settings and general settings cleanup
-        - move to prman python plugin for rib integration
+        - move to RenderMan python plugin for rib integration
         - lights integration
         - general code cleanup
 
@@ -222,7 +237,7 @@ v0.6.5 - 23/08/2011
 
 
 v0.6.4 - 20/08/2011
-* Fix for not finding 3delight library correctly on Linux (ubuntu)	
+* Fix for not finding 3delight library correctly on Linux (ubuntu)
 
 
 v0.6.3 - 11/08/2011
@@ -272,11 +287,11 @@ Fixes:
 * Added manual shader initialisation to work around new limitations in bpy API
 * Attempted fixes for windows texture path troubles
 
-New features: 
+New features:
 * Motion blurred dynamic hair support
 
 New features contributed by Magnus Löfgren:
-* Support for deep shadow maps (Transparent Shadows), on by default 
+* Support for deep shadow maps (Transparent Shadows), on by default
 * Trace Motion Blur parameter now accessible, allowing motion blurred shadows
 
 

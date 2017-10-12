@@ -1,10 +1,10 @@
-PRMan for Blender Installation Instructions
+RenderMan for Blender Installation Instructions
 ------------------------------------------
 
 1.  Install Blender if not already (2.78 recommended)
 
 2.  Register for the free Non-Commercial Version of RenderMan from Pixar.
-https://renderman.pixar.com/view/non-commercial-renderman
+https://renderman.pixar.com/store/intro
 
 3.  Download and install RenderMan Pro Server Package and 
 installation instructions at: http://rendermansite.pixar.com/view/get-renderman 
@@ -14,7 +14,7 @@ It is recommended to install RenderMan Pro Server in the default location (or se
 3.A If on Windows, be sure to restart after installing RenderMan Pro Server
 
 4.  Download the latest release of the RenderMan for Blender addon 
-https://github.com/bsavery/PRMan-for-Blender/releases save the zip file somewhere.
+https://github.com/prman-pixar/RenderManForBlender/releases save the zip file somewhere.
 
 5.  Start Blender, and from the File->User Preferences->Add-ons install the zip file from step 4.  
 
@@ -25,8 +25,8 @@ ADVANCED:
 RenderMan normally bases everything off a variable RMANTREE which is set to your installation
 folder, eg /Applications/Pixar/RenderManProServer-21.0 on OSX and C:\Program Files\Pixar\RenderManProServer-21.0 on Windows.
 
-PRMan for Blender will try and guess the appropriate RenderMan version to use and the location of
-the RMANTREE folder.  If you are installing PRMan to the standard location you shouldn't have to do anything!
+RenderMan for Blender will try and guess the appropriate RenderMan version to use and the location of
+the RMANTREE folder.  If you are installing RenderMan to the standard location you shouldn't have to do anything!
 
 However, if you installed in a non-standard location, set the RMANTREE 
 environment variable before starting blender.

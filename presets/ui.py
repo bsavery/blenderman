@@ -112,7 +112,7 @@ class Renderman_Presets_UI_Panel(bpy.types.Panel):
 
 class Renderman_Presets_Menu(bpy.types.Menu):
     bl_idname = "renderman_presets_menu"
-    bl_label = "Renderman Presets Menu"
+    bl_label = "RenderMan Presets Menu"
 
     path = StringProperty(default="")
 

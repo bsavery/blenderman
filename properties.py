@@ -48,7 +48,7 @@ projection_names = [('none', 'None', 'None')]
 
 
 class RendermanCameraSettings(bpy.types.PropertyGroup):
-    bl_label = "Renderman Camera Settings"
+    bl_label = "RenderMan Camera Settings"
     bl_idname = 'RendermanCameraSettings'
 
     def get_projection_name(self):
@@ -379,7 +379,7 @@ class RendermanRenderLayerSettings(bpy.types.PropertyGroup):
 
     exr_format_options = EnumProperty(
         name="EXR Bit Depth",
-        description="Sets the bit depth of the .exr file.  Leaving at 'default' will use the Renderman defaults",
+        description="Sets the bit depth of the .exr file.  Leaving at 'default' will use the RenderMan defaults",
         items=[
             ('default', 'Default', ''),
             ('half', 'Half (16 bit)', ''),
@@ -397,7 +397,7 @@ class RendermanRenderLayerSettings(bpy.types.PropertyGroup):
 
     exr_compression = EnumProperty(
         name="EXR Compression",
-        description="Determined the compression used on the EXR file.  Leaving at 'default' will use the Renderman defaults",
+        description="Determined the compression used on the EXR file.  Leaving at 'default' will use the RenderMan defaults",
         items=[
             ('default', 'Default', ''),
             ('none', 'None', ''),
@@ -574,7 +574,7 @@ class RendermanSceneSettings(bpy.types.PropertyGroup):
 
     dicing_strategy = EnumProperty(
         name="Dicing Strategy",
-        description="Sets the method that PRMan uses to tessellate objects.  Spherical may help with volume rendering",
+        description="Sets the method that RenderMan uses to tessellate objects.  Spherical may help with volume rendering",
         items=[
             ("planarprojection", "Planar Projection",
              "Tessellates using the screen space coordinates of a primitive projected onto a plane"),
@@ -795,7 +795,7 @@ class RendermanSceneSettings(bpy.types.PropertyGroup):
 
     enable_external_rendering = BoolProperty(
         name="Enable External Rendering",
-        description="This will allow extended rendering modes, which allow batch rendering to PRMan outside of Blender",
+        description="This will allow extended rendering modes, which allow batch rendering to RenderMan outside of Blender",
         default=False)
 
     display_driver = EnumProperty(
@@ -811,7 +811,7 @@ class RendermanSceneSettings(bpy.types.PropertyGroup):
 
     exr_format_options = EnumProperty(
         name="Bit Depth",
-        description="Sets the bit depth of the main EXR file.  Leaving at 'default' will use the Renderman defaults",
+        description="Sets the bit depth of the main EXR file.  Leaving at 'default' will use the RenderMan defaults",
         items=[
             ('default', 'Default', ''),
             ('half', 'Half (16 bit)', ''),
@@ -820,7 +820,7 @@ class RendermanSceneSettings(bpy.types.PropertyGroup):
 
     exr_compression = EnumProperty(
         name="Compression",
-        description="Determined the compression used on the main EXR file.  Leaving at 'default' will use the Renderman defaults",
+        description="Determined the compression used on the main EXR file.  Leaving at 'default' will use the RenderMan defaults",
         items=[
             ('default', 'Default', ''),
             ('none', 'None', ''),
@@ -870,7 +870,7 @@ class RendermanSceneSettings(bpy.types.PropertyGroup):
 
     do_render = BoolProperty(
         name="Initiate Renderer",
-        description="Spool RIB files to Renderman",
+        description="Spool RIB files to RenderMan",
         default=True)
 
     alf_options = BoolProperty(
@@ -957,12 +957,12 @@ class RendermanSceneSettings(bpy.types.PropertyGroup):
 
     do_denoise = BoolProperty(
         name="Denoise Post-Process",
-        description="Use PRMan's image denoiser to post process your render.  This allows you to use a higher pixel variance (and therefore faster render) while still producing a high quality image",
+        description="Use RenderMan's image denoiser to post process your render.  This allows you to use a higher pixel variance (and therefore faster render) while still producing a high quality image",
         default=False)
 
     external_denoise = BoolProperty(
         name="Denoise Post-Process",
-        description="Use PRMan's image denoiser to post process your render.  This allows you to use a higher pixel variance (and therefore faster render) while still producing a high quality image",
+        description="Use RenderMan's image denoiser to post process your render.  This allows you to use a higher pixel variance (and therefore faster render) while still producing a high quality image",
         default=False)
 
     crossframe_denoise = BoolProperty(
@@ -2213,11 +2213,11 @@ class RendermanObjectSettings(bpy.types.PropertyGroup):
 
     raytrace_override = BoolProperty(
         name="Ray Trace Override",
-        description="Override default Renderman ray tracing behavior. Recommended for advanced users only",
+        description="Override default RenderMan ray tracing behavior. Recommended for advanced users only",
         default=False)
     raytrace_pixel_variance = FloatProperty(
         name="Relative Pixel Variance",
-        description="Allows this object ot render to a different quality level than the main scene.  Actual pixel variance will be this number multiplied by the main pixel variance",
+        description="Allows this object to render to a different quality level than the main scene.  Actual pixel variance will be this number multiplied by the main pixel variance",
         default=1.0)
     raytrace_maxdiffusedepth = IntProperty(
         name="Max Diffuse Depth",
@@ -2355,7 +2355,7 @@ class Tab_CollectionGroup(bpy.types.PropertyGroup):
 
     bpy.types.Scene.rm_help = BoolProperty(
         name="Help",
-        description="Show some links about Renderman and the documentation",
+        description="Show some links about RenderMan and the documentation",
         default=False)
 
     bpy.types.Scene.rm_env = BoolProperty(

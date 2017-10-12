@@ -114,10 +114,10 @@ def load_icons():
 
     # Create OpenVDB Visualizer
 
-    # Renderman Doc
+    # RenderMan Doc
     custom_icons.load("help", os.path.join(
         icons_dir, "rman_help.png"), 'IMAGE')
-    # About Renderman
+    # About RenderMan
     custom_icons.load("info", os.path.join(
         icons_dir, "rman_info.png"), 'IMAGE')
 
@@ -125,7 +125,7 @@ def load_icons():
     custom_icons.load("reload_plugin", os.path.join(
         icons_dir, "rman_loadplugin.png"), 'IMAGE')
 
-    # Renderman for Blender UI-Panels Icon - "R"
+    # RenderMan for Blender UI-Panels Icon - "R"
     custom_icons.load("rfb_panel", os.path.join(
         icons_dir, "rman_blender.png"), 'IMAGE')
 

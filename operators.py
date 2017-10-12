@@ -134,8 +134,8 @@ class SHADING_OT_convert_all_renderman_nodetree(bpy.types.Operator):
 
     ''''''
     bl_idname = "shading.convert_cycles_stuff"
-    bl_label = "Convert All Cycles to Renderman"
-    bl_description = "Convert all nodetrees to renderman"
+    bl_label = "Convert All Cycles to RenderMan"
+    bl_description = "Convert all nodetrees to RenderMan"
 
     def execute(self, context):
         for mat in bpy.data.materials:
@@ -194,8 +194,8 @@ class SHADING_OT_add_renderman_nodetree(bpy.types.Operator):
 
     ''''''
     bl_idname = "shading.add_renderman_nodetree"
-    bl_label = "Add Renderman Nodetree"
-    bl_description = "Add a renderman shader node tree linked to this material"
+    bl_label = "Add RenderMan Nodetree"
+    bl_description = "Add a RenderMan shader node tree linked to this material"
 
     idtype = StringProperty(name="ID Type", default="material")
     bxdf_name = StringProperty(name="Bxdf Name", default="PxrSurface")
@@ -474,7 +474,7 @@ class StartInteractive(bpy.types.Operator):
         w = context.region.width
         h = context.region.height
 
-        # Draw text area that PRMan is running.
+        # Draw text area that RenderMan is running.
         pos_x = w / 2 - 100
         pos_y = 20
         blf.enable(0, blf.SHADOW)
@@ -483,7 +483,7 @@ class StartInteractive(bpy.types.Operator):
         blf.size(0, 32, 36)
         blf.position(0, pos_x, pos_y, 0)
         bgl.glColor4f(1.0, 0.0, 0.0, 1.0)
-        blf.draw(0, "%s" % ('PRMan Interactive Mode Running'))
+        blf.draw(0, "%s" % ('RenderMan Interactive Mode Running'))
         blf.disable(0, blf.SHADOW)
 
     def invoke(self, context, event=None):
@@ -613,9 +613,9 @@ def quickAddPresets(presetList, pathFromPresetDir, name):
 
 
 class AddPresetRendermanRender(AddPresetBase, bpy.types.Operator):
-    '''Add or remove a Renderman Sampling Preset'''
+    '''Add or remove a RenderMan Sampling Preset'''
     bl_idname = "render.renderman_preset_add"
-    bl_label = "Add Renderman Preset"
+    bl_label = "Add RenderMan Preset"
     bl_options = {'REGISTER', 'UNDO'}
     preset_menu = "presets"
     preset_defines = ["scene = bpy.context.scene", ]
@@ -701,7 +701,7 @@ class RendermanRenderPresets():
 
 
 class PresetsMenu(bpy.types.Menu):
-    bl_label = "Renderman Presets"
+    bl_label = "RenderMan Presets"
     bl_idname = "presets"
     preset_subdir = os.path.join("renderman", "render")
     preset_operator = "script.execute_preset"
@@ -717,7 +717,7 @@ blenderAddonPaths = addon_utils.paths()
 rendermanExampleFilesList = []
 names = []
 for path in blenderAddonPaths:
-    basePath = os.path.join(path, "PRMan-for-Blender", "examples")
+    basePath = os.path.join(path, "RenderManForBlender", "examples")
     exists = os.path.exists(basePath)
     if exists:
         names = get_Files_in_Directory(basePath)
@@ -736,7 +736,7 @@ for name in names:
         def loadFile(self, context, exampleName):
             blenderAddonPaths = addon_utils.paths()
             for path in blenderAddonPaths:
-                basePath = os.path.join(path, "PRMan-for-Blender", "examples")
+                basePath = os.path.join(path, "RenderManForBlender", "examples")
                 exists = os.path.exists(basePath)
                 if exists:
                     examplePath = os.path.join(
@@ -750,7 +750,7 @@ for name in names:
 
 
 class LoadSceneMenu(bpy.types.Menu):
-    bl_label = "RendermanExamples"
+    bl_label = "RenderMan Examples"
     bl_idname = "examples"
 
     def get_operator_failsafe(self, idname):
@@ -1034,7 +1034,7 @@ class Add_Subdiv_Sheme(bpy.types.Operator):
 
 class RM_Add_Area(bpy.types.Operator):
     bl_idname = "object.mr_add_area"
-    bl_label = "Add Renderman Area"
+    bl_label = "Add RenderMan Area"
     bl_description = ""
     bl_options = {"REGISTER", "UNDO"}
 
@@ -1048,7 +1048,7 @@ class RM_Add_Area(bpy.types.Operator):
 
 class RM_Add_LightFilter(bpy.types.Operator):
     bl_idname = "object.mr_add_light_filter"
-    bl_label = "Add Renderman Light Filter"
+    bl_label = "Add RenderMan Light Filter"
     bl_description = ""
     bl_options = {"REGISTER", "UNDO"}
 
@@ -1064,7 +1064,7 @@ class RM_Add_LightFilter(bpy.types.Operator):
 
 class RM_Add_Hemi(bpy.types.Operator):
     bl_idname = "object.mr_add_hemi"
-    bl_label = "Add Renderman Hemi"
+    bl_label = "Add RenderMan Hemi"
     bl_description = ""
     bl_options = {"REGISTER", "UNDO"}
 
@@ -1078,7 +1078,7 @@ class RM_Add_Hemi(bpy.types.Operator):
 
 class RM_Add_Sky(bpy.types.Operator):
     bl_idname = "object.mr_add_sky"
-    bl_label = "Add Renderman Sky"
+    bl_label = "Add RenderMan Sky"
     bl_description = ""
     bl_options = {"REGISTER", "UNDO"}
 

@@ -37,7 +37,7 @@ import os
 
 # an actual preset
 class RendermanPreset(PropertyGroup):
-    bl_label = "Renderman Preset Group"
+    bl_label = "RenderMan Preset Group"
     bl_idname = 'RendermanPreset'
 
     #def get_enum_items(self, context):
@@ -62,13 +62,13 @@ class RendermanPreset(PropertyGroup):
 
 # forward define preset group
 class RendermanPresetGroup(PropertyGroup):
-    bl_label = "Renderman Preset Group"
+    bl_label = "RenderMan Preset Group"
     bl_idname = 'RendermanPresetGroup'
     pass
 
 # A property group holds presets and sub groups
 class RendermanPresetGroup(PropertyGroup):
-    bl_label = "Renderman Preset Group"
+    bl_label = "RenderMan Preset Group"
     bl_idname = 'RendermanPresetGroup'
 
     @classmethod

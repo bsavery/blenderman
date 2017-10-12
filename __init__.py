@@ -27,11 +27,11 @@ import sys
 
 bl_info = {
     "name": "RenderMan For Blender",
-    "author": "Brian Savery",
-    "version": (21, 4, 0),
+    "author": "Pixar",
+    "version": (21, 5, 0),
     "blender": (2, 78, 0),
     "location": "Info Header, render engine menu",
-    "description": "RenderMan 21.4 integration",
+    "description": "RenderMan 21.5 integration",
     "warning": "",
     "category": "Render"}
 

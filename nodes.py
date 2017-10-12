@@ -127,9 +127,9 @@ class RendermanSocketInterface:
 
 # socket types (need this just for the ui_open)
 class RendermanNodeSocketFloat(bpy.types.NodeSocketFloat, RendermanSocket):
-    '''Renderman float input/output'''
+    '''RenderMan float input/output'''
     bl_idname = 'RendermanNodeSocketFloat'
-    bl_label = 'Renderman Float Socket'
+    bl_label = 'RenderMan Float Socket'
 
     default_value = FloatProperty(update=update_func)
     renderman_type = StringProperty(default='float')
@@ -139,9 +139,9 @@ class RendermanNodeSocketFloat(bpy.types.NodeSocketFloat, RendermanSocket):
 
 
 class RendermanNodeSocketInterfaceFloat(bpy.types.NodeSocketInterfaceFloat, RendermanSocketInterface):
-    '''Renderman float input/output'''
+    '''RenderMan float input/output'''
     bl_idname = 'RendermanNodeSocketInterfaceFloat'
-    bl_label = 'Renderman Float Socket'
+    bl_label = 'RenderMan Float Socket'
     bl_socket_idname = 'RendermanNodeSocketFloat'
 
     default_value = FloatProperty()
@@ -151,9 +151,9 @@ class RendermanNodeSocketInterfaceFloat(bpy.types.NodeSocketInterfaceFloat, Rend
 
 
 class RendermanNodeSocketInt(bpy.types.NodeSocketInt, RendermanSocket):
-    '''Renderman int input/output'''
+    '''RenderMan int input/output'''
     bl_idname = 'RendermanNodeSocketInt'
-    bl_label = 'Renderman Int Socket'
+    bl_label = 'RenderMan Int Socket'
 
     default_value = IntProperty(update=update_func)
     renderman_type = StringProperty(default='int')
@@ -163,9 +163,9 @@ class RendermanNodeSocketInt(bpy.types.NodeSocketInt, RendermanSocket):
 
 
 class RendermanNodeSocketInterfaceInt(bpy.types.NodeSocketInterfaceInt, RendermanSocketInterface):
-    '''Renderman float input/output'''
+    '''RenderMan float input/output'''
     bl_idname = 'RendermanNodeSocketInterfaceInt'
-    bl_label = 'Renderman Int Socket'
+    bl_label = 'RenderMan Int Socket'
     bl_socket_idname = 'RendermanNodeSocketInt'
 
     default_value = IntProperty()
@@ -175,35 +175,35 @@ class RendermanNodeSocketInterfaceInt(bpy.types.NodeSocketInterfaceInt, Renderma
 
 
 class RendermanNodeSocketString(bpy.types.NodeSocketString, RendermanSocket):
-    '''Renderman string input/output'''
+    '''RenderMan string input/output'''
     bl_idname = 'RendermanNodeSocketString'
-    bl_label = 'Renderman String Socket'
+    bl_label = 'RenderMan String Socket'
     default_value = StringProperty(update=update_func)
     is_texture = BoolProperty(default=False)
     renderman_type = StringProperty(default='string')
 
 
 class RendermanNodeSocketStruct(bpy.types.NodeSocketString, RendermanSocket):
-    '''Renderman struct input/output'''
+    '''RenderMan struct input/output'''
     bl_idname = 'RendermanNodeSocketStruct'
-    bl_label = 'Renderman Struct Socket'
+    bl_label = 'RenderMan Struct Socket'
     hide_value = True
     renderman_type = 'string'
     default_value = ''
 
 
 class RendermanNodeSocketInterfaceStruct(bpy.types.NodeSocketInterfaceString, RendermanSocketInterface):
-    '''Renderman struct input/output'''
+    '''RenderMan struct input/output'''
     bl_idname = 'RendermanNodeSocketInterfaceStruct'
-    bl_label = 'Renderman Struct Socket'
+    bl_label = 'RenderMan Struct Socket'
     bl_socket_idname = 'RendermanNodeSocketStruct'
     hide_value = True
 
 
 class RendermanNodeSocketColor(bpy.types.NodeSocketColor, RendermanSocket):
-    '''Renderman color input/output'''
+    '''RenderMan color input/output'''
     bl_idname = 'RendermanNodeSocketColor'
-    bl_label = 'Renderman Color Socket'
+    bl_label = 'RenderMan Color Socket'
 
     default_value = FloatVectorProperty(size=3,
                                         subtype="COLOR", update=update_func)
@@ -214,9 +214,9 @@ class RendermanNodeSocketColor(bpy.types.NodeSocketColor, RendermanSocket):
 
 
 class RendermanNodeSocketInterfaceColor(bpy.types.NodeSocketInterfaceColor, RendermanSocketInterface):
-    '''Renderman color input/output'''
+    '''RenderMan color input/output'''
     bl_idname = 'RendermanNodeSocketInterfaceColor'
-    bl_label = 'Renderman Color Socket'
+    bl_label = 'RenderMan Color Socket'
     bl_socket_idname = 'RendermanNodeSocketColor'
 
     default_value = FloatVectorProperty(size=3,
@@ -227,9 +227,9 @@ class RendermanNodeSocketInterfaceColor(bpy.types.NodeSocketInterfaceColor, Rend
 
 
 class RendermanNodeSocketVector(RendermanSocket, bpy.types.NodeSocketVector):
-    '''Renderman vector input/output'''
+    '''RenderMan vector input/output'''
     bl_idname = 'RendermanNodeSocketVector'
-    bl_label = 'Renderman Vector Socket'
+    bl_label = 'RenderMan Vector Socket'
     hide_value = True
 
     default_value = FloatVectorProperty(size=3,
@@ -241,9 +241,9 @@ class RendermanNodeSocketVector(RendermanSocket, bpy.types.NodeSocketVector):
 
 
 class RendermanNodeSocketInterfaceVector(bpy.types.NodeSocketInterfaceVector, RendermanSocketInterface):
-    '''Renderman color input/output'''
+    '''RenderMan color input/output'''
     bl_idname = 'RendermanNodeSocketInterfaceVector'
-    bl_label = 'Renderman Vector Socket'
+    bl_label = 'RenderMan Vector Socket'
     bl_socket_idname = 'RendermanNodeSocketVector'
     hide_value = True
 
@@ -257,18 +257,18 @@ class RendermanNodeSocketInterfaceVector(bpy.types.NodeSocketInterfaceVector, Re
 
 
 class RendermanShaderSocket(bpy.types.NodeSocketShader, RendermanSocket):
-    '''Renderman shader input/output'''
+    '''RenderMan shader input/output'''
     bl_idname = 'RendermanShaderSocket'
-    bl_label = 'Renderman Shader Socket'
+    bl_label = 'RenderMan Shader Socket'
     hide_value = True
 
 # Custom socket type for connecting shaders
 
 
 class RendermanShaderSocketInterface(bpy.types.NodeSocketInterfaceShader, RendermanSocketInterface):
-    '''Renderman shader input/output'''
+    '''RenderMan shader input/output'''
     bl_idname = 'RendermanShaderInterfaceSocket'
-    bl_label = 'Renderman Shader Socket'
+    bl_label = 'RenderMan Shader Socket'
     bl_socket_idname = 'RendermanShaderSocket'
     hide_value = True
 
@@ -542,7 +542,7 @@ class RendermanShadingNode(bpy.types.ShaderNode):
 
 
 class RendermanOutputNode(RendermanShadingNode):
-    bl_label = 'PRMan Material'
+    bl_label = 'RenderMan Material'
     renderman_node_type = 'output'
     bl_icon = 'MATERIAL'
     node_tree = None
@@ -2019,7 +2019,7 @@ def is_same_type(socket1, socket2):
 
 
 def is_float_type(socket):
-    # this is a prman node
+    # this is a renderman node
     if type(socket) == type({}):
         return socket['renderman_type'] in ['int', 'float']
     elif hasattr(socket.node, 'plugin_name'):
@@ -2033,7 +2033,7 @@ def is_float_type(socket):
 
 
 def is_float3_type(socket):
-    # this is a prman node
+    # this is a renderman node
     if type(socket) == type({}):
         return socket['renderman_type'] in ['int', 'float']
     elif hasattr(socket.node, 'plugin_name'):
@@ -2269,18 +2269,18 @@ def register():
             nodetypes[typename] = nodetype
 
     node_cats = {
-        'bxdf': ('PRMan Bxdfs', []),
-        'light': ('PRMan Lights', []),
-        'patterns_texture': ('PRMan Texture Patterns', []),
-        'patterns_bump': ('PRMan Bump Patterns', []),
-        'patterns_color': ('PRMan Color Patterns', []),
-        'patterns_manifold': ('PRMan Manifold Patterns', []),
-        'patterns_geometry': ('PRMan Geometry Patterns', []),
-        'patterns_utility': ('PRMan Utility Patterns', []),
-        'patterns_script': ('PRMan Script Patterns', []),
-        'patterns_displace': ('PRMan Displacement Patterns', []),
-        'patterns_layer': ('PRMan Layers', []),
-        'displacement': ('PRMan Displacements', [])
+        'bxdf': ('RenderMan Bxdfs', []),
+        'light': ('RenderMan Lights', []),
+        'patterns_texture': ('RenderMan Texture Patterns', []),
+        'patterns_bump': ('RenderMan Bump Patterns', []),
+        'patterns_color': ('RenderMan Color Patterns', []),
+        'patterns_manifold': ('RenderMan Manifold Patterns', []),
+        'patterns_geometry': ('RenderMan Geometry Patterns', []),
+        'patterns_utility': ('RenderMan Utility Patterns', []),
+        'patterns_script': ('RenderMan Script Patterns', []),
+        'patterns_displace': ('RenderMan Displacement Patterns', []),
+        'patterns_layer': ('RenderMan Layers', []),
+        'displacement': ('RenderMan Displacements', [])
     }
 
     for name, node_type in nodetypes.items():
@@ -2310,7 +2310,7 @@ def register():
     # all categories in a list
     node_categories = [
         # identifier, label, items list
-        RendermanPatternNodeCategory("PRMan_output_nodes", "PRMan Outputs",
+        RendermanPatternNodeCategory("PRMan_output_nodes", "RenderMan Outputs",
                                      items=[NodeItem('RendermanOutputNode', label=RendermanOutputNode.bl_label)]),
     ]
 

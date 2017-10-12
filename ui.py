@@ -978,7 +978,7 @@ class DATA_PT_renderman_lamp(ShaderPanel, Panel):
                     row.prop(lamp, 'size', text="Size X")
                     row.prop(lamp, 'size_y')
                 else:
-                    row.prop(lamp, 'size', text="Radius")
+                    row.prop(lamp, 'size', text="Diameter")
             # layout.prop(lamp.renderman, "shadingrate")
 
         # layout.prop_search(lamp.renderman, "nodetree", bpy.data, "node_groups")
@@ -1079,7 +1079,7 @@ class OBJECT_PT_renderman_object_geometry(Panel, CollectionPanel):
     bl_space_type = 'PROPERTIES'
     bl_region_type = 'WINDOW'
     bl_context = "object"
-    bl_label = "Renderman Geometry"
+    bl_label = "RenderMan Geometry"
 
     @classmethod
     def poll(cls, context):
@@ -1657,10 +1657,10 @@ def PRMan_menu_func(self, context):
     self.layout.separator()
     if engine.ipr:
         self.layout.operator('lighting.start_interactive',
-                             text="PRMan Stop Interactive Rendering")
+                             text="RenderMan Stop Interactive Rendering")
     else:
         self.layout.operator('lighting.start_interactive',
-                             text="PRMan Start Interactive Rendering")
+                             text="RenderMan Start Interactive Rendering")
 
 
 #################
@@ -1923,7 +1923,7 @@ class Renderman_Object_Panel(CollectionPanel, Panel):
 
 class Renderman_UI_Panel(bpy.types.Panel, _RManPanelHeader):
     bl_idname = "renderman_ui_panel"
-    bl_label = "Renderman "
+    bl_label = "RenderMan"
     bl_space_type = "VIEW_3D"
     bl_region_type = "TOOLS"
     bl_category = "Renderman"
@@ -2421,20 +2421,20 @@ class Renderman_UI_Panel(bpy.types.Panel, _RManPanelHeader):
 
         # Create OpenVDB Visualizer
         layout.separator()
-        # Renderman Doc
+        # RenderMan Doc
         rman_help = icons.get("help")
-        layout.operator("wm.url_open", text="Renderman Docs",
-                        icon_value=rman_help.icon_id).url = "https://github.com/bsavery/PRMan-for-Blender/wiki/Documentation-Home"
+        layout.operator("wm.url_open", text="RenderMan Docs",
+                        icon_value=rman_help.icon_id).url = "https://github.com/prman-pixar/RenderManForBlender/wiki/Documentation-Home"
         rman_info = icons.get("info")
-        layout.operator("wm.url_open", text="About Renderman",
-                        icon_value=rman_info.icon_id).url = "http://renderman.pixar.com/view/non-commercial-renderman"
+        layout.operator("wm.url_open", text="About RenderMan",
+                        icon_value=rman_info.icon_id).url = "https://renderman.pixar.com/store/intro"
 
         # Reload the addon
         # rman_reload = icons.get("reload_plugin")
         # layout.operator("renderman.restartaddon", icon_value=rman_reload.icon_id)
 
-        # Enable the menu item to display the examples menu in the Renderman
-        # Pannel.
+        # Enable the menu item to display the examples menu in the RenderMan
+        # Panel.
         layout.separator()
         layout.menu("examples", icon_value=rman_help.icon_id)
 

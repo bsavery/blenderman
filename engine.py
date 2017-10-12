@@ -323,7 +323,7 @@ class RPass:
             update_image()
         except:
             engine.report({"ERROR"},
-                          "Problem launching PRMan from %s." % prman_executable)
+                          "Problem launching RenderMan from %s." % prman_executable)
             isProblem = True
 
     def get_denoise_names(self):
@@ -397,7 +397,7 @@ class RPass:
             isProblem = False
         except:
             engine.report({"ERROR"},
-                          "Problem launching PRMan from %s." % prman_executable)
+                          "Problem launching RenderMan from %s." % prman_executable)
             isProblem = True
 
         if not isProblem:
@@ -406,7 +406,7 @@ class RPass:
             s = '.'
             while not os.path.exists(render_output) and \
                     self.display_driver not in ['it']:
-                engine.update_stats("", ("PRMan: Starting Rendering" + s))
+                engine.update_stats("", ("RenderMan: Starting Rendering" + s))
                 if engine.test_break():
                     try:
                         process.kill()
@@ -415,7 +415,7 @@ class RPass:
                     break
 
                 if process.poll() != None:
-                    engine.report({"ERROR"}, "PRMan: Exited")
+                    engine.report({"ERROR"}, "RenderMan: Exited")
                     break
 
                 time.sleep(DELAY)
@@ -425,7 +425,7 @@ class RPass:
 
                 if self.display_driver not in ['it']:
                     prev_mod_time = os.path.getmtime(render_output)
-                engine.update_stats("", ("PRMan: Rendering."))
+                engine.update_stats("", ("RenderMan: Rendering."))
                 # Update while rendering
 
                 while True:
@@ -437,20 +437,20 @@ class RPass:
                         engine.update_progress(float(perc) / 100.0)
                     else:
                         if line and "ERROR" in str(line):
-                            engine.report({"ERROR"}, "PRMan: %s " %
+                            engine.report({"ERROR"}, "RenderMan: %s " %
                                           line.decode('utf8'))
                         elif line and "WARNING" in str(line):
-                            engine.report({"WARNING"}, "PRMan: %s " %
+                            engine.report({"WARNING"}, "RenderMan: %s " %
                                           line.decode('utf8'))
                         elif line and "SEVERE" in str(line):
-                            engine.report({"ERROR"}, "PRMan: %s " %
+                            engine.report({"ERROR"}, "RenderMan: %s " %
                                           line.decode('utf8'))
 
                     if process.poll() is not None:
                         if self.display_driver not in ['it']:
                             update_image()
                         t2 = time.time()
-                        engine.report({"INFO"}, "PRMan: Done Rendering." +
+                        engine.report({"INFO"}, "RenderMan: Done Rendering." +
                                       " (elapsed time: " +
                                       format_seconds_to_hhmmss(t2 - t1) + ")")
 
@@ -462,7 +462,7 @@ class RPass:
                             process.kill()
                             isProblem = True
                             engine.report({"INFO"},
-                                          "PRMan: Rendering Cancelled.")
+                                          "RenderMan: Rendering Cancelled.")
                         except:
                             pass
                         break
@@ -480,7 +480,7 @@ class RPass:
                       "] does not exist.")
         else:
             debug("error",
-                  "Problem launching PRMan from %s." % prman_executable)
+                  "Problem launching RenderMan from %s." % prman_executable)
 
         # launch the denoise process if turned on
         if self.rm.do_denoise and not isProblem:
@@ -496,7 +496,7 @@ class RPass:
                     cmd = [os.path.join(self.paths['rmantree'], 'bin',
                                         'denoise')] + denoise_options + [denoise_data]
 
-                    engine.update_stats("", ("PRMan: Denoising image"))
+                    engine.update_stats("", ("RenderMan: Denoising image"))
                     t1 = time.time()
                     process = subprocess.Popen(cmd, cwd=images_dir,
                                                stdout=subprocess.PIPE,
@@ -505,7 +505,7 @@ class RPass:
                     process.wait()
                     t2 = time.time()
                     if os.path.exists(filtered_name):
-                        engine.report({"INFO"}, "PRMan: Done Denoising." +
+                        engine.report({"INFO"}, "RenderMan: Done Denoising." +
                                       " (elapsed time: " +
                                       format_seconds_to_hhmmss(t2 - t1) + ")")
                         if self.display_driver != 'it':
@@ -536,7 +536,7 @@ class RPass:
                                                        env=environ)
                             process.wait()
                     else:
-                        engine.report({"ERROR"}, "PRMan: Error Denoising.")
+                        engine.report({"ERROR"}, "RenderMan: Error Denoising.")
                 except:
                     engine.report({"ERROR"},
                                   "Problem launching denoise from %s." %
