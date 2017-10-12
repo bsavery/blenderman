@@ -3140,7 +3140,6 @@ def export_display(ri, rpass, scene):
         ri.Option("bucket", {"string order": [rm.bucket_shape.lower()]})
 
     display_driver = rpass.display_driver
-    rpass.output_files = []
     addon_prefs = get_addon_prefs()
     main_display = user_path(
         addon_prefs.path_display_driver_image, scene=scene, display_driver=rpass.display_driver)
@@ -3154,7 +3153,6 @@ def export_display(ri, rpass, scene):
         dspy_info = make_dspy_info(scene)
 
     ri.Display(main_display, display_driver, "rgba", dspy_info)
-    rpass.output_files.append(main_display)
 
     display_params = {'int asrgba': 1}
 
@@ -3226,7 +3224,6 @@ def export_display(ri, rpass, scene):
                         layer_name=layer_name, pass_name=aov)
                     ri.Display('+' + dspy_name, display_driver,
                                aov, display_params)
-                    rpass.output_files.append(dspy_name)
 
         # else we have custom rman render layer settings
         else:
@@ -3323,7 +3320,6 @@ def export_display(ri, rpass, scene):
                     dspy_name = user_path(
                         addon_prefs.path_aov_image, scene=scene, display_driver=rpass.display_driver,
                         layer_name=layer_name, pass_name=aov_name)
-                    rpass.output_files.append(dspy_name)
                     ri.Display('+' + dspy_name, display_driver,
                                aov_channel_name, params)
 
