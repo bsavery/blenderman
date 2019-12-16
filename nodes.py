@@ -452,7 +452,7 @@ class RendermanShadingNode(bpy.types.ShaderNode):
                 FileNameNoEXT = os.path.splitext(script.name)[0]
                 FileNameOSO = FileNameNoEXT
                 FileNameOSO += ".oso"
-                node.plugin_name = FileNameNoEXT
+                node.plugin_name: FileNameNoEXT
                 ok = node.compile_osl(osl_file.name, compile_path, script.name)
                 export_path = os.path.join(
                     user_path(prefs.env_vars.out), "shaders", FileNameOSO)
@@ -461,7 +461,7 @@ class RendermanShadingNode(bpy.types.ShaderNode):
                 ok = node.compile_osl(osl_path, compile_path)
                 FileName = os.path.basename(osl_path)
                 FileNameNoEXT = os.path.splitext(FileName)[0]
-                node.plugin_name = FileNameNoEXT
+                node.plugin_name: FileNameNoEXT
                 FileNameOSO = FileNameNoEXT
                 FileNameOSO += ".oso"
                 export_path = os.path.join(
@@ -480,7 +480,7 @@ class RendermanShadingNode(bpy.types.ShaderNode):
             debug('osl', prop_names, "MetaInfo: ", shader_meta)
             # Set node name to shader name
             node.label = shader_meta["shader"]
-            node.plugin_name = shader_meta["shader"]
+            node.plugin_name: shader_meta["shader"]
             # Generate new inputs and outputs
             setattr(node, 'shader_meta', shader_meta)
             node.setOslProps(prop_names, shader_meta)
@@ -664,7 +664,7 @@ def generate_node_type(prefs, name, args):
     if name == 'PxrRamp':
         ntype.node_group = StringProperty('color_ramp', default='')
 
-    ntype.plugin_name = StringProperty(name='Plugin Name',
+    ntype.plugin_name: StringProperty(name='Plugin Name',
                                        default=name, options={'HIDDEN'})
     # lights cant connect to a node tree in 20.0
     class_generate_properties(ntype, name, inputs + outputs)

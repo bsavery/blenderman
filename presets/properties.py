@@ -52,12 +52,12 @@ class RendermanPreset(PropertyGroup):
         group = RendermanPresetGroup.get_from_path(group_path)
         return group.presets[preset] if preset in group.presets.keys() else None
     
-    name = StringProperty(default='')
-    label= StringProperty(default='')
-    #thumbnail = EnumProperty(items=get_enum_items)
-    thumb_path = StringProperty(subtype='FILE_PATH')
-    path = StringProperty(subtype='FILE_PATH')
-    json_path = StringProperty(subtype='FILE_PATH')
+    name: StringProperty(default='')
+    label: StringProperty(default='')
+    #thumbnail: EnumProperty(items=get_enum_items)
+    thumb_path: StringProperty(subtype='FILE_PATH')
+    path: StringProperty(subtype='FILE_PATH')
+    json_path: StringProperty(subtype='FILE_PATH')
 
 
 # forward define preset group
@@ -91,15 +91,15 @@ class RendermanPresetGroup(PropertyGroup):
         else:
             return None
 
-    name = StringProperty(default='')
-    ui_open = BoolProperty(default=True)
+    name: StringProperty(default='')
+    ui_open: BoolProperty(default=True)
 
     def generate_previews(self, context):
         return icons.load_previews(self)
     
-    path = StringProperty(default='')
-    presets = CollectionProperty(type=RendermanPreset)
-    current_preset = EnumProperty(items=generate_previews, name='Current Preset')
+    path: StringProperty(default='')
+    presets: CollectionProperty(type=RendermanPreset)
+    current_preset: EnumProperty(items=generate_previews, name='Current Preset')
 
     # gets the presets and all from children
     def get_presets(self):

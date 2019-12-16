@@ -101,8 +101,8 @@ class load_asset_to_scene(bpy.types.Operator):
     bl_label = "Load Asset to Scene"
     bl_description = "Load the Asset to scene"
 
-    preset_path = StringProperty(default='')
-    assign = BoolProperty(default=False)
+    preset_path: StringProperty(default='')
+    assign: BoolProperty(default=False)
 
     def invoke(self, context, event):
         preset = RendermanPreset.get_from_path(self.properties.preset_path)
@@ -121,7 +121,7 @@ class save_asset_to_lib(bpy.types.Operator):
     bl_label = "Save Asset to Library"
     bl_description = "Save Asset to Library"
 
-    lib_path = StringProperty(default='')
+    lib_path: StringProperty(default='')
 
     def invoke(self, context, event):
         presets_path = util.get_addon_prefs().presets_library.path
@@ -150,7 +150,7 @@ class set_active_preset_library(bpy.types.Operator):
     bl_label = "Set active RenderMan Preset Library"
     bl_description = "Sets the clicked library active"
 
-    lib_path = StringProperty(default='')
+    lib_path: StringProperty(default='')
 
     def execute(self, context):
         lib_path = self.properties.lib_path
@@ -164,7 +164,7 @@ class add_preset_library(bpy.types.Operator):
     bl_label = "Add RenderMan Preset Library"
     bl_description = "Adds a new library"
 
-    new_name = StringProperty(default="")
+    new_name: StringProperty(default="")
     
     def execute(self, context):
         active = RendermanPresetGroup.get_active_library()
@@ -215,7 +215,7 @@ class remove_preset(bpy.types.Operator):
     bl_label = "Remove RenderMan Preset"
     bl_description = "Remove a Preset"
 
-    preset_path = StringProperty()
+    preset_path: StringProperty()
 
     def execute(self, context):
         preset_path = self.properties.preset_path
@@ -246,8 +246,8 @@ class move_preset(bpy.types.Operator):
             return enum
         return get_libs(util.get_addon_prefs().presets_library)
 
-    preset_path = StringProperty(default='')
-    new_library = EnumProperty(items=get_libraries, description='New Library', name="New Library")
+    preset_path: StringProperty(default='')
+    new_library: EnumProperty(items=get_libraries, description='New Library', name="New Library")
 
     def execute(self, context):
         new_parent_path = self.properties.new_library
@@ -285,8 +285,8 @@ class move_preset_library(bpy.types.Operator):
 
         return get_libs(util.get_addon_prefs().presets_library)
 
-    lib_path = StringProperty(default='')
-    new_library = EnumProperty(items=get_libraries, description='New Library', name="New Library")
+    lib_path: StringProperty(default='')
+    new_library: EnumProperty(items=get_libraries, description='New Library', name="New Library")
 
     def execute(self, context):
         new_parent_path = self.properties.new_library

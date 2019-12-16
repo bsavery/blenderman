@@ -36,14 +36,14 @@ from .util import get_installed_rendermans,\
 from .presets.properties import RendermanPresetGroup
 
 class RendermanPreferencePath(bpy.types.PropertyGroup):
-    name = StringProperty(name="", subtype='DIR_PATH')
+    name: StringProperty(name="", subtype='DIR_PATH')
 
 
 class RendermanEnvVarSettings(bpy.types.PropertyGroup):
     if sys.platform == ("win32"):
         outpath = os.path.join(
             "C:", "Users", os.getlogin(), "Documents", "PRMan")
-        out = StringProperty(
+        out: StringProperty(
             name="OUT (Output Root)",
             description="Default RIB export path root",
             subtype='DIR_PATH',
@@ -51,25 +51,25 @@ class RendermanEnvVarSettings(bpy.types.PropertyGroup):
 
     else:
         outpath = os.path.join(os.environ.get('HOME'), "Documents", "PRMan")
-        out = StringProperty(
+        out: StringProperty(
             name="OUT (Output Root)",
             description="Default RIB export path root",
             subtype='DIR_PATH',
             default='/tmp/renderman_for_blender/{blend}')
 
-    shd = StringProperty(
+    shd: StringProperty(
         name="SHD (Shadow Maps)",
         description="SHD environment variable",
         subtype='DIR_PATH',
         default=os.path.join('$OUT', 'shadowmaps'))
 
-    ptc = StringProperty(
+    ptc: StringProperty(
         name="PTC (Point Clouds)",
         description="PTC environment variable",
         subtype='DIR_PATH',
         default=os.path.join('$OUT', 'pointclouds'))
 
-    arc = StringProperty(
+    arc: StringProperty(
         name="ARC (Archives)",
         description="ARC environment variable",
         subtype='DIR_PATH',
@@ -87,41 +87,41 @@ class RendermanPreferences(AddonPreferences):
             options.append((path, vers, path))
         return options
 
-    shader_paths = CollectionProperty(type=RendermanPreferencePath,
+    shader_paths: CollectionProperty(type=RendermanPreferencePath,
                                       name="Shader Paths")
-    shader_paths_index = IntProperty(min=-1, default=-1)
+    shader_paths_index: IntProperty(min=-1, default=-1)
 
-    texture_paths = CollectionProperty(type=RendermanPreferencePath,
+    texture_paths: CollectionProperty(type=RendermanPreferencePath,
                                        name="Texture Paths")
-    texture_paths_index = IntProperty(min=-1, default=-1)
+    texture_paths_index: IntProperty(min=-1, default=-1)
 
-    procedural_paths = CollectionProperty(type=RendermanPreferencePath,
+    procedural_paths: CollectionProperty(type=RendermanPreferencePath,
                                           name="Procedural Paths")
-    procedural_paths_index = IntProperty(min=-1, default=-1)
+    procedural_paths_index: IntProperty(min=-1, default=-1)
 
-    archive_paths = CollectionProperty(type=RendermanPreferencePath,
+    archive_paths: CollectionProperty(type=RendermanPreferencePath,
                                        name="Archive Paths")
-    archive_paths_index = IntProperty(min=-1, default=-1)
+    archive_paths_index: IntProperty(min=-1, default=-1)
 
-    use_default_paths = BoolProperty(
+    use_default_paths: BoolProperty(
         name="Use RenderMan default paths",
         description="Includes paths for default shaders etc. from RenderMan Pro\
             Server install",
         default=True)
-    use_builtin_paths = BoolProperty(
+    use_builtin_paths: BoolProperty(
         name="Use built in paths",
         description="Includes paths for default shaders etc. from RenderMan\
             exporter",
         default=False)
 
-    rmantree_choice = EnumProperty(
+    rmantree_choice: EnumProperty(
         name='RenderMan Version to use',
         description='Leaving as "Newest" will automatically update when you install a new RenderMan version',
         # default='NEWEST',
         items=find_installed_rendermans
     )
 
-    rmantree_method = EnumProperty(
+    rmantree_method: EnumProperty(
         name='RenderMan Location',
         description='How RenderMan should be detected.  Most users should leave to "Detect"',
         items=[('DETECT', 'Choose From Installed', 'This will scan for installed RenderMan locations to choose from'),
@@ -129,71 +129,71 @@ class RendermanPreferences(AddonPreferences):
                 'This will use the RMANTREE set in the enviornment variables'),
                ('MANUAL', 'Set Manually', 'Manually set the RenderMan installation (for expert users)')])
 
-    path_rmantree = StringProperty(
+    path_rmantree: StringProperty(
         name="RMANTREE Path",
         description="Path to RenderMan Pro Server installation folder",
         subtype='DIR_PATH',
         default='')
-    path_renderer = StringProperty(
+    path_renderer: StringProperty(
         name="Renderer Path",
         description="Path to renderer executable",
         subtype='FILE_PATH',
         default="prman")
-    path_shader_compiler = StringProperty(
+    path_shader_compiler: StringProperty(
         name="Shader Compiler Path",
         description="Path to shader compiler executable",
         subtype='FILE_PATH',
         default="shader")
-    path_shader_info = StringProperty(
+    path_shader_info: StringProperty(
         name="Shader Info Path",
         description="Path to shaderinfo executable",
         subtype='FILE_PATH',
         default="sloinfo")
-    path_texture_optimiser = StringProperty(
+    path_texture_optimiser: StringProperty(
         name="Texture Optimiser Path",
         description="Path to tdlmake executable",
         subtype='FILE_PATH',
         default="txmake")
 
-    draw_ipr_text = BoolProperty(
+    draw_ipr_text: BoolProperty(
         name="Draw IPR Text",
         description="Draw notice on View3D when IPR is active",
         default=True)
 
-    draw_panel_icon = BoolProperty(
+    draw_panel_icon: BoolProperty(
         name="Draw Panel Icon",
         description="Draw an icon on RenderMan Panels",
         default=True)
 
-    path_display_driver_image = StringProperty(
+    path_display_driver_image: StringProperty(
         name="Main Image path",
         description="Path for the rendered main image",
         subtype='FILE_PATH',
         default=os.path.join('$OUT', 'images', '{scene}.####.{file_type}'))
 
-    path_aov_image = StringProperty(
+    path_aov_image: StringProperty(
         name="AOV Image path",
         description="Path for the rendered aov images",
         subtype='FILE_PATH',
         default=os.path.join('$OUT', 'images', '{scene}.{layer}.{pass}.####.{file_type}'))
 
-    env_vars = PointerProperty(
+    env_vars: PointerProperty(
         type=RendermanEnvVarSettings,
         name="Environment Variable Settings")
 
-    auto_check_update = bpy.props.BoolProperty(
+    auto_check_update: bpy.props.BoolProperty(
         name = "Auto-check for Update",
         description = "If enabled, auto-check for updates using an interval",
         default = True,
         )
 
-    presets_library = PointerProperty(
+    presets_library: PointerProperty(
         type=RendermanPresetGroup,
     )
 
     # both these paths are absolute
-    active_presets_path = StringProperty(default = '')
-    presets_path = StringProperty(
+    active_presets_path: StringProperty(default = '')
+    presets_path: StringProperty(
         name="Path for preset Library",
         description="Path for preset files, if not present these will be copied from RMANTREE.\n  Set this if you want to pull in an external library.",
         subtype='FILE_PATH',
