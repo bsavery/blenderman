@@ -2603,7 +2603,7 @@ def register():
         type=RendermanMaterialSettings, name="Renderman Material Settings")
     bpy.types.Texture.renderman = PointerProperty(
         type=RendermanTextureSettings, name="Renderman Texture Settings")
-    bpy.types.Lamp.renderman = PointerProperty(
+    bpy.types.Light.renderman = PointerProperty(
         type=RendermanLightSettings, name="Renderman Light Settings")
     bpy.types.ParticleSettings.renderman = PointerProperty(
         type=RendermanParticleSettings, name="Renderman Particle Settings")
