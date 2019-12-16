@@ -29,7 +29,7 @@ bl_info = {
     "name": "RenderMan For Blender",
     "author": "Pixar",
     "version": (21, 5, 0),
-    "blender": (2, 78, 0),
+    "blender": (2, 81, 0),
     "location": "Info Header, render engine menu",
     "description": "RenderMan 21.5 integration",
     "warning": "",
