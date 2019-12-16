@@ -32,7 +32,6 @@ import sys
 import fnmatch
 import subprocess
 from subprocess import Popen, PIPE
-from extensions_framework import util as efutil
 from mathutils import Matrix, Vector
 EnableDebugging = False
 
@@ -268,7 +267,15 @@ def get_path_list(rm, type):
 
 
 def get_real_path(path):
-    return os.path.realpath(efutil.filesystem_path(path))
+    if path.startswith('//'):
+        path = bpy.path.abspath(path)
+    else:
+        path = os.path.realpath(path)
+
+    path = path.replace('\\', '/')
+    path = os.path.realpath(path)
+
+    return path
 
 
 # Convert env variables to full paths.
@@ -513,7 +520,7 @@ def get_rman_version(rmantree):
 
 
 def get_addon_prefs():
-    addon = bpy.context.user_preferences.addons[__name__.split('.')[0]]
+    addon = bpy.context.preferences.addons[__name__.split('.')[0]]
     return addon.preferences
 
 
