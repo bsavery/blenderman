@@ -410,7 +410,7 @@ class RendermanShadingNode(bpy.types.ShaderNode):
             node = context.node
         else:
             node = nodeOR
-        prefs = bpy.context.user_preferences.addons[__package__].preferences
+        prefs = bpy.context.preferences.addons[__package__].preferences
 
         out_path = user_path(prefs.env_vars.out)
         compile_path = os.path.join(user_path(prefs.env_vars.out), "shaders")
@@ -1314,7 +1314,7 @@ def gen_params(ri, node, mat_name=None):
     if node.bl_idname == "PxrOSLPatternNode":
 
         if getattr(node, "codetypeswitch") == "EXT":
-            prefs = bpy.context.user_preferences.addons[__package__].preferences
+            prefs = bpy.context.preferences.addons[__package__].preferences
             osl_path = user_path(getattr(node, 'shadercode'))
             FileName = os.path.basename(osl_path)
             FileNameNoEXT,ext = os.path.splitext(FileName)
@@ -2266,7 +2266,7 @@ def register():
     for cls in classes:
         bpy.utils.register_class(cls)
 
-    user_preferences = bpy.context.user_preferences
+    user_preferences = bpy.context.preferences
     prefs = user_preferences.addons[__package__].preferences
 
     categories = {}

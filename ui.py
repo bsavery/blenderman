@@ -2452,7 +2452,7 @@ def register():
     bpy.utils.register_class(RENDERMAN_LL_OBJECT_list)
     # bpy.utils.register_class(RENDERMAN_OUTPUT_list)
     # bpy.utils.register_class(RENDERMAN_CHANNEL_list)
-    bpy.types.INFO_MT_render.append(PRMan_menu_func)
+    bpy.types.TOPBAR_MT_render.append(PRMan_menu_func)
 
     for panel in get_panels():
         panel.COMPAT_ENGINES.add('PRMAN_RENDER')
@@ -2464,7 +2464,7 @@ def unregister():
     bpy.utils.unregister_class(RENDERMAN_LL_OBJECT_list)
     # bpy.utils.register_class(RENDERMAN_OUTPUT_list)
     # bpy.utils.register_class(RENDERMAN_CHANNEL_list)
-    bpy.types.INFO_MT_render.remove(PRMan_menu_func)
+    bpy.types.TOPBAR_MT_render.remove(PRMan_menu_func)
 
     for panel in get_panels():
         panel.COMPAT_ENGINES.add('PRMAN_RENDER')

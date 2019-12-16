@@ -73,17 +73,17 @@ class PRManRender(bpy.types.RenderEngine):
 
 # these handlers are for marking files as dirty for ribgen
 def add_handlers(scene):
-    if engine.update_timestamp not in bpy.app.handlers.scene_update_post:
-        bpy.app.handlers.scene_update_post.append(engine.update_timestamp)
-    if properties.initial_groups not in bpy.app.handlers.scene_update_post:
+    if engine.update_timestamp not in bpy.app.handlers.depsgraph_update_post:
+        bpy.app.handlers.depsgraph_update_post.append(engine.update_timestamp)
+    if properties.initial_groups not in bpy.app.handlers.depsgraph_update_post:
         bpy.app.handlers.load_post.append(properties.initial_groups)
 
 
 def remove_handlers():
-    if properties.initial_groups in bpy.app.handlers.scene_update_post:
-        bpy.app.handlers.scene_update_post.remove(properties.initial_groups)
-    if engine.update_timestamp in bpy.app.handlers.scene_update_post:
-        bpy.app.handlers.scene_update_post.remove(engine.update_timestamp)
+    if properties.initial_groups in bpy.app.handlers.depsgraph_update_post:
+        bpy.app.handlers.depsgraph_update_post.remove(properties.initial_groups)
+    if engine.update_timestamp in bpy.app.handlers.depsgraph_update_post:
+        bpy.app.handlers.depsgraph_update_post.remove(engine.update_timestamp)
 
 
 def load_addon():
@@ -119,7 +119,7 @@ def register():
     load_addon()
     from . import presets
     presets.register()
-    bpy.utils.register_module(__name__)
+    bpy.utils.register_class(PRManRender)
 
 
 
@@ -133,4 +133,4 @@ def unregister():
     preferences.unregister()
     from . import presets
     presets.unregister()
-    bpy.utils.unregister_module(__name__)
+    bpy.utils.unregister_class(PRManRender)
