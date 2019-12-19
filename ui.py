@@ -1767,7 +1767,7 @@ class Renderman_Light_Panel(CollectionPanel, Panel):
                     columns.label('')
 
 
-class RENDERMAN_LL_LIGHT_list(bpy.types.UIList):
+class RENDERMAN_LL_LIGHT_UL_list(bpy.types.UIList):
 
     def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index):
         rm = context.scene.renderman
@@ -1783,7 +1783,7 @@ class RENDERMAN_LL_LIGHT_list(bpy.types.UIList):
         layout.label(label, icon=icon)
 
 
-class RENDERMAN_LL_OBJECT_list(bpy.types.UIList):
+class RENDERMAN_LL_OBJECT_UL_list(bpy.types.UIList):
 
     def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index):
         rm = context.scene.renderman
@@ -2448,8 +2448,8 @@ class Renderman_UI_Panel(bpy.types.Panel, _RManPanelHeader):
 
 def register():
     bpy.utils.register_class(RENDERMAN_GROUP_UL_List)
-    bpy.utils.register_class(RENDERMAN_LL_LIGHT_list)
-    bpy.utils.register_class(RENDERMAN_LL_OBJECT_list)
+    bpy.utils.register_class(RENDERMAN_LL_LIGHT_UL_list)
+    bpy.utils.register_class(RENDERMAN_LL_OBJECT_UL_list)
     # bpy.utils.register_class(RENDERMAN_OUTPUT_list)
     # bpy.utils.register_class(RENDERMAN_CHANNEL_list)
     bpy.types.TOPBAR_MT_render.append(PRMan_menu_func)
@@ -2460,8 +2460,8 @@ def register():
 
 def unregister():
     bpy.utils.unregister_class(RENDERMAN_GROUP_UL_List)
-    bpy.utils.unregister_class(RENDERMAN_LL_LIGHT_list)
-    bpy.utils.unregister_class(RENDERMAN_LL_OBJECT_list)
+    bpy.utils.unregister_class(RENDERMAN_LL_LIGHT_UL_list)
+    bpy.utils.unregister_class(RENDERMAN_LL_OBJECT_UL_list)
     # bpy.utils.register_class(RENDERMAN_OUTPUT_list)
     # bpy.utils.register_class(RENDERMAN_CHANNEL_list)
     bpy.types.TOPBAR_MT_render.remove(PRMan_menu_func)

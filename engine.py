@@ -159,8 +159,8 @@ def update_interactive(engine, context):
 # if a script updates objects.  We would need to iterate through all objects
 @persistent
 def update_timestamp(scene):
-    active = scene.objects.active
-    if active and (active.is_updated_data or (active.data and active.data.is_updated)):
+    active = bpy.context.active_object # scene.objects.active
+    if active and (active.is_evaluated or (active.data and active.data.is_evaluated)): # if active and (active.is_updated_data or (active.data and active.data.is_updated)):
         # mark object for update
         now = int(time.time())
         active.renderman.update_timestamp = now
@@ -181,6 +181,9 @@ class RPass:
         self.scene = scene
         self.output_files = []
         # set the display driver
+        for elem in scene.object_instances:
+            print(elem)
+
         if external_render:
             self.display_driver = scene.renderman.display_driver
         elif preview_render:

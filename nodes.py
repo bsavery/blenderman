@@ -75,7 +75,7 @@ def update_func(self, context):
 
 
 class RendermanSocket:
-    ui_open = BoolProperty(name='UI Open', default=True)
+    ui_open: BoolProperty(name='UI Open', default=True)
 
     def get_pretty_name(self, node):
         if node.bl_idname in group_nodes:
@@ -132,8 +132,8 @@ class RendermanNodeSocketFloat(bpy.types.NodeSocketFloat, RendermanSocket):
     bl_idname = 'RendermanNodeSocketFloat'
     bl_label = 'RenderMan Float Socket'
 
-    default_value = FloatProperty(update=update_func)
-    renderman_type = StringProperty(default='float')
+    default_value: FloatProperty(update=update_func)
+    renderman_type: StringProperty(default='float')
 
     def draw_color(self, context, node):
         return (0.5, 0.5, 0.5, 1.0)
@@ -156,8 +156,8 @@ class RendermanNodeSocketInt(bpy.types.NodeSocketInt, RendermanSocket):
     bl_idname = 'RendermanNodeSocketInt'
     bl_label = 'RenderMan Int Socket'
 
-    default_value = IntProperty(update=update_func)
-    renderman_type = StringProperty(default='int')
+    default_value: IntProperty(update=update_func)
+    renderman_type: StringProperty(default='int')
 
     def draw_color(self, context, node):
         return (1.0, 1.0, 1.0, 1.0)
@@ -179,9 +179,9 @@ class RendermanNodeSocketString(bpy.types.NodeSocketString, RendermanSocket):
     '''RenderMan string input/output'''
     bl_idname = 'RendermanNodeSocketString'
     bl_label = 'RenderMan String Socket'
-    default_value = StringProperty(update=update_func)
-    is_texture = BoolProperty(default=False)
-    renderman_type = StringProperty(default='string')
+    default_value: StringProperty(update=update_func)
+    is_texture: BoolProperty(default=False)
+    renderman_type: StringProperty(default='string')
 
 
 class RendermanNodeSocketStruct(bpy.types.NodeSocketString, RendermanSocket):
@@ -189,8 +189,8 @@ class RendermanNodeSocketStruct(bpy.types.NodeSocketString, RendermanSocket):
     bl_idname = 'RendermanNodeSocketStruct'
     bl_label = 'RenderMan Struct Socket'
     hide_value = True
-    renderman_type = 'string'
-    default_value = ''
+    renderman_type: 'string'
+    default_value: ''
 
 
 class RendermanNodeSocketInterfaceStruct(bpy.types.NodeSocketInterfaceString, RendermanSocketInterface):
@@ -206,9 +206,9 @@ class RendermanNodeSocketColor(bpy.types.NodeSocketColor, RendermanSocket):
     bl_idname = 'RendermanNodeSocketColor'
     bl_label = 'RenderMan Color Socket'
 
-    default_value = FloatVectorProperty(size=3,
+    default_value: FloatVectorProperty(size=3,
                                         subtype="COLOR", update=update_func)
-    renderman_type = StringProperty(default='color')
+    renderman_type: StringProperty(default='color')
 
     def draw_color(self, context, node):
         return (1.0, 1.0, .5, 1.0)
