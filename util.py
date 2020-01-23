@@ -704,3 +704,10 @@ def init_env(rm):
         os.environ['PATH'] += pathsep + os.path.join(RMANTREE, "bin")
     else:
         os.environ['PATH'] = os.path.join(RMANTREE, "bin")
+
+def set_annotation(object, name, value):
+    try:
+        object.__annotations__[name] = value
+    except:
+        object.__annotations__ = {}
+        object.__annotations__[name] = value

@@ -36,6 +36,7 @@ from .util import path_list_convert
 from .util import path_win_to_unixy
 from .util import user_path
 from .util import get_sequence_path
+from .util import set_annotation
 
 from .util import args_files_in_path
 from bpy.props import *
@@ -66,19 +67,19 @@ def generate_page(sp, node, parent_name, first_level=False):
         prop = BoolProperty(name="Enable " + parent_name,
                             default=bool(default),
                             update=update_func_with_inputs)
-        setattr(node, param_name, prop)
+        set_annotation(node, param_name, prop)
 
     for sub_param in sp.findall('param') + sp.findall('page'):
         if sub_param.tag == 'page':
             name = parent_name + '.' + sub_param.attrib['name']
             sub_names, sub_meta = generate_page(sub_param, node, name)
-            setattr(node, name, sub_names)
+            set_annotation(node, name, sub_names)
             # props.append(sub_props)
             prop_meta.update(sub_meta)
             prop_meta[name] = {'renderman_type': 'page'}
             prop_names.append(name)
             ui_label = "%s_uio" % name
-            setattr(node, ui_label, BoolProperty(name=ui_label,
+            set_annotation(node, ui_label, BoolProperty(name=ui_label,
                                                  default=False))
         else:
 
@@ -88,7 +89,7 @@ def generate_page(sp, node, parent_name, first_level=False):
 
             prop_names.append(name)
             prop_meta[name] = meta
-            setattr(node, name, prop)
+            set_annotation(node, name, prop)
             # If a texture is involved and not an environment texture add
             # options
             if name == "filename":
@@ -97,15 +98,15 @@ def generate_page(sp, node, parent_name, first_level=False):
                 # make texoptions hider
                 prop_names.append("TxMake Options")
                 prop_meta["TxMake Options"] = {'renderman_type': 'page'}
-                setattr(node, "TxMake Options", optionsNames)
+                set_annotation(node, "TxMake Options", optionsNames)
                 ui_label = "%s_uio" % "TxMake Options"
-                setattr(node, ui_label, BoolProperty(name=ui_label,
+                set_annotation(node, ui_label, BoolProperty(name=ui_label,
                                                      default=False))
                 prop_meta.update(optionsMeta)
                 for Texname in optionsNames:
-                    setattr(
+                    set_annotation(
                         node, Texname + "_uio", optionsProps[Texname])
-                    setattr(node, Texname, optionsProps[Texname])
+                    set_annotation(node, Texname, optionsProps[Texname])
 
             # if name == sp.attrib['name']:
             #    name = name + '_prop'
@@ -137,7 +138,7 @@ def class_generate_properties(node, parent_name, shaderparameters):
                     'default': '', 'label': 'codetypeswitch',
                     'type': 'enum', 'options': '',
                     'widget': 'mapper', '__noconnection': True}
-        setattr(node, EnumName, EnumProp)
+        set_annotation(node, EnumName, EnumProp)
         prop_names.append(EnumName)
         prop_meta[EnumName] = EnumMeta
         # Internal file search prop
@@ -151,7 +152,7 @@ def class_generate_properties(node, parent_name, shaderparameters):
                         'default': '', 'label': 'internalSearch',
                         'type': 'string', 'options': '',
                         'widget': 'fileinput', '__noconnection': True}
-        setattr(node, InternalName, InternalProp)
+        set_annotation(node, InternalName, InternalProp)
         prop_names.append(InternalName)
         prop_meta[InternalName] = InternalMeta
         # External file prop
@@ -163,7 +164,7 @@ def class_generate_properties(node, parent_name, shaderparameters):
                     'default': '', 'label': 'ShaderCode',
                     'type': 'string', 'options': '',
                     'widget': 'fileinput', '__noconnection': True}
-        setattr(node, codeName, codeProp)
+        set_annotation(node, codeName, codeProp)
         prop_names.append(codeName)
         prop_meta[codeName] = codeMeta
 
@@ -176,10 +177,10 @@ def class_generate_properties(node, parent_name, shaderparameters):
             prop_names.append(page_name)
             prop_meta[page_name] = {'renderman_type': 'page'}
             ui_label = "%s_uio" % page_name
-            setattr(node, ui_label, BoolProperty(name=ui_label,
+            set_annotation(node, ui_label, BoolProperty(name=ui_label,
                                                  default=False))
             prop_meta.update(sub_params_meta)
-            setattr(node, page_name, sub_prop_names)
+            set_annotation(node, page_name, sub_prop_names)
 
         elif sp.tag == 'output':
             tag = sp.find('*/tag')
@@ -194,7 +195,7 @@ def class_generate_properties(node, parent_name, shaderparameters):
                 continue
             prop_names.append(name)
             prop_meta[name] = meta
-            setattr(node, name, prop)
+            set_annotation(node, name, prop)
             # If a texture is involved and not an environment texture add
             # options
             if name == "filename":
@@ -203,19 +204,19 @@ def class_generate_properties(node, parent_name, shaderparameters):
                 # make texoptions hider
                 prop_names.append("TxMake Options")
                 prop_meta["TxMake Options"] = {'renderman_type': 'page'}
-                setattr(node, "TxMake Options", optionsNames)
+                set_annotation(node, "TxMake Options", optionsNames)
                 ui_label = "%s_uio" % "TxMake Options"
-                setattr(node, ui_label, BoolProperty(name=ui_label,
+                set_annotation(node, ui_label, BoolProperty(name=ui_label,
                                                      default=False))
                 prop_meta.update(optionsMeta)
                 for Texname in optionsNames:
-                    setattr(
+                    set_annotation(
                         node, Texname + "_uio", optionsProps[Texname])
-                    setattr(node, Texname, optionsProps[Texname])
+                    set_annotation(node, Texname, optionsProps[Texname])
 
-    setattr(node, 'prop_names', prop_names)
-    setattr(node, 'prop_meta', prop_meta)
-    setattr(node, 'output_meta', output_meta)
+    set_annotation(node, 'prop_names', prop_names)
+    set_annotation(node, 'prop_meta', prop_meta)
+    set_annotation(node, 'output_meta', output_meta)
 
 
 def update_conditional_visops(node):

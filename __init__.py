@@ -124,13 +124,13 @@ def register():
 
 
 def unregister():
-    from . import preferences
+    bpy.utils.unregister_class(PRManRender)
     remove_handlers()
     properties.unregister()
     operators.unregister()
     ui.unregister()
     nodes.unregister()
+    from . import preferences
     preferences.unregister()
     from . import presets
     presets.unregister()
-    bpy.utils.unregister_class(PRManRender)

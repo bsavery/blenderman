@@ -233,9 +233,9 @@ class RendermanNodeSocketVector(RendermanSocket, bpy.types.NodeSocketVector):
     bl_label = 'RenderMan Vector Socket'
     hide_value = True
 
-    default_value = FloatVectorProperty(size=3,
+    default_value: FloatVectorProperty(size=3,
                                         subtype="EULER", update=update_func)
-    renderman_type = StringProperty(default='vector')
+    renderman_type: StringProperty(default='vector')
 
     def draw_color(self, context, node):
         return (.25, .25, .75, 1.0)

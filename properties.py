@@ -32,6 +32,8 @@ from mathutils import Vector
 
 from .util import guess_rmantree
 
+from .util import set_annotation
+
 from .util import args_files_in_path
 from .shader_parameters import class_generate_properties
 
@@ -2450,7 +2452,6 @@ initial_aov_channels = [("a", "alpha", ""),
 class RendermanPluginSettings(bpy.types.PropertyGroup):
     pass
 
-
 def prune_perspective_camera(args_xml, name):
     for page in args_xml.findall('page'):
         page_name = page.get('name')
@@ -2499,19 +2500,22 @@ def register_plugin_to_parent(ntype, name, args_xml, plugin_type, parent):
     inputs = [p for p in args_xml.findall('./param')] + \
         [p for p in args_xml.findall('./page')]
     class_generate_properties(ntype, name, inputs)
-    setattr(ntype, 'renderman_node_type', plugin_type)
+    #setattr(ntype, 'renderman_node_type', plugin_type)
+    set_annotation(ntype, 'renderman_node_type', plugin_type)
 
     # register and add to scene_settings
     bpy.utils.register_class(ntype)
-    setattr(parent, "%s_settings" % name,
-            PointerProperty(type=ntype, name="%s Settings" % name)
-            )
+    #setattr(parent, "%s_settings" % name,
+    #        PointerProperty(type=ntype, name="%s Settings" % name)
+    #        )
+    set_annotation(parent, "%s_settings" % name,  PointerProperty(type=ntype, name="%s Settings" % name))
 
     # special case for world lights
     if plugin_type == 'light' and name in ['PxrDomeLight', 'PxrEnvDayLight']:
-        setattr(RendermanWorldSettings, "%s_settings" % name,
-                PointerProperty(type=ntype, name="%s Settings" % name)
-                )
+        #setattr(RendermanWorldSettings, "%s_settings" % name,
+        #        PointerProperty(type=ntype, name="%s Settings" % name)
+        #        )
+        set_annotation(RendermanWorldSettings, "%s_settings" % name, PointerProperty(type=ntype, name="%s Settings" % name))
 
 
 def register_plugin_types():
