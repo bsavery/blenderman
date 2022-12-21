@@ -78,11 +78,15 @@ class PRMAN_OT_Renderman_Package(Operator):
                 shutil.copyfile(fpath, diskpath)
                 z.write(diskpath, arcname=os.path.join('textures', bfile))
                 remove_files.append(diskpath)
-                bfile = os.path.basename(txitem.outfile)
-                diskpath = os.path.join(texture_dir, bfile)
-                shutil.copyfile(txitem.outfile, diskpath)
-                z.write(diskpath, arcname=os.path.join('textures', bfile))
-                remove_files.append(diskpath)
+                # Check if texture already copied
+                if fpath == txitem.outfile:
+                    pass
+                else:
+                    bfile = os.path.basename(txitem.outfile)
+                    diskpath = os.path.join(texture_dir, bfile)
+                    shutil.copyfile(txitem.outfile, diskpath)
+                    z.write(diskpath, arcname=os.path.join('textures', bfile))
+                    remove_files.append(diskpath)
 
         for node in shadergraph_utils.get_all_shading_nodes():
             if node.bl_label == 'PxrOSL' and getattr(node, "codetypeswitch") == "EXT":
@@ -168,12 +172,19 @@ class PRMAN_OT_Renderman_Package(Operator):
 
         z.write(bl_filepath, arcname=bl_filename)
         z.close()
-
+		
+		# Try to remove the temporary files and directories
         for f in remove_files:
-            os.remove(f)
+            try:
+                os.remove(f)
+            except:
+                continue
 
         for d in remove_dirs:
-            os.removedirs(d)        
+            try:
+                os.removedirs(d)
+            except:
+                continue            
 
         bpy.ops.wm.revert_mainfile()
 
