@@ -735,6 +735,13 @@ class RendermanPreferences(AddonPreferences):
         col = row.column()
         col.prop(self, 'rmantree_method')
 
+         # Check if Blender is using newer version of python than 3.9. This can be removed when renderman supports python 3.10.
+        if sys.version_info[1] > 9:
+            row = layout.row()
+            row.alert = True
+            row.label(text='This verion of Blender is not supported. We support Blender versions up to 3.0.x.', icon='ERROR')
+            return
+
         if self.rmantree_method == 'MANUAL':
             col.prop(self, "path_rmantree")
             if envconfig_utils.envconfig() is None:

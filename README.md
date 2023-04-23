@@ -4,6 +4,10 @@
 
 RenderMan for Blender is a render engine addon written for the 3D creation suite [Blender](https://www.blender.org/).
 
+## Supported Blender versions
+
+RenderMan supports Blender versions up to 3.0
+
 ## Installing
 
 To use, install RenderMan, (free from [renderman.pixar.com](https://renderman.pixar.com/store/intro)), download [the latest release](https://github.com/prman-pixar/RenderManForBlender/releases) and put it in the addons folder for Blender. See the [installation.txt](installation.txt) file for detailed instructions.
