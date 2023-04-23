@@ -739,7 +739,7 @@ class RendermanPreferences(AddonPreferences):
         if sys.version_info[1] > 9:
             row = layout.row()
             row.alert = True
-            row.label(text='This verion of Blender is not supported. We support Blender versions up to 3.0.x.', icon='ERROR')
+            row.label(text='This version of Blender is not supported. We support Blender versions up to 3.0.x.', icon='ERROR')
             return
 
         if self.rmantree_method == 'MANUAL':
