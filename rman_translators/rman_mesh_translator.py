@@ -473,7 +473,13 @@ class RmanMeshTranslator(RmanTranslator):
             for mat_id, faces in \
                 _get_mats_faces_(nverts, material_ids).items():
 
-                mat = ob.data.materials[mat_id]
+                # If the face has a mat index that is higher than the number of
+                # material slots, use the last material. This is what
+                # Eevee/Cycles does.
+                if mat_id >= len(ob.data.materials):
+                    mat = ob.data.materials[-1]
+                else:
+                    mat = ob.data.materials[mat_id]
                 if not mat:
                     continue
                 sg_material = self.rman_scene.rman_materials.get(mat.original, None)
