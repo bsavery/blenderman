@@ -28,10 +28,12 @@ class OutputChannel:
 
 # Settings copied from RfK
 # They seem to be slightly different from batch render version
+DENOISER_ALBEDO = OutputChannel("color", "albedo", "color lpe:nothruput;noinfinitecheck;noclamp;unoccluded;overwrite;C<.S'passthru'>*((U2L)|O)")
+DENOISER_NORMAL = OutputChannel("normal", "normal", "normal Nn")
 __INTERACTIVE_DENOISE_CHANNELS = [
     OutputChannel("color", "Ci"),
     OutputChannel("float", "a"),
-    OutputChannel("color", "albedo", "color lpe:nothruput;noinfinitecheck;noclamp;unoccluded;overwrite;C<.S'passthru'>*((U2L)|O)"),
+    DENOISER_ALBEDO,
     OutputChannel("color", "albedo_var", "color lpe:nothruput;noinfinitecheck;noclamp;unoccluded;overwrite;C<.S'passthru'>*((U2L)|O)", "variance"),
     OutputChannel("color", "albedo_mse", "color lpe:nothruput;noinfinitecheck;noclamp;unoccluded;overwrite;C<.S'passthru'>*((U2L)|O)", "mse"),
     OutputChannel("vector", "backward", "vector motionBack"),
@@ -39,7 +41,7 @@ __INTERACTIVE_DENOISE_CHANNELS = [
     OutputChannel("color", "diffuse_mse", "color lpe:C(D[DS]*[LO])|O", "mse"),
     OutputChannel("vector", "forward", "vector motionFore"),
     OutputChannel("color", "mse", "color Ci", "mse"),
-    OutputChannel("normal", "normal", "normal Nn"),
+    DENOISER_NORMAL,
     OutputChannel("normal", "normal_var", "normal Nn", "variance"),
     OutputChannel("color", "normal_mse", "normal Nn", "mse"),
     OutputChannel("color", "specular", "color lpe:CS[DS]*[LO]"),
@@ -47,6 +49,12 @@ __INTERACTIVE_DENOISE_CHANNELS = [
     OutputChannel("float", "zfiltered", "float zfiltered"),
     OutputChannel("float", "zfiltered_var", "float zfiltered", "variance"),
     OutputChannel("float", "sampleCount", "sampleCount")
+]
+
+# extra channels for the Optix denoiser
+OPTIX_DENOISE_CHANNELS = [
+    DENOISER_ALBEDO,
+    DENOISER_NORMAL
 ]
 
 def get_beauty_filepath(bl_scene, use_blender_frame=False, expand_tokens=False, no_ext=False):
@@ -219,6 +227,8 @@ def _add_interactive_denoiser_channels(dspys_dict, dspy_params, rman_scene):
     the beauty display will be used as the variance file
     """
 
+    from .envconfig_utils import envconfig
+
     for output_chan in __INTERACTIVE_DENOISE_CHANNELS:
         dspy_channels = dspys_dict['displays']['beauty']['params']['displayChannels']
         if output_chan.name in dspy_channels:
@@ -237,6 +247,47 @@ def _add_interactive_denoiser_channels(dspys_dict, dspy_params, rman_scene):
         dspys_dict['displays']['beauty']['params']['displayChannels'].append(output_chan.name)            
 
     dspys_dict['displays']['beauty']['is_variance'] = True
+    
+    if rman_scene.is_viewport_render:
+        param_list = rman_scene.rman.Types.ParamList()
+        rm = rman_scene.bl_scene.renderman
+        if rman_scene.ipr_render_into == "blender":
+            qn_passthru = envconfig().get_qn_dspy('blender')
+        else:
+            qn_passthru = envconfig().get_qn_dspy('socket')
+        param_list.SetString('dspyDSOPath', qn_passthru)
+        param_list.SetInteger('cheapPass', int(rm.blender_ipr_aidenoiser_cheapFirstPass))
+        param_list.SetInteger('minSamples', rm.blender_ipr_aidenoiser_minSamples)
+        param_list.SetInteger('interval', rm.blender_ipr_aidenoiser_interval)
+        param_list.SetInteger('immediateClose', 1)
+
+        dspys_dict['displays']['beauty']['dspyDriverParams'] = param_list
+
+def _add_optix_denoiser_channels(dspys_dict, rman_scene):
+
+    for output_chan in OPTIX_DENOISE_CHANNELS:
+        if output_chan.name not in dspys_dict['channels']:
+            d = _default_dspy_params()
+
+            if output_chan.source != "":
+                d[u'channelSource'] = {'type': u'string', 'value': output_chan.source}
+            d[u'channelType'] = { 'type': u'string', 'value': output_chan.type}
+            if output_chan.statistics != '':
+                d[u'statistics'] = { 'type': u'string', 'value': output_chan.statistics}
+            dspys_dict['channels'][output_chan.name] =  d  
+
+        dn_nm = 'optix_denoiser_%s' % output_chan.name
+        dspys_dict['displays'][dn_nm] = {
+            'driverNode': 'blender',
+            'filePath': dn_nm,
+            'denoise': False,
+            'denoise_mode': 'singleframe',  
+            'camera': None,    
+            'bake_mode': None,          
+            'params': {},
+            'dspyDriverParams': None}              
+
+        dspys_dict['displays'][dn_nm]['params']['displayChannels'] = [output_chan.name]
 
 def _set_blender_dspy_dict(layer, dspys_dict, dspy_drv, rman_scene, expandTokens, do_optix_denoise=False):   
 
@@ -249,7 +300,7 @@ def _set_blender_dspy_dict(layer, dspys_dict, dspy_drv, rman_scene, expandTokens
         display_driver = __BLENDER_TO_RMAN_DSPY__.get(rman_scene.bl_scene.render.image_settings.file_format, 'openexr')
         param_list = rman_scene.rman.Types.ParamList()
         if display_driver == 'openexr':
-            param_list.SetInteger('asrgba', 1)
+            param_list.SetInteger('asrgba', 1)              
 
     if display_driver == 'blender' and do_optix_denoise:   
         aov_denoise = True
@@ -284,9 +335,10 @@ def _set_blender_dspy_dict(layer, dspys_dict, dspy_drv, rman_scene, expandTokens
         'bake_mode': None,            
         'params': dspy_params,
         'dspyDriverParams': param_list}
-
+        
     if display_driver == 'blender' and rman_scene.is_viewport_render:
         display_driver = 'null' 
+
     elif display_driver == "quicklyNoiseless":
         _add_interactive_denoiser_channels(dspys_dict, dspy_params, rman_scene)
         display_driver = 'null' 
@@ -365,7 +417,10 @@ def _set_blender_dspy_dict(layer, dspys_dict, dspy_drv, rman_scene, expandTokens
             'camera': None,    
             'bake_mode': None,          
             'params': dspy_params,
-            'dspyDriverParams': None}                     
+            'dspyDriverParams': None}   
+
+    if do_optix_denoise:
+        _add_optix_denoiser_channels(dspys_dict, rman_scene)                           
 
 def _get_real_chan_name(chan):
     """ Get the real channel name
@@ -568,6 +623,9 @@ def _set_rman_dspy_dict(rm_rl, dspys_dict, dspy_drv, rman_scene, expandTokens, d
                 'bake_mode': None,
                 'params': dspy_params,
                 'dspyDriverParams': None}  
+
+    if do_optix_denoise:
+        _add_optix_denoiser_channels(dspys_dict, rman_scene)            
 
 def _set_rman_holdouts_dspy_dict(dspys_dict, dspy_drv, rman_scene, expandTokens, include_holdouts=True):
 

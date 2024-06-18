@@ -226,17 +226,22 @@ def _draw_ui_from_rman_config(config_name, panel, context, layout, parent):
                 curr_col = row_dict['default']
 
             conditionalVisOps = getattr(ndp, 'conditionalVisOps', None)
+            conditionalLockOps = getattr(ndp, 'conditionalLockOps', None)
             if conditionalVisOps:
-                # check if the conditionalVisOp to see if we're disabled
+                # eval the conditionalVisOps to see if we should be visible
                 expr = conditionalVisOps.get('expr', None)
                 node = parent              
                 if expr and not eval(expr):
-                    # conditionalLockOps disable the prop rather
-                    # than hide them
-                    if not hasattr(ndp, 'conditionalLockOps'):
-                        continue
-                    else:
-                        is_enabled = False
+                    continue
+
+            if conditionalVisOps and conditionalLockOps:
+                # check if there is a conditionalLockOps
+                expr = conditionalVisOps.get('lock_expr', None)
+                if expr is None:
+                    expr = conditionalVisOps.get('expr', None)
+                node = parent                           
+                if expr and not eval(expr):
+                    is_enabled = False                        
 
             label = ndp.label if hasattr(ndp, 'label') else ndp.name
             row = curr_col.row()
@@ -315,6 +320,14 @@ def draw_prop(node, prop_name, layout, level=0, nt=None, context=None, sticky=Fa
         except Exception as err:                        
             rfb_log().error("Error handling conditionalVisOp: %s" % str(err))
             pass
+
+    if bl_prop_info.conditionalLockOps and bl_prop_info.lock_expr:
+        try:
+            locked = not eval(bl_prop_info.lock_expr)
+            bl_prop_info.prop_disabled = locked
+        except Exception as err:                        
+            rfb_log().error("Error handling conditionalVisOp: %s" % str(err))
+            pass        
 
     if bl_prop_info.prop_hidden:
         return

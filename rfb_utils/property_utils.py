@@ -69,7 +69,8 @@ class BlPropInfo:
         self.prop_disabled = getattr(node, '%s_disabled' % prop_name, False)
         self.conditionalVisOps = prop_meta.get('conditionalVisOps', dict())
         self.cond_expr = self.conditionalVisOps.get('expr', None)
-        self.conditionalLockOps = prop_meta.get('conditionalLockOps', None)
+        self.conditionalLockOps = prop_meta.get('conditionalLockOps', dict())
+        self.lock_expr = self.conditionalLockOps.get('lock_expr', self.cond_expr)
         self.renderman_type = prop_meta.get('renderman_type', '')
         self.param_type = self.renderman_type
         self.arraySize = prop_meta.get('arraySize', None)

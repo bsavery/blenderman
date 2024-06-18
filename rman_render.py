@@ -403,6 +403,9 @@ class BlRenderResultHelper:
             if self.write_aovs:
                 use_ice = hasattr(ice, 'FromArray')
                 for i, dspy_nm in enumerate(self.dspy_dict['displays'].keys()):
+                    if dspy_nm in ['optix_denoiser_albedo', 'optix_denoiser_normal']:
+                        # don't write out these displays; they're only for the opti
+                        continue
                     filepath = self.dspy_dict['displays'][dspy_nm]['filePath']
 
                     if i == 0:

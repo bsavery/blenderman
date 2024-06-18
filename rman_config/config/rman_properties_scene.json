@@ -1606,6 +1606,17 @@
         {
             "panel": "RENDER_PT_renderman_spooling_export_options",
             "page": "Denoising",
+            "name": "ai_denoiser_launch",
+            "label": "Launch Denoiser",
+            "type": "int",
+            "bl_prop_options": "",
+            "default": 1,
+            "widget": "checkbox",
+            "help": "Turn this off if you don't want the denoiser to automatically launch. This might be useful if you need the variance files to be generated, but want to denoise the files later. The Denoise option still needs to be on in the RenderMan Displays for the variance file to be generated."
+        },        
+        {
+            "panel": "RENDER_PT_renderman_spooling_export_options",
+            "page": "Denoising",
             "name": "ai_denoiser_asymmetry",
             "label": "Asymmetry",
             "type": "float",
