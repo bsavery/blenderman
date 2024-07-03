@@ -500,8 +500,6 @@ class RmanRender(object):
     def _start_prman_begin(self):
         argv = []
         argv.append("prman") 
-        argv.append("-dspyserver")
-        argv.append("%s" % envconfig().rman_it_path)
 
         woffs = ',' . join(rfb_config['woffs'])
         if woffs:
@@ -517,7 +515,9 @@ class RmanRender(object):
         argv = []
         self.stats_mgr.stats_add_session()
         argv.append("-statssession")
-        argv.append(self.stats_mgr.rman_stats_session_name)        
+        argv.append(self.stats_mgr.rman_stats_session_name) 
+        argv.append("-dspyserver")
+        argv.append("%s" % envconfig().rman_it_path)               
         err = self.rictl.PRManRenderBegin(argv)
         if err:
             rfb_log().error("Error initializing RenderMan")
