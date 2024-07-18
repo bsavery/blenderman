@@ -106,7 +106,15 @@ class RmanEnvConfig(object):
         if immediate_close:
             self.setenv('RMAN_QN_IMMEDIATE_CLOSE', '1')
         else:
-            self.unsetenv('RMAN_QN_IMMEDIATE_CLOSE')        
+            self.unsetenv('RMAN_QN_IMMEDIATE_CLOSE')       
+
+    def get_qn_dspy(self, dspy, immediate_close=True):
+        ext = '.so'
+        if sys.platform == ("win32"):
+                ext = '.dll'
+        d = os.path.join(self.rmantree, 'lib', 'plugins', 'd_%s%s' % (dspy, ext))
+        return d
+
 
     def read_envvars_file(self):
         bl_config_path = bpy.utils.user_resource('CONFIG')
