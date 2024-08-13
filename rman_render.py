@@ -317,6 +317,19 @@ class BlRenderResultHelper:
         self.image_scale = -1
         self.write_aovs = False
 
+    @staticmethod
+    def write_empty_result(rman_render):
+        scale = rman_render.bl_scene.render.resolution_percentage / 100.0
+        size_x = int(rman_render.bl_scene.render.resolution_x * scale)
+        size_y = int(rman_render.bl_scene.render.resolution_y * scale)
+
+        pixel_count = size_x * size_y
+        rect = numpy.zeros((pixel_count, 4))
+        result = rman_render.bl_engine.begin_result(0, 0, size_x, size_y)
+        layer = result.layers[0].passes["Combined"]
+        layer.rect = rect       
+        rman_render.bl_engine.end_result(result)     
+
     def register_passes(self):
         self.render = self.rman_render.rman_scene.bl_scene.render
         self.render_view = self.rman_render.bl_engine.active_view_get()
@@ -779,7 +792,13 @@ class RmanRender(object):
             if bl_rr_helper:
                 bl_rr_helper.update_passes()
         if bl_rr_helper:
-            bl_rr_helper.finish_passes()
+            bl_rr_helper.finish_passes()            
+        elif for_background and not use_compositor:
+            # if we're background mode and not using the compositor,
+            # i.e.: we're not using the Blender display driver
+            # make sure we create a black/empty image to as the Blender 
+            # render result
+            BlRenderResultHelper.write_empty_result(self)
 
 
         self.del_bl_engine()
