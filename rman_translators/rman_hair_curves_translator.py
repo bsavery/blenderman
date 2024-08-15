@@ -112,11 +112,15 @@ class RmanHairCurvesTranslator(RmanTranslator):
                 hair_curve_attr.values.append(vals)
             bl_curve.bl_hair_attributes[attr.name] = hair_curve_attr
 
-            if hair_attr.rman_type == 'float2' and attr.name == uv_map:  
-                # make a copy of the uv_map to scalpST 
-                attr_copy = deepcopy(hair_curve_attr)
-                attr_copy.rman_name = 'scalpST'
-                bl_curve.bl_hair_attributes['scalpST'] = attr_copy
+    def _copy_uv_map(self, ob, bl_hair_attributes, bl_curve):
+        # make a copy of the uv_map to scalpST         
+        uv_map = ob.original.data.surface_uv_map
+        hair_attr = bl_hair_attributes.get(uv_map, None)
+        hair_curve_attr = bl_curve.bl_hair_attributes.get(uv_map, None)
+        if hair_attr and hair_curve_attr and hair_attr.rman_type == 'float2':
+            attr_copy = deepcopy(hair_curve_attr)
+            attr_copy.rman_name = 'scalpST'
+            bl_curve.bl_hair_attributes['scalpST'] = attr_copy
 
     @time_this
     def _get_strands_(self, ob):
@@ -161,13 +165,17 @@ class RmanHairCurvesTranslator(RmanTranslator):
 
             self.get_attributes_for_curves(ob, bl_hair_attributes, bl_curve, curve.index, curve.first_point_index, npoints)
                
+            # FIXME: is this still needed? 
             # if we get more than 100000 vertices, start a new BlHair.  This
-            # is to avoid a maxint on the array length
+            # is to avoid a maxint on the array length        
             if bl_curve.nverts > 100000:
+                self._copy_uv_map(ob, bl_hair_attributes, bl_curve)
                 curve_sets.append(bl_curve)
                 bl_curve = BlHair()
+            
 
-        if bl_curve.nverts > 0:       
+        if bl_curve.nverts > 0:
+            self._copy_uv_map(ob, bl_hair_attributes, bl_curve)       
             curve_sets.append(bl_curve)
 
         return curve_sets              
