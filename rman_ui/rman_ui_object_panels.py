@@ -141,13 +141,11 @@ class OBJECT_PT_renderman_object_material_override(Panel, CollectionPanel):
     bl_region_type = 'WINDOW'
     bl_context = "object"
     bl_label = "RenderMan Material"
+    bl_options = {'DEFAULT_CLOSED'}    
 
     @classmethod
     def poll(cls, context):
         rd = context.scene.render
-        ob = context.object
-        if ob.type != 'EMPTY':
-            return False
         return (context.object and rd.engine in {'PRMAN_RENDER'} )
 
     def draw(self, context):
@@ -169,9 +167,6 @@ class MATERIAL_PT_renderman_object_shader_surface(Panel, CollectionPanel):
     @classmethod
     def poll(cls, context):
         rd = context.scene.render
-        ob = context.object
-        if ob.type != 'EMPTY':
-            return False
         mat = context.object.renderman.rman_material_override
         if not mat:            
             return False

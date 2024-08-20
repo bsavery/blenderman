@@ -2,12 +2,14 @@ from .rman_translator import RmanTranslator
 from ..rfb_utils import transform_utils
 from ..rfb_utils import scenegraph_utils
 from ..rfb_utils.timer_utils import time_this
+from ..rfb_utils.scene_utils import BlAttribute
 from ..rfb_logger import rfb_log
 from ..rman_sg_nodes.rman_sg_haircurves import RmanSgHairCurves
 from mathutils import Vector
 import math
 import bpy    
 import numpy as np
+from copy import deepcopy
 
 class BlHair:
 
@@ -18,16 +20,6 @@ class BlHair:
         self.hair_width = []
         self.index = []
         self.bl_hair_attributes = dict()
-
-class BlHairAttribute:
-
-    def __init__(self):
-        self.rman_type = ''
-        self.rman_name = ''
-        self.rman_detail = None
-        self.array_len = -1
-        self.values = []
-
 class RmanHairCurvesTranslator(RmanTranslator):
 
     def __init__(self, rman_scene):
@@ -81,97 +73,23 @@ class RmanHairCurvesTranslator(RmanTranslator):
             width_detail = "vertex" 
             primvar.SetFloatDetail(self.rman_scene.rman.Tokens.Rix.k_width, bl_curve.hair_width, width_detail)
             
-            for nm, hair_attr in bl_curve.bl_hair_attributes.items():
-                if hair_attr.rman_detail is None:
-                    continue
-                if hair_attr.rman_type == "float":
-                    primvar.SetFloatDetail(hair_attr.rman_name, hair_attr.values, hair_attr.rman_detail)
-                elif hair_attr.rman_type == "float2":
-                    primvar.SetFloatArrayDetail(hair_attr.rman_name, hair_attr.values, 2, hair_attr.rman_detail)
-                elif hair_attr.rman_type == "vector":
-                    primvar.SetVectorDetail(hair_attr.rman_name, hair_attr.values, hair_attr.rman_detail)
-                elif hair_attr.rman_type == 'color':
-                    primvar.SetColorDetail(hair_attr.rman_name, hair_attr.values, hair_attr.rman_detail)
-                elif hair_attr.rman_type == 'integer':
-                    primvar.SetIntegerDetail(hair_attr.rman_name, hair_attr.values, hair_attr.rman_detail)
+            BlAttribute.set_rman_primvars(primvar, bl_curve.bl_hair_attributes)
                     
             curves_sg.SetPrimVars(primvar)
             rman_sg_hair.sg_node.AddChild(curves_sg)  
             rman_sg_hair.sg_curves_list.append(curves_sg)  
         
     def get_attributes(self, ob, bl_hair_attributes):
-        uv_map = ob.original.data.surface_uv_map
-        for attr in ob.data.attributes:
-            if attr.name.startswith('.'):
-                continue
-            hair_attr = None
-            if attr.data_type == 'FLOAT2':
-                hair_attr = BlHairAttribute()
-                hair_attr.rman_name = attr.name
-                if attr.name == uv_map:
-                    # rename this to be our scalpST
-                    hair_attr.rman_name = 'scalpST'
-                hair_attr.rman_type = 'float2'
-
-                npoints = len(attr.data)
-                values = np.zeros(npoints*2, dtype=np.float32)
-                attr.data.foreach_get('vector', values)
-                values = np.reshape(values, (npoints, 2))
-                hair_attr.values = values.tolist()
-
-            elif attr.data_type == 'FLOAT_VECTOR':
-                hair_attr = BlHairAttribute()
-                hair_attr.rman_name = attr.name
-                hair_attr.rman_type = 'vector'
-
-                npoints = len(attr.data)
-                values = np.zeros(npoints*3, dtype=np.float32)
-                attr.data.foreach_get('vector', values)
-                values = np.reshape(values, (npoints, 3))
-                hair_attr.values = values.tolist()
+        detail_map = { len(ob.data.points): 'vertex', len(ob.data.curves): 'uniform'}
+        BlAttribute.parse_attributes(bl_hair_attributes, ob, detail_map)
+        if 'color' in bl_hair_attributes:
+            # rename color to Cs
+            v = bl_hair_attributes['color']
+            v.rman_name = 'Cs'
+            bl_hair_attributes['color'] = v
             
-            elif attr.data_type in ['BYTE_COLOR', 'FLOAT_COLOR']:
-                hair_attr = BlHairAttribute()
-                hair_attr.rman_name = attr.name
-                if attr.name == 'color':
-                    hair_attr.rman_name = 'Cs'
-                hair_attr.rman_type = 'color'
-
-                npoints = len(attr.data)
-                values = np.zeros(npoints*4, dtype=np.float32)
-                attr.data.foreach_get('color', values)
-                values = np.reshape(values, (npoints, 4))
-                hair_attr.values .extend(values[0:, 0:3].tolist())
-
-            elif attr.data_type == 'FLOAT':
-                hair_attr = BlHairAttribute()
-                hair_attr.rman_name = attr.name
-                hair_attr.rman_type = 'float'
-                hair_attr.array_len = -1
-
-                npoints = len(attr.data)
-                values = np.zeros(npoints, dtype=np.float32)
-                attr.data.foreach_get('value', values)
-                hair_attr.values = values.tolist()                          
-            elif attr.data_type in ['INT8', 'INT']:
-                hair_attr = BlHairAttribute()
-                hair_attr.rman_name = attr.name
-                hair_attr.rman_type = 'integer'
-                hair_attr.array_len = -1
-
-                npoints = len(attr.data)
-                values = np.zeros(npoints, dtype=np.int32)
-                attr.data.foreach_get('value', values)
-                hair_attr.values = values.tolist()                
-            
-            if hair_attr:
-                bl_hair_attributes[attr.name] = hair_attr     
-                if len(attr.data) == len(ob.data.points):
-                    hair_attr.rman_detail = 'vertex'
-                elif len(attr.data) == len(ob.data.curves):
-                    hair_attr.rman_detail = 'uniform'
-
     def get_attributes_for_curves(self, ob, bl_hair_attributes, bl_curve, idx, fp_idx, npoints):
+        uv_map = ob.original.data.surface_uv_map
         for attr in ob.data.attributes:
             if attr.name.startswith('.'):
                 continue
@@ -179,7 +97,7 @@ class RmanHairCurvesTranslator(RmanTranslator):
                 continue
             hair_attr = bl_hair_attributes[attr.name]
 
-            hair_curve_attr = bl_curve.bl_hair_attributes.get(attr.name, BlHairAttribute())
+            hair_curve_attr = bl_curve.bl_hair_attributes.get(attr.name, BlAttribute())
             hair_curve_attr.rman_name = hair_attr.rman_name
             hair_curve_attr.rman_detail = hair_attr.rman_detail
             hair_curve_attr.rman_type = hair_attr.rman_type
@@ -194,6 +112,15 @@ class RmanHairCurvesTranslator(RmanTranslator):
                 hair_curve_attr.values.append(vals)
             bl_curve.bl_hair_attributes[attr.name] = hair_curve_attr
 
+    def _copy_uv_map(self, ob, bl_hair_attributes, bl_curve):
+        # make a copy of the uv_map to scalpST         
+        uv_map = ob.original.data.surface_uv_map
+        hair_attr = bl_hair_attributes.get(uv_map, None)
+        hair_curve_attr = bl_curve.bl_hair_attributes.get(uv_map, None)
+        if hair_attr and hair_curve_attr and hair_attr.rman_type == 'float2':
+            attr_copy = deepcopy(hair_curve_attr)
+            attr_copy.rman_name = 'scalpST'
+            bl_curve.bl_hair_attributes['scalpST'] = attr_copy
 
     @time_this
     def _get_strands_(self, ob):
@@ -238,13 +165,17 @@ class RmanHairCurvesTranslator(RmanTranslator):
 
             self.get_attributes_for_curves(ob, bl_hair_attributes, bl_curve, curve.index, curve.first_point_index, npoints)
                
+            # FIXME: is this still needed? 
             # if we get more than 100000 vertices, start a new BlHair.  This
-            # is to avoid a maxint on the array length
+            # is to avoid a maxint on the array length        
             if bl_curve.nverts > 100000:
+                self._copy_uv_map(ob, bl_hair_attributes, bl_curve)
                 curve_sets.append(bl_curve)
                 bl_curve = BlHair()
+            
 
-        if bl_curve.nverts > 0:       
+        if bl_curve.nverts > 0:
+            self._copy_uv_map(ob, bl_hair_attributes, bl_curve)       
             curve_sets.append(bl_curve)
 
         return curve_sets              

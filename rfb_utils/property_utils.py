@@ -1,7 +1,8 @@
 from . import string_utils
 from . import prefs_utils
 from . import osl_utils
-from ..rman_constants import __RMAN_EMPTY_STRING__, __RESERVED_BLENDER_NAMES__, RFB_FLOAT3
+from . import filepath_utils
+from ..rman_constants import __RMAN_EMPTY_STRING__, __RESERVED_BLENDER_NAMES__, RFB_FLOAT3, BLENDER_INTERP_MAP
 from ..rfb_logger import rfb_log
 from bpy.props import *
 import bpy
@@ -68,7 +69,8 @@ class BlPropInfo:
         self.prop_disabled = getattr(node, '%s_disabled' % prop_name, False)
         self.conditionalVisOps = prop_meta.get('conditionalVisOps', dict())
         self.cond_expr = self.conditionalVisOps.get('expr', None)
-        self.conditionalLockOps = prop_meta.get('conditionalLockOps', None)
+        self.conditionalLockOps = prop_meta.get('conditionalLockOps', dict())
+        self.lock_expr = self.conditionalLockOps.get('lock_expr', self.cond_expr)
         self.renderman_type = prop_meta.get('renderman_type', '')
         self.param_type = self.renderman_type
         self.arraySize = prop_meta.get('arraySize', None)
@@ -514,8 +516,16 @@ def get_output_param_str(rman_sg_node, node, mat_name, socket, to_socket=None, p
         
         if current_group_node is None:
             return None
+        
+        # same as above, find the index of the socket
+        # then use that index to get the incoming socket
+        # on the group node
+        idx = -1
+        for i, output in enumerate(node.outputs):
+            if output == socket:
+                idx = i        
 
-        in_sock = current_group_node.inputs[socket.name]
+        in_sock = current_group_node.inputs[idx]
         if len(in_sock.links):
             link = in_sock.links[0]
             rerouted_node = link.from_node
@@ -696,7 +706,7 @@ def set_dspymeta_params(node, prop_name, params):
 def set_pxrosl_params(node, rman_sg_node, params, ob=None, mat_name=None):
 
     prop_meta = getattr(node, 'prop_meta', dict())
-    shader_path = node.shadercode
+    shader_path = filepath_utils.get_real_path(node.shadercode)
     already_read = False
     for input_name, input in node.inputs.items():
         if input_name not in prop_meta and already_read == False: 
@@ -757,8 +767,7 @@ def set_ramp_rixparams(node, prop_name, prop, param_type, params):
             params.SetFloatArray("%s_Knots" % prop_name, positions, len(positions))
             params.SetColorArray("%s_Colors" % prop_name, colors, len(positions))
 
-            rman_interp_map = { 'B_SPLINE': 'bspline', 'LINEAR': 'linear', 'CONSTANT': 'constant'}
-            interp = rman_interp_map.get(color_ramp_node.color_ramp.interpolation,'catmull-rom')
+            interp = BLENDER_INTERP_MAP.get(color_ramp_node.color_ramp.interpolation,'catmull-rom')
             params.SetString("%s_Interpolation" % prop_name, interp )  
         else:         
             # this might be from a linked file

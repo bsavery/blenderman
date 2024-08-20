@@ -285,24 +285,26 @@ class RendermanSocket:
     def draw(self, context, layout, node, text):
 
         renderman_type = getattr(self, 'renderman_type', '')
+        split = layout.split()
+        row = split.row()
         if self.hide and self.hide_value:
             pass
         elif self.hide_value:
-            layout.label(text=self.get_pretty_name(node))
+            row.label(text=self.get_pretty_name(node))
         elif self.is_output:
             if self.is_array:
-                layout.label(text='%s[]' % (self.get_pretty_name(node)))
+                row.label(text='%s[]' % (self.get_pretty_name(node)))
             else:
-                layout.label(text=self.get_pretty_name(node))
+                row.label(text=self.get_pretty_name(node))
         elif self.is_linked or self.is_output:
-            layout.label(text=self.get_pretty_name(node))
+            row.label(text=self.get_pretty_name(node))
         elif node.bl_idname in __CYCLES_GROUP_NODES__ or node.bl_idname == "PxrOSLPatternNode":
-            layout.prop(self, 'default_value',
+            row.prop(self, 'default_value',
                         text=self.get_pretty_name(node), slider=True)
         elif renderman_type in __SOCKET_HIDE_VALUE__:
-            layout.label(text=self.get_pretty_name(node))                        
+            row.label(text=self.get_pretty_name(node))                        
         elif hasattr(node, self.name):
-            layout.prop(node, self.name,
+            row.prop(node, self.name,
                         text=self.get_pretty_name(node), slider=True)
         else:
             # check if this is an array element
@@ -318,20 +320,20 @@ class RendermanSocket:
                         elem = e
                         break
                 if elem:               
-                    layout.prop(elem, 'value_%s' % elem.type, text=elem.name, slider=True)
+                    row.prop(elem, 'value_%s' % elem.type, text=elem.name, slider=True)
                 else:
-                    layout.label(text=self.get_pretty_name(node))
+                    row.label(text=self.get_pretty_name(node))
             else:
-                layout.label(text=self.get_pretty_name(node))
+                row.label(text=self.get_pretty_name(node))
 
         renderman_node_type = getattr(node, 'renderman_node_type', '')
         if not self.hide and context.region.type == 'UI' and renderman_node_type != 'output':            
             nt = context.space_data.edit_tree
-            layout.context_pointer_set("socket", self)
-            layout.context_pointer_set("node", node)
-            layout.context_pointer_set("nodetree", nt)
+            row.context_pointer_set("socket", self)
+            row.context_pointer_set("node", node)
+            row.context_pointer_set("nodetree", nt)
             rman_icon = rfb_icons.get_icon('rman_connection_menu')
-            layout.menu('NODE_MT_renderman_connection_menu', text='', icon_value=rman_icon.icon_id)                
+            row.menu('NODE_MT_renderman_connection_menu', text='', icon_value=rman_icon.icon_id)                
             
         mat = getattr(context, 'material')
         if mat:

@@ -226,17 +226,22 @@ def _draw_ui_from_rman_config(config_name, panel, context, layout, parent):
                 curr_col = row_dict['default']
 
             conditionalVisOps = getattr(ndp, 'conditionalVisOps', None)
+            conditionalLockOps = getattr(ndp, 'conditionalLockOps', None)
             if conditionalVisOps:
-                # check if the conditionalVisOp to see if we're disabled
+                # eval the conditionalVisOps to see if we should be visible
                 expr = conditionalVisOps.get('expr', None)
                 node = parent              
                 if expr and not eval(expr):
-                    # conditionalLockOps disable the prop rather
-                    # than hide them
-                    if not hasattr(ndp, 'conditionalLockOps'):
-                        continue
-                    else:
-                        is_enabled = False
+                    continue
+
+            if conditionalVisOps and conditionalLockOps:
+                # check if there is a conditionalLockOps
+                expr = conditionalVisOps.get('lock_expr', None)
+                if expr is None:
+                    expr = conditionalVisOps.get('expr', None)
+                node = parent                           
+                if expr and not eval(expr):
+                    is_enabled = False                        
 
             label = ndp.label if hasattr(ndp, 'label') else ndp.name
             row = curr_col.row()
@@ -315,6 +320,14 @@ def draw_prop(node, prop_name, layout, level=0, nt=None, context=None, sticky=Fa
         except Exception as err:                        
             rfb_log().error("Error handling conditionalVisOp: %s" % str(err))
             pass
+
+    if bl_prop_info.conditionalLockOps and bl_prop_info.lock_expr:
+        try:
+            locked = not eval(bl_prop_info.lock_expr)
+            bl_prop_info.prop_disabled = locked
+        except Exception as err:                        
+            rfb_log().error("Error handling conditionalVisOp: %s" % str(err))
+            pass        
 
     if bl_prop_info.prop_hidden:
         return
@@ -749,25 +762,45 @@ def draw_node_properties_recursive(layout, context, nt, node, level=0, single_no
         for input in node.inputs:
             if input.is_linked:
                 input_node = shadergraph_utils.socket_node_input(nt, input)
-                icon = get_open_close_icon(input.show_expanded)
+                do_single_view = single_node_view and prefs_utils.single_node_view()
+                if do_single_view:                
+                    icon = get_open_close_icon(False)
 
-                split = layout.split(factor=NODE_LAYOUT_SPLIT)
-                row = split.row()
-                draw_indented_label(row, None, level)
+                    split = layout.split()
+                    row = split.row()
+                    draw_indented_label(row, None, level)                         
+                    label = input.name
+                    
+                    rman_icon = rfb_icons.get_node_icon(input_node.bl_label)               
+                    row.label(text=label + ' (%s):' % input_node.name)
 
-                label = input.name                
-                rman_icon = rfb_icons.get_node_icon(input_node.bl_label)
-                row.prop(input, "show_expanded", icon=icon, text='',
-                         icon_only=True, emboss=False)                                   
-                row.label(text=label + ' (%s):' % input_node.name)
-                row.context_pointer_set("socket", input)
-                row.context_pointer_set("node", node)
-                row.context_pointer_set("nodetree", nt)
-                row.menu('NODE_MT_renderman_connection_menu', text='', icon_value=rman_icon.icon_id)           
+                    row.context_pointer_set("node", input_node)
+                    row.context_pointer_set("nodetree", nt)        
+                    row.operator('node.rman_select_nodetree_node', text='', icon=icon)                
+                    row.context_pointer_set("socket", input)
+                    row.context_pointer_set("node", node)
+                    row.context_pointer_set("nodetree", nt)
+                    row.menu('NODE_MT_renderman_connection_menu', text='', icon_value=rman_icon.icon_id)                  
+                else:
+                    icon = get_open_close_icon(input.show_expanded)
 
-                if input.show_expanded:
-                    draw_node_properties_recursive(layout, context, nt,
-                                                   input_node, level=level + 1, single_node_view=single_node_view)
+                    split = layout.split(factor=NODE_LAYOUT_SPLIT)
+                    row = split.row()
+                    draw_indented_label(row, None, level)
+
+                    label = input.name                
+                    rman_icon = rfb_icons.get_node_icon(input_node.bl_label)
+                    row.prop(input, "show_expanded", icon=icon, text='',
+                            icon_only=True, emboss=False)                                   
+                    row.label(text=label + ' (%s):' % input_node.name)
+                    row.context_pointer_set("socket", input)
+                    row.context_pointer_set("node", node)
+                    row.context_pointer_set("nodetree", nt)
+                    row.menu('NODE_MT_renderman_connection_menu', text='', icon_value=rman_icon.icon_id)           
+
+                    if input.show_expanded:
+                        draw_node_properties_recursive(layout, context, nt,
+                                                    input_node, level=level + 1, single_node_view=single_node_view)                                        
             else:
                 row = layout.row(align=True)              
                 draw_indented_label(row, None, level)
@@ -782,7 +815,8 @@ def draw_node_properties_recursive(layout, context, nt, node, level=0, single_no
                 row.context_pointer_set("socket", input)
                 row.context_pointer_set("node", node)
                 row.context_pointer_set("nodetree", nt)
-                row.menu('NODE_MT_renderman_connection_menu', text='', icon='NODE_MATERIAL')
+                rman_icon = rfb_icons.get_icon('rman_connection_menu')
+                row.menu('NODE_MT_renderman_connection_menu', text='', icon_value=rman_icon.icon_id)
 
     else:
         draw_props(node, node.prop_names, layout, level, nt=nt, context=context, single_node_view=single_node_view)

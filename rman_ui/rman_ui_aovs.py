@@ -171,6 +171,8 @@ class PRMAN_OT_Renderman_layer_add_channel(Operator):
                 if settings:
                     chan.channel_source = settings['channelSource']
                     chan.channel_type = settings['channelType']
+                    if 'filter' in settings:
+                        chan.chan_pixelfilter = settings['filter']
 
             chan_ptr = aov.dspy_channels.add()  
             aov.dspy_channels_index = len(aov.dspy_channels)-1   

@@ -32,6 +32,122 @@ DUPLI_SOURCE_PREFIX = "dup_src_"
 
 RMAN_VOL_TYPES = ['RI_VOLUME', 'OPENVDB', 'FLUID']
 
+class BlAttribute:
+    '''
+    A class to represent Blender's bpy.types.Attribute
+    '''
+
+    def __init__(self):
+        self.rman_type = ''
+        self.rman_name = ''
+        self.rman_detail = None
+        self.array_len = -1
+        self.values = []
+
+    @staticmethod
+    def parse_attributes(attrs_dict, ob, detail_map, detail_default='vertex'):
+        '''
+        Helper function to parse an array of Blender's bpy.types.Attribute
+
+        Args:
+            attrs_dict (dict): dictionary of names to BlAttribute instances
+            ob (bpy.types.Object): the object that holds the bpy.types.Attribute array
+            detail_map (dict): a dictionary of ints to RenderMan detail strings 
+            detail_default (str): default detail if we cannot determine what the detail should
+                                  be from detail_map
+        '''
+        import numpy as np
+
+        for attr in ob.data.attributes:
+            if attr.name.startswith('.'):
+                continue
+            rman_attr = None
+            if attr.data_type == 'FLOAT2':
+                rman_attr = BlAttribute()
+                rman_attr.rman_name = attr.name
+                rman_attr.rman_type = 'float2'
+
+                npoints = len(attr.data)
+                values = np.zeros(npoints*2, dtype=np.float32)
+                attr.data.foreach_get('vector', values)
+                values = np.reshape(values, (npoints, 2))
+                rman_attr.values = values.tolist()
+
+            elif attr.data_type == 'FLOAT_VECTOR':
+                rman_attr = BlAttribute()
+                rman_attr.rman_name = attr.name
+                rman_attr.rman_type = 'vector'
+
+                npoints = len(attr.data)
+                values = np.zeros(npoints*3, dtype=np.float32)
+                attr.data.foreach_get('vector', values)
+                values = np.reshape(values, (npoints, 3))
+                rman_attr.values = values.tolist()
+            
+            elif attr.data_type in ['BYTE_COLOR', 'FLOAT_COLOR']:
+                rman_attr = BlAttribute()
+                rman_attr.rman_name = attr.name
+                if attr.name == 'color':
+                    rman_attr.rman_name = 'Cs'
+                rman_attr.rman_type = 'color'
+
+                npoints = len(attr.data)
+                values = np.zeros(npoints*4, dtype=np.float32)
+                attr.data.foreach_get('color', values)
+                values = np.reshape(values, (npoints, 4))
+                rman_attr.values .extend(values[0:, 0:3].tolist())
+
+            elif attr.data_type == 'FLOAT':
+                rman_attr = BlAttribute()
+                rman_attr.rman_name = attr.name
+                rman_attr.rman_type = 'float'
+                rman_attr.array_len = -1
+
+                npoints = len(attr.data)
+                values = np.zeros(npoints, dtype=np.float32)
+                attr.data.foreach_get('value', values)
+                rman_attr.values = values.tolist()                          
+            elif attr.data_type in ['INT8', 'INT']:
+                rman_attr = BlAttribute()
+                rman_attr.rman_name = attr.name
+                rman_attr.rman_type = 'integer'
+                rman_attr.array_len = -1
+
+                npoints = len(attr.data)
+                values = np.zeros(npoints, dtype=np.int32)
+                attr.data.foreach_get('value', values)
+                rman_attr.values = values.tolist()                
+            
+            if rman_attr:
+                rman_attr.rman_name = string_utils.sanitize_node_name(rman_attr.rman_name)
+                attrs_dict[attr.name] = rman_attr     
+                detail = detail_map.get(len(attr.data), detail_default)                
+                rman_attr.rman_detail = detail
+
+    @staticmethod
+    def set_rman_primvars(primvar, bl_attributes):
+        '''
+        Helper function to loop over a dictionary of BlAttributes and
+        set RtParamList
+
+        Args:
+            primvar (RtParamList): the RtParamList that we want to set attributes for
+            bl_attributes (dict): the dictionary of BlAttributes we're reading from
+        '''        
+        for nm, rman_attr in bl_attributes.items():
+            if rman_attr.rman_detail is None:
+                continue
+            if rman_attr.rman_type == "float":
+                primvar.SetFloatDetail(rman_attr.rman_name, rman_attr.values, rman_attr.rman_detail)
+            elif rman_attr.rman_type == "float2":
+                primvar.SetFloatArrayDetail(rman_attr.rman_name, rman_attr.values, 2, rman_attr.rman_detail)
+            elif rman_attr.rman_type == "vector":
+                primvar.SetVectorDetail(rman_attr.rman_name, rman_attr.values, rman_attr.rman_detail)
+            elif rman_attr.rman_type == 'color':
+                primvar.SetColorDetail(rman_attr.rman_name, rman_attr.values, rman_attr.rman_detail)
+            elif rman_attr.rman_type == 'integer':
+                primvar.SetIntegerDetail(rman_attr.rman_name, rman_attr.values, rman_attr.rman_detail)
+
 # ------------- Filtering -------------
 def is_visible_layer(scene, ob):
     #

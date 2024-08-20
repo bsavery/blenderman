@@ -5,6 +5,7 @@ from ..rfb_utils import mesh_utils
 from ..rfb_utils import string_utils
 from ..rfb_utils import property_utils
 from ..rfb_utils import scenegraph_utils
+from ..rfb_utils.scene_utils import BlAttribute
 from ..rfb_logger import rfb_log
 from ..rman_constants import BLENDER_41
 
@@ -245,34 +246,43 @@ def _get_primvars_(ob, rman_sg_mesh, geo, rixparams):
     # reference pose
     if hasattr(rm, 'reference_pose'):
         _export_reference_pose(ob, rman_sg_mesh, rm, rixparams)
-    
-    # custom prim vars
-    for p in rm.prim_vars:
-        if p.data_source == 'VERTEX_COLOR':
-            vcols = _get_mesh_vcol_(geo, p.data_name)
-            
-            if vcols and len(vcols) > 0:
-                detail = "facevarying" if facevarying_detail == len(vcols) else "vertex"
-                rixparams.SetColorDetail(p.name, vcols, detail)
-            
-        elif p.data_source == 'UV_TEXTURE':
-            uvs = _get_mesh_uv_(geo, p.data_name)
-            if uvs and len(uvs) > 0:
-                detail = "facevarying" if (facevarying_detail*2) == len(uvs) else "vertex"
-                rixparams.SetFloatArrayDetail(p.name, uvs, 2, detail)
-                if p.export_tangents:
-                    export_tangents(ob, geo, rixparams, uvmap=p.data_name, name=p.name) 
 
-        elif p.data_source == 'VERTEX_GROUP':
-            weights = _get_mesh_vgroup_(ob, geo, p.data_name)
-            if weights and len(weights) > 0:
-                detail = "facevarying" if facevarying_detail == len(weights) else "vertex"
-                rixparams.SetFloatDetail(p.name, weights, detail)
-        elif p.data_source == 'VERTEX_ATTR_COLOR':
-            vattr = _get_mesh_vattr_(geo, p.data_name)            
-            if vattr and len(vattr) > 0:
-                detail = "facevarying" if facevarying_detail == len(vattr) else "vertex"
-                rixparams.SetColorDetail(p.data_name, vattr, detail)
+    if rm.output_all_primvars:
+        # export all of the attributes
+        detail_map = { facevarying_detail: 'facevarying',
+                    rman_sg_mesh.npoints: 'vertex', rman_sg_mesh.npolys: 'uniform'}
+        attrs_dict = dict()
+        BlAttribute.parse_attributes(attrs_dict, ob, detail_map)
+        BlAttribute.set_rman_primvars(rixparams, attrs_dict)
+        
+    else:
+        # custom prim vars
+        for p in rm.prim_vars:
+            if p.data_source == 'VERTEX_COLOR':
+                vcols = _get_mesh_vcol_(geo, p.data_name)
+                
+                if vcols and len(vcols) > 0:
+                    detail = "facevarying" if facevarying_detail == len(vcols) else "vertex"
+                    rixparams.SetColorDetail(p.name, vcols, detail)
+                
+            elif p.data_source == 'UV_TEXTURE':
+                uvs = _get_mesh_uv_(geo, p.data_name)
+                if uvs and len(uvs) > 0:
+                    detail = "facevarying" if (facevarying_detail*2) == len(uvs) else "vertex"
+                    rixparams.SetFloatArrayDetail(p.name, uvs, 2, detail)
+                    if p.export_tangents:
+                        export_tangents(ob, geo, rixparams, uvmap=p.data_name, name=p.name) 
+
+            elif p.data_source == 'VERTEX_GROUP':
+                weights = _get_mesh_vgroup_(ob, geo, p.data_name)
+                if weights and len(weights) > 0:
+                    detail = "facevarying" if facevarying_detail == len(weights) else "vertex"
+                    rixparams.SetFloatDetail(p.name, weights, detail)
+            elif p.data_source == 'VERTEX_ATTR_COLOR':
+                vattr = _get_mesh_vattr_(geo, p.data_name)            
+                if vattr and len(vattr) > 0:
+                    detail = "facevarying" if facevarying_detail == len(vattr) else "vertex"
+                    rixparams.SetColorDetail(p.data_name, vattr, detail)
 
     rm_scene = rman_sg_mesh.rman_scene.bl_scene.renderman
     property_utils.set_primvar_bl_props(rixparams, rm, inherit_node=rm_scene)

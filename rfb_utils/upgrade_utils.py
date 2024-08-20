@@ -253,6 +253,21 @@ def upgrade_260_0(scene):
                 rpn.has_WNref = True
                 rpn.rman__WNref = rp.rman__WNref
 
+def upgrade_261_0(scene):
+    '''
+    In 26.1 and below, we used a collection to hold the primitive variables
+    we wanted to export. Starting with 26.2, we now export all attributes as
+    primvars. This can be turned off by setting output_all_primvars to off.
+
+    For older scenes, look for meshes that had members in primvars and if so,
+    turn off output_all_primvars.
+    '''
+    for mesh in bpy.data.meshes:
+        rm = mesh.renderman
+        if len(rm.prim_vars) > 0:
+            rm.output_all_primvars = False
+        
+
 __RMAN_SCENE_UPGRADE_FUNCTIONS__ = OrderedDict()
     
 __RMAN_SCENE_UPGRADE_FUNCTIONS__['24.2'] = upgrade_242
@@ -260,6 +275,7 @@ __RMAN_SCENE_UPGRADE_FUNCTIONS__['24.3'] = upgrade_243
 __RMAN_SCENE_UPGRADE_FUNCTIONS__['25.0'] = upgrade_250
 __RMAN_SCENE_UPGRADE_FUNCTIONS__['25.0.1'] = upgrade_250_1
 __RMAN_SCENE_UPGRADE_FUNCTIONS__['26.0.0'] = upgrade_260_0
+__RMAN_SCENE_UPGRADE_FUNCTIONS__['26.1.0'] = upgrade_261_0
 
 def upgrade_scene(bl_scene):
     global __RMAN_SCENE_UPGRADE_FUNCTIONS__

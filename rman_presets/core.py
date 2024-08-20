@@ -20,6 +20,7 @@ from ..rfb_logger import rfb_log
 from ..rman_bl_nodes import __BL_NODES_MAP__, __RMAN_NODE_TYPES__
 from ..rman_constants import RMAN_STYLIZED_FILTERS, RFB_FLOAT3, CYCLES_NODE_MAP, RMAN_SUPPORTED_VERSION_STRING
 from ..rman_constants import RFB_ASSET_VERSION_KEY, RFB_ASSET_VERSION, BLENDER_VERSION_MAJOR, BLENDER_VERSION_MINOR
+from ..rman_constants import RMAN_INTERP_MAP, BLENDER_INTERP_MAP
 from ..rfb_utils.shadergraph_utils import RmanConvertNode
 
 import rman_utils.rman_assets.lib as ral
@@ -471,15 +472,9 @@ def set_asset_params(ob, node, nodeName, Asset):
                     color_ramp_node = nt.nodes[ramp_name]                            
                     colors = []
                     positions = []
-                    # double the start and end points
-                    positions.append(float(color_ramp_node.color_ramp.elements[0].position))
-                    colors.append(color_ramp_node.color_ramp.elements[0].color[:3])
                     for e in color_ramp_node.color_ramp.elements:
                         positions.append(float(e.position))
                         colors.append(e.color[:3])
-                    positions.append(
-                        float(color_ramp_node.color_ramp.elements[-1].position))
-                    colors.append(color_ramp_node.color_ramp.elements[-1].color[:3])
 
                     array_size = len(positions)
                     pdict = {'type': 'int', 'value': array_size}
@@ -491,8 +486,7 @@ def set_asset_params(ob, node, nodeName, Asset):
                     pdict = {'type': 'color[%d]' % array_size, 'value': colors}
                     Asset.addParam(nodeName, node_type, "%s_Colors" % prop_name, pdict)
 
-                    rman_interp_map = { 'LINEAR': 'linear', 'CONSTANT': 'constant'}
-                    interp = rman_interp_map.get(color_ramp_node.color_ramp.interpolation,'catmull-rom')   
+                    interp = BLENDER_INTERP_MAP.get(color_ramp_node.color_ramp.interpolation,'catmull-rom')   
                     pdict = {'type': 'string', 'value': interp}
                     Asset.addParam(nodeName, node_type, "%s_Interpolation" % prop_name, pdict)                            
                 continue               
@@ -505,14 +499,10 @@ def set_asset_params(ob, node, nodeName, Asset):
                     curve = float_ramp_node.mapping.curves[0]
                     knots = []
                     vals = []
-                    # double the start and end points
-                    knots.append(curve.points[0].location[0])
-                    vals.append(curve.points[0].location[1])
                     for p in curve.points:
                         knots.append(p.location[0])
                         vals.append(p.location[1])
-                    knots.append(curve.points[-1].location[0])
-                    vals.append(curve.points[-1].location[1])
+                        
                     array_size = len(knots)   
 
                     pdict = {'type': 'int', 'value': array_size}
@@ -845,8 +835,8 @@ def setParams(Asset, node, paramsList):
         param_widget = prop_meta.get('widget', 'default')        
 
         if prop_meta['renderman_type'] == 'colorramp':
-            prop = getattr(node, pname)
-            nt = bpy.data.node_groups[node.rman_fake_node_group]
+            prop = getattr(node, pname)            
+            nt = node.rman_fake_node_group_ptr
             if nt:
                 ramp_name = prop
                 color_ramp_node = nt.nodes[ramp_name]                    
@@ -856,7 +846,7 @@ def setParams(Asset, node, paramsList):
             continue
         elif prop_meta['renderman_type'] == 'floatramp':
             prop = getattr(node, pname)
-            nt = bpy.data.node_groups[node.rman_fake_node_group]
+            nt = node.rman_fake_node_group_ptr
             if nt:
                 ramp_name =  prop
                 float_ramp_node = nt.nodes[ramp_name]  
@@ -897,9 +887,12 @@ def setParams(Asset, node, paramsList):
             colors_vals = colors_param.value() 
             rman_interp = interpolation_param.value()
 
-            rman_interp_map = { 'bspline':'B_SPLINE' , 'linear': 'LINEAR', 'constant': 'CONSTANT'}
-            interp = rman_interp_map.get(rman_interp, 'LINEAR')    
-            n.color_ramp.interpolation = interp           
+            interp = RMAN_INTERP_MAP.get(rman_interp, 'LINEAR')    
+            n.color_ramp.interpolation = interp     
+
+            # remove all of the points except for the first two
+            for i in range(len(elements)-1, 1, -1):
+                elements.remove(elements[-1])                  
 
             if len(colors_vals) == size:
                 for i in range(0, size):
@@ -934,15 +927,19 @@ def setParams(Asset, node, paramsList):
             knots_vals = knots_param.value()
             floats_vals = floats_param.value()
 
+            # remove all of the points except for the first two
+            for i in range(len(points)-1, 1, -1):
+                points.remove(points[-1])
+
             for i in range(0, size):  
                 if i == 0:
                     point = points[0]
                     point.location[0] = knots_vals[i]
-                    point.location[0] = floats_vals[i]    
+                    point.location[1] = floats_vals[i]    
                 elif i == 1:
                     point = points[1]
                     point.location[0] = knots_vals[i]
-                    point.location[0] = floats_vals[i]                        
+                    point.location[1] = floats_vals[i]                        
                 else:                
                     points.new(knots_vals[i], floats_vals[i])            
 

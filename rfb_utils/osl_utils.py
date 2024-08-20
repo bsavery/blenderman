@@ -25,6 +25,7 @@ def readOSO(filePath):
             IO = "out"
 
         prop_meta = {"type": type, "IO": IO}            
+        prop_meta['renderman_type'] = type
 
         # default
         if not pdict['isstruct']:

@@ -453,12 +453,14 @@
             "description": "The time taken to render a pixel",
             "channelType": "float",
             "channelSource": "cpuTime",
+            "filter": "sum",
             "group": "Data AOVs"
         },     
         "sampleCount": {
             "description": "The number of samples taken for the resulting pixel",
             "channelType": "float",
             "channelSource": "sampleCount",
+            "filter": "sum",
             "group": "Data AOVs"
         }, 
         "Nn": {

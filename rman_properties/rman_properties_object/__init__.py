@@ -58,6 +58,7 @@ class RendermanObjectSettings(RmanBasePropertyGroup, bpy.types.PropertyGroup):
     rman_material_override: PointerProperty(
         name='Material',
         type=bpy.types.Material,
+        description="Override the attached material. This is useful for attaching different materials to instances, or for objects that Blender doesn't allow for materials (ex: Empty).",
         update=matrial_override_update
     )    
 

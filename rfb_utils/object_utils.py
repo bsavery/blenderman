@@ -183,9 +183,9 @@ def prototype_key(ob):
     if isinstance(ob, bpy.types.DepsgraphObjectInstance):
         if ob.is_instance:
             if ob.object.data:
-                return '%s-DATA' % ob.object.data.name_full
+                return '%s-%s-DATA' % (ob.object.type, ob.object.data.name_full)
             else:
-                return '%s-OBJECT' % ob.object.name_full
+                return '%s-%s-OBJECT' % (ob.object.type, ob.object.name_full)
         if ob.object.data:
             if isinstance(ob.object.data, bpy.types.Mesh) and use_gpu_subdiv:
                 '''
@@ -201,7 +201,7 @@ def prototype_key(ob):
                 https://projects.blender.org/blender/blender/issues/111393
                 '''
                 data_ob = bpy.data.objects[ob.object.name]
-                return '%s-DATA' % data_ob.original.data.name_full
+                return '%s-MESH-DATA' % data_ob.original.data.name_full
 
             elif BLENDER_HAS_CURVES_NODE and isinstance(ob.object.data, bpy.types.Curves):
                 '''
@@ -209,9 +209,9 @@ def prototype_key(ob):
                 name is not unique when you have multiple Curves object.
                 '''
                 data_ob = bpy.data.objects[ob.object.name]
-                return '%s-DATA' % data_ob.original.data.name_full            
-            return '%s-DATA' % ob.object.data.name_full
-        return '%s-OBJECT' % ob.object.original.name_full
+                return '%s-CURVES-DATA' % data_ob.original.data.name_full            
+            return '%s-%s-DATA' % (ob.object.type, ob.object.data.name_full)
+        return '%s-%s-OBJECT' % (ob.object.type, ob.object.original.name_full)
     elif ob.data:
         if isinstance(ob.data, bpy.types.Mesh) and use_gpu_subdiv:
             '''
@@ -227,7 +227,7 @@ def prototype_key(ob):
             https://projects.blender.org/blender/blender/issues/111393
             '''
             data_ob = bpy.data.objects[ob.name]
-            return '%s-DATA' % data_ob.original.data.name_full
+            return '%s-MESH-DATA' % data_ob.original.data.name_full
 
         elif BLENDER_HAS_CURVES_NODE and isinstance(ob.data, bpy.types.Curves):
             '''
@@ -235,9 +235,9 @@ def prototype_key(ob):
             name is not unique when you have multiple Curves object.
             '''
             data_ob = bpy.data.objects[ob.name]
-            return '%s-DATA' % data_ob.original.data.name_full   
-        return '%s-DATA' % ob.original.data.original.name_full
-    return '%s-OBJECT' % ob.original.name_full
+            return '%s-CURVES-DATA' % data_ob.original.data.name_full   
+        return '%s-%s-DATA' % (ob.type, ob.original.data.original.name_full)
+    return '%s-%s-OBJECT' % (ob.type, ob.original.name_full)
 
 def curve_is_mesh(ob):
     '''

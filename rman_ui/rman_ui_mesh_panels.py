@@ -60,18 +60,23 @@ class MESH_PT_renderman_prim_vars(CollectionPanel, Panel):
         self.layout.use_property_decorate = False           
         mesh = context.mesh
         rm = mesh.renderman
+        row = layout.row()
 
-        self._draw_collection(context, layout, rm, "Primitive Variables:",
-                              "collection.add_remove", "mesh", "prim_vars",
-                              "prim_vars_index")
+        row.prop(rm, 'output_all_primvars')
+        row = layout.row()
+        row.enabled = not rm.output_all_primvars
+        self._draw_collection(context, row, rm, "Primitive Variables:",
+                                "collection.add_remove", "mesh", "prim_vars",
+                                "prim_vars_index")
 
         _draw_ui_from_rman_config('rman_properties_mesh', 'MESH_PT_renderman_prim_vars', context, layout, rm)
 
 
+        row = layout.row()
         if len(rm.reference_pose) > 0 or len(rm.reference_pose_normals) > 0:
-            layout.operator('mesh.freeze_reference_pose', text='Re-Freeze Reference Pose')
+            row.operator('mesh.freeze_reference_pose', text='Re-Freeze Reference Pose')
         else:
-            layout.operator('mesh.freeze_reference_pose', text='Freeze Reference Pose')
+            row.operator('mesh.freeze_reference_pose', text='Freeze Reference Pose')
 
 classes = [
     MESH_PT_renderman_mesh_attrs,

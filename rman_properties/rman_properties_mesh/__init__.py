@@ -1,4 +1,4 @@
-from bpy.props import PointerProperty, IntProperty, CollectionProperty
+from bpy.props import PointerProperty, IntProperty, CollectionProperty, BoolProperty
 
 from ...rfb_logger import rfb_log 
 from ...rman_config import RmanBasePropertyGroup
@@ -8,6 +8,11 @@ from ..rman_properties_misc import RendermanMeshPrimVar, RendermanReferencePoseP
 import bpy
 
 class RendermanMeshGeometrySettings(RmanBasePropertyGroup, bpy.types.PropertyGroup):
+    output_all_primvars: BoolProperty(
+        name="Output All Attributes",
+        default=True,
+        description="Output all attributes as primitive variables. If you don't need all of them, turn this off and use the UI below. This can help speed up exporting of the scene."
+    )
     prim_vars: CollectionProperty(
         type=RendermanMeshPrimVar, name="Primitive Variables")
     prim_vars_index: IntProperty(min=-1, default=-1)

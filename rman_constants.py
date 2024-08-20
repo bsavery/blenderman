@@ -40,7 +40,7 @@ BLENDER_PYTHON_VERSION_MINOR = pyver.minor
 BLENDER_PYTHON_VERSION = '%s.%s' % (pyver.major, pyver.minor)
 
 RMAN_SUPPORTED_VERSION_MAJOR = 26
-RMAN_SUPPORTED_VERSION_MINOR = 0
+RMAN_SUPPORTED_VERSION_MINOR = 1
 RMAN_SUPPORTED_VERSION_BETA = ''
 RMAN_SUPPORTED_VERSION = (RMAN_SUPPORTED_VERSION_MAJOR, RMAN_SUPPORTED_VERSION_MINOR, RMAN_SUPPORTED_VERSION_BETA)
 RMAN_SUPPORTED_VERSION_STRING = '%d.%d%s' % (RMAN_SUPPORTED_VERSION_MAJOR, RMAN_SUPPORTED_VERSION_MINOR, RMAN_SUPPORTED_VERSION_BETA)
@@ -109,6 +109,12 @@ __RESERVED_BLENDER_NAMES__ = {
     'resolution': 'rman_resolution',
     'name': 'rman_name'
 }
+
+# Map ramp interpolation types between RenderMan and Blender
+# Blender doesn't have an equvialent to catmull-rom, so use cardinal
+# as catmull-rom
+RMAN_INTERP_MAP = { 'bspline':'B_SPLINE' , 'linear': 'LINEAR', 'constant': 'CONSTANT', 'catmull-rom': 'CARDINAL'}
+BLENDER_INTERP_MAP = { 'B_SPLINE': 'bspline', 'LINEAR': 'linear', 'CONSTANT': 'constant', 'CARDINAL': 'catmull-rom'}
 
 CYCLES_NODE_MAP = {
     'ShaderNodeAttribute': 'node_attribute',

@@ -312,6 +312,9 @@ class PRMAN_OT_Renderman_Zip_Addon(Operator):
 
         rfb_addon = rman_constants.RFB_ADDON_PATH
         rfb_zip = os.path.join(self.properties.directory, 'RenderManForBlender.zip')
+        if os.path.exists(rfb_zip):
+            os.remove(rfb_zip)
+
         z = zipfile.ZipFile(rfb_zip, mode='w')
 
         # get all directories and files in the addon path

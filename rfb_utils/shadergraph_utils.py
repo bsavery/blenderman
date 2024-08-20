@@ -231,9 +231,13 @@ def get_socket_type(node, socket):
     else:
         return sock_type
 
-def get_node_name(node, mat_name):
-    node_name = string_utils.sanitize_node_name('%s_%s' % (mat_name, node.name))
-    return node_name
+def get_node_name(node, prefix=""):
+    nm = node.name
+    if node.label != "":
+        nm = node.label
+    if prefix != "":
+        return string_utils.sanitize_node_name('%s_%s' % (prefix, nm))
+    return string_utils.sanitize_node_name('%s' % nm)
 
 def linked_sockets(sockets):
     if sockets is None:
@@ -430,12 +434,36 @@ def find_node_input(node, name):
     return None
 
 # walk the tree for nodes to export
-def gather_nodes(node):
+def gather_nodes(node, for_solo_node=False):
+    '''gather all of the nodes that are connected
+    to the given node
+
+    Arguments:        
+        node (byp.types.Node) - the input node we are interested in
+        for_solo_node (bool) - whether we are looking for connected nodes for a solo node
+
+    Returns:
+        (list) - the list of nodes that are connected to the given node
+    '''
+
     nodes = []
     for socket in node.inputs:
         if socket.is_linked:
             link = socket.links[0]
-            for sub_node in gather_nodes(socket.links[0].from_node):
+            from_node = link.from_node
+            if for_solo_node and from_node.bl_idname == "NodeGroupInput":
+                # for solo nodes, if the current node we are looking at is a NodeGroupInput
+                # we know we are inside a NodeGroup.
+                # we need to do some special handling here because we don't want to stop
+                # collecting nodes when we hit a NodeGroupInput node, we need to look
+                # for connected nodes on the "outside". So we get the NodeGroup node, where
+                # these inner nodes belong to.
+
+                # we don't need to do this for regular, non-solo node networks because
+                # we already do a gather for NodeGroup nodes in RmanMaterialTranslator's
+                # translate_node_group method
+                from_node = get_group_node(from_node)
+            for sub_node in gather_nodes(from_node, for_solo_node=for_solo_node):
                 if sub_node not in nodes:
                     nodes.append(sub_node)
 
@@ -463,16 +491,6 @@ def gather_nodes(node):
         nodes.append(node)
 
     return nodes    
-
-def gather_all_nodes_for_material(ob, nodes_list):
-    for node in ob.node_tree.nodes:
-        if node not in nodes_list:
-            if isinstance(ob, bpy.types.ShaderNodeGroup):
-                nodes_list.insert(0, node)
-            else:
-                nodes_list.append(node)
-        if node.bl_idname == 'ShaderNodeGroup':
-            gather_all_nodes_for_material(node, nodes_list)
 
 def gather_all_textured_nodes(ob, nodes_list):   
     nt = None
@@ -540,6 +558,8 @@ def get_group_node(node):
             nodes = group_nt.node_tree.nodes
         elif isinstance(group_nt, bpy.types.NodeGroup):
             nodes = group_nt.nodes
+        elif isinstance(group_nt, bpy.types.ShaderNodeTree):
+            nodes = group_nt.nodes            
         for n in nodes:
             if n.bl_idname == 'ShaderNodeGroup':
                 for n2 in n.node_tree.nodes:

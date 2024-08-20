@@ -950,13 +950,14 @@ class RmanSceneSync(object):
 
                     # simply grab the existing instance and update the transform and/or material
                     rman_sg_group = self.rman_scene.get_rman_sg_instance(instance, rman_sg_node, instance_parent, psys, create=False)
+                    rman_group_translator = self.rman_scene.rman_translators['GROUP']
                     if rman_sg_group:
-                        if rman_update.is_updated_attributes:
-                            # don't need to do anything if this an attribute update
+                        # update instance attributes
+                        self.rman_scene.update_instance_attributes(rman_group_translator, rman_sg_group, ob_eval, instance, remove=True)                                
+                        if rman_update.is_updated_attributes:    
                             continue
 
                         if rman_update.is_updated_transform:
-                            rman_group_translator = self.rman_scene.rman_translators['GROUP']
                             rman_group_translator.update_transform(instance, rman_sg_group) 
                         if is_empty_instancer and instance_parent.renderman.rman_material_override:
                             self.rman_scene.attach_material(instance_parent, rman_sg_group)                            
