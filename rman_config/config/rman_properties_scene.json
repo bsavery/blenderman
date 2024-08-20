@@ -1625,7 +1625,19 @@
             "min": 0.0,
             "max": 2.0,
             "help": "Controls the asymmetry value, 0 is best quality, higher values encourage the denoiser to avoid overblurring, leading to weaker denoising."             
-        },     
+        },
+        {
+            "panel": "RENDER_PT_renderman_spooling_export_options",
+            "page": "Denoising",
+            "name": "ai_denoiser_tiles",
+            "label": "Tiles",
+            "type": "int2",
+            "bl_prop_options": "",
+            "default": [1,1],
+            "options": "1x1:[1,1]|2x2:[2,2]|3x3:[3,3]|4x4:[4,4]|5x5:[5,5]",
+            "widget": "mapper",            
+            "help": "Denoise the images in tiles. This can be useful if you are denoising fairly large images and want to reduce memory usage."
+        },               
         {
             "panel": "RENDER_PT_renderman_spooling_export_options",
             "page": "Denoising",

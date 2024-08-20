@@ -34,20 +34,14 @@ __INTERACTIVE_DENOISE_CHANNELS = [
     OutputChannel("color", "Ci"),
     OutputChannel("float", "a"),
     DENOISER_ALBEDO,
-    OutputChannel("color", "albedo_var", "color lpe:nothruput;noinfinitecheck;noclamp;unoccluded;overwrite;C<.S'passthru'>*((U2L)|O)", "variance"),
     OutputChannel("color", "albedo_mse", "color lpe:nothruput;noinfinitecheck;noclamp;unoccluded;overwrite;C<.S'passthru'>*((U2L)|O)", "mse"),
-    OutputChannel("vector", "backward", "vector motionBack"),
     OutputChannel("color", "diffuse", "color lpe:C(D[DS]*[LO])|O"),
     OutputChannel("color", "diffuse_mse", "color lpe:C(D[DS]*[LO])|O", "mse"),
-    OutputChannel("vector", "forward", "vector motionFore"),
     OutputChannel("color", "mse", "color Ci", "mse"),
     DENOISER_NORMAL,
-    OutputChannel("normal", "normal_var", "normal Nn", "variance"),
     OutputChannel("color", "normal_mse", "normal Nn", "mse"),
     OutputChannel("color", "specular", "color lpe:CS[DS]*[LO]"),
     OutputChannel("color", "specular_mse", "color lpe:CS[DS]*[LO]", "mse"),
-    OutputChannel("float", "zfiltered", "float zfiltered"),
-    OutputChannel("float", "zfiltered_var", "float zfiltered", "variance"),
     OutputChannel("float", "sampleCount", "sampleCount")
 ]
 

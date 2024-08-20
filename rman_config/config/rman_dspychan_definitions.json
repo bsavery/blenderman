@@ -767,19 +767,13 @@
                 "mse",
                 "sampleCount",
                 "albedo",
-                "albedo_var",
                 "albedo_mse",
                 "diffuse",
                 "diffuse_mse",
                 "specular",
                 "specular_mse",
-                "zfiltered",
-                "zfiltered_var",
                 "normal",
-                "normal_var",
-                "normal_mse",
-                "forward",
-                "backward"
+                "normal_mse"
             ]
         },        
         "Mattes": {

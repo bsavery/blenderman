@@ -407,7 +407,13 @@ class RmanSpool(object):
             command.argv.append(rm.ai_denoiser_remap_irradiance)
         if rm.ai_denoiser_remap_alpha:
             command.argv.append('--alpha')
-            command.argv.append(rm.ai_denoiser_remap_alpha)                        
+            command.argv.append(rm.ai_denoiser_remap_alpha) 
+        command.argv.append('--progress')
+        if envconfig().build_info.version() > "26.2":
+            command.argv.append('--tiles')
+            tilesX, tilesY = string_utils.convert_val(rm.ai_denoiser_tiles, type_hint="int2")
+            command.argv.append(tilesX)
+            command.argv.append(tilesY)                       
 
         command.argv.extend(img_files)
                                                          
