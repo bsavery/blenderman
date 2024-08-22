@@ -247,7 +247,8 @@ def _get_primvars_(ob, rman_sg_mesh, geo, rixparams):
     if hasattr(rm, 'reference_pose'):
         _export_reference_pose(ob, rman_sg_mesh, rm, rixparams)
 
-    if rm.output_all_primvars:
+    output_all_primvars = getattr(rm, 'output_all_primvars', False)
+    if output_all_primvars:
         # export all of the attributes
         detail_map = { facevarying_detail: 'facevarying',
                     rman_sg_mesh.npoints: 'vertex', rman_sg_mesh.npolys: 'uniform'}

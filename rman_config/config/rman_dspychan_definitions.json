@@ -749,6 +749,11 @@
             "channelType": "color",
             "channelSource": "NPRdistort",
             "group": "NPR"
+        },
+        "NPRshadow": {
+            "channelType": "color",
+            "channelSource": "lpe:shadows;C[DS]+<L.>",
+            "group": "NPR"
         }
     },
     "displays": {
@@ -811,6 +816,7 @@
                 "Nn",
                 "sampleCount",
                 "directSpecular",
+                "NPRshadow",
                 "NPRtoonOut",
                 "NPRhatchOut",
                 "NPRlineOut",
