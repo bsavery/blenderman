@@ -188,24 +188,25 @@ def get_socket_name(node, socket):
             if node_desc:
                 idx = -1
                 is_output = socket.is_output
-                if is_output:
-                    for i, output in enumerate(node.outputs):
-                        if socket.name == output.name:
-                            idx = i
-                            break      
-                else:              
-                    for i, input in enumerate(node.inputs):
-                        if socket.name == input.name:
-                            idx = i
-                            break
+                node_desc_params = node_desc.outputs if is_output else node_desc.params
+                sockets = node.outputs if is_output else node.inputs
+
+                # Let's look if there's one with a similar
+                # name already
+                for p in node_desc_params:
+                    if socket.name in p.name:
+                        return p.name
+                        
+                # try based on index       
+                for i, input in enumerate(sockets):
+                    if socket.name == input.name:
+                        idx = i
+                        break
                     
                 if idx == -1:
                     return socket.identifier.replace(' ', '')
 
-                if is_output:
-                    node_desc_param = node_desc.outputs[idx]
-                else:
-                    node_desc_param = node_desc.params[idx]
+                node_desc_param = node_desc_params[idx]
 
                 return node_desc_param.name                        
 

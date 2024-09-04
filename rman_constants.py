@@ -107,7 +107,8 @@ __RESERVED_BLENDER_NAMES__ = {
     'inputs': 'rman_inputs',
     'outputs': 'rman_outputs',
     'resolution': 'rman_resolution',
-    'name': 'rman_name'
+    'name': 'rman_name',
+    'type': 'rman_type'
 }
 
 # Map ramp interpolation types between RenderMan and Blender
@@ -170,6 +171,10 @@ CYCLES_NODE_MAP = {
     'ShaderNodeWireframe': 'node_wireframe',
     'ShaderNodeDisplacement': 'node_displacement'
 }
+
+CYCLES_SHADERS_PATH = os.path.join('scripts', 'addons', 'cycles', 'shader')
+if BLENDER_VERSION >= (4, 2, 0):
+    CYCLES_SHADERS_PATH = os.path.join('scripts', 'addons_core', 'cycles', 'shader')    
 
 # map types in args files to socket types
 __RMAN_SOCKET_MAP__ = {
