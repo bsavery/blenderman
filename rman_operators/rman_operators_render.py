@@ -108,7 +108,9 @@ class PRMAN_OT_BatchRendermanBake(bpy.types.Operator):
             scene.renderman.hider_type = 'BAKE'
             scene.renderman.enable_external_rendering = True
             try:
-                bpy.ops.render.render(layer=context.view_layer.name)
+                for view_layer in scene.view_layers:
+                    if view_layer.use:
+                        bpy.ops.render.render(layer=view_layer.name)
             except:
                 pass
             scene.renderman.hider_type = 'RAYTRACE'
@@ -168,7 +170,9 @@ class PRMAN_OT_BatchRender(bpy.types.Operator):
         if not rm.is_rman_interactive_running:
             scene.renderman.enable_external_rendering = True        
             try:
-                bpy.ops.render.render(layer=context.view_layer.name)
+                for view_layer in scene.view_layers:
+                    if view_layer.use:
+                        bpy.ops.render.render(layer=view_layer.name)
             except:
                 pass
             scene.renderman.enable_external_rendering = False

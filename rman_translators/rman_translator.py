@@ -8,6 +8,7 @@ from ..rfb_utils import shadergraph_utils
 from ..rfb_utils import scene_utils
 import hashlib
 import os
+import bpy
 
 class RmanTranslator(object):
     '''
@@ -138,6 +139,17 @@ class RmanTranslator(object):
             attrs.SetFloatArray('user:blender_instance_uv', ob_inst.uv, 2)
         else:
             attrs.SetFloat('user:blender_is_instance', 0)
+
+        # Check if this is part of a Blender holdout
+        if is_instance:
+            holdout = ob_inst.parent.holdout_get(view_layer=self.rman_scene.bl_view_layer)
+        else:
+            holdout = ob_inst.object.holdout_get(view_layer=self.rman_scene.bl_view_layer)
+
+        if holdout:
+            # let Blender's holdout attribute take precedence
+            attrs.Remove('trace:holdout')
+            attrs.SetInteger('Ri:Matte', 1)
 
         rman_sg_node.sg_node.SetAttributes(attrs)     
 

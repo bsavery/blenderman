@@ -241,7 +241,7 @@ class RmanScene(object):
     def export_for_interactive_render(self, context, depsgraph, sg_scene):
         self.sg_scene = sg_scene
         self.context = context
-        self.bl_view_layer = context.view_layer
+        self.bl_view_layer = depsgraph.view_layer_eval
         self.bl_scene = depsgraph.scene_eval
         self._find_renderman_layer()
         self.depsgraph = depsgraph
@@ -263,14 +263,14 @@ class RmanScene(object):
         self.bl_frame_current = self.bl_scene.frame_current
         self.sg_scene = sg_scene
         self.context = context
-        self.bl_view_layer = context.view_layer
+        self.depsgraph = context.evaluated_depsgraph_get()
+        self.bl_view_layer = self.depsgraph.view_layer_eval
         self._find_renderman_layer()
         self.rman_bake = False
         self.external_render = False
         self.is_interactive = False
         self.is_viewport_render = False
 
-        self.depsgraph = context.evaluated_depsgraph_get()
         self.export_root_sg_node()
         self.export_materials([m for m in self.depsgraph.ids if isinstance(m, bpy.types.Material)])
         self.export_data_blocks(selected_objects=True)

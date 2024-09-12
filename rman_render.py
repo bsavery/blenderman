@@ -302,9 +302,10 @@ def preload_quicklynoiseless():
             rfb_log().debug('Failed to preload {0}: {1}'.format(plugin_path, error))
 
 class BlRenderResultHelper:
-    def __init__(self, rman_render, bl_scene, dspy_dict):
+    def __init__(self, rman_render, bl_scene, dspy_dict, bl_layer):
         self.rman_render = rman_render
         self.bl_scene = bl_scene
+        self.bl_layer = bl_layer
         self.dspy_dict = dspy_dict
         self.width = -1
         self.height = -1
@@ -318,14 +319,14 @@ class BlRenderResultHelper:
         self.write_aovs = False
 
     @staticmethod
-    def write_empty_result(rman_render):
+    def write_empty_result(rman_render, bl_layer):
         scale = rman_render.bl_scene.render.resolution_percentage / 100.0
         size_x = int(rman_render.bl_scene.render.resolution_x * scale)
         size_y = int(rman_render.bl_scene.render.resolution_y * scale)
 
         pixel_count = size_x * size_y
         rect = numpy.zeros((pixel_count, 4))
-        result = rman_render.bl_engine.begin_result(0, 0, size_x, size_y)
+        result = rman_render.bl_engine.begin_result(0, 0, size_x, size_y, layer=bl_layer.name)
         layer = result.layers[0].passes["Combined"]
         layer.rect = rect       
         rman_render.bl_engine.end_result(result)     
@@ -384,6 +385,7 @@ class BlRenderResultHelper:
         self.bl_result = self.rman_render.bl_engine.begin_result(0, 0,
                                     self.size_x,
                                     self.size_y,
+                                    layer=self.bl_layer.name,
                                     view=self.render_view)                        
 
         for i, dspy_nm in enumerate(self.dspy_dict['displays'].keys()):
@@ -737,6 +739,7 @@ class RmanRender(object):
 
         boot_strapping = False
         bl_rr_helper = None
+        bl_layer = depsgraph.view_layer_eval
         if self.sg_scene is None:
             boot_strapping = True
             if not self.create_scene(config, render_config):
@@ -747,7 +750,6 @@ class RmanRender(object):
 
         # Export the scene
         try:
-            bl_layer = depsgraph.view_layer
             self.rman_is_exporting = True
             self.start_export_stats_thread()
             if boot_strapping:
@@ -779,7 +781,7 @@ class RmanRender(object):
             self.sg_scene.Render(render_cmd)
         if self.rman_render_into == 'blender':  
             dspy_dict = display_utils.get_dspy_dict(self.rman_scene, include_holdouts=False)
-            bl_rr_helper = BlRenderResultHelper(self, self.bl_scene, dspy_dict)
+            bl_rr_helper = BlRenderResultHelper(self, self.bl_scene, dspy_dict, bl_layer)
             if for_background:
                 bl_rr_helper.write_aovs = (use_compositor and rm.use_bl_compositor_write_aovs)
             else:
@@ -798,7 +800,7 @@ class RmanRender(object):
             # i.e.: we're not using the Blender display driver
             # make sure we create a black/empty image to as the Blender 
             # render result
-            BlRenderResultHelper.write_empty_result(self)
+            BlRenderResultHelper.write_empty_result(self, bl_layer)
 
 
         self.del_bl_engine()
@@ -838,7 +840,7 @@ class RmanRender(object):
             if do_persistent_data:
                         
                 for frame in range(bl_scene.frame_start, bl_scene.frame_end + 1, bl_scene.frame_step):
-                    bl_view_layer = depsgraph.view_layer
+                    bl_view_layer = depsgraph.view_layer_eval
                     config = rman.Types.RtParamList()
                     render_config = rman.Types.RtParamList()
 
@@ -870,7 +872,7 @@ class RmanRender(object):
                 self.rman_scene.reset()       
             else:     
                 for frame in range(bl_scene.frame_start, bl_scene.frame_end + 1):
-                    bl_view_layer = depsgraph.view_layer
+                    bl_view_layer = depsgraph.view_layer_eval
                     config = rman.Types.RtParamList()
                     render_config = rman.Types.RtParamList()
 
@@ -916,7 +918,7 @@ class RmanRender(object):
             try:
                 time_start = time.time()
                         
-                bl_view_layer = depsgraph.view_layer         
+                bl_view_layer = depsgraph.view_layer_eval      
                 rfb_log().info("Parsing scene...")      
                 self.rman_is_exporting = True       
                 self.rman_scene.export_for_final_render(depsgraph, self.sg_scene, bl_view_layer, is_external=True)
@@ -987,7 +989,7 @@ class RmanRender(object):
             self.del_bl_engine()
             return False        
         try:
-            bl_layer = depsgraph.view_layer
+            bl_layer = depsgraph.view_layer_eval_eval
             self.rman_is_exporting = True
             self.start_export_stats_thread()
             self.rman_scene.export_for_bake_render(depsgraph, self.sg_scene, bl_layer, is_external=is_external)
@@ -1034,7 +1036,7 @@ class RmanRender(object):
             original_frame = bl_scene.frame_current
             rfb_log().debug("Writing to RIB...")             
             for frame in range(bl_scene.frame_start, bl_scene.frame_end + 1):
-                bl_view_layer = depsgraph.view_layer
+                bl_view_layer = depsgraph.view_layer_eval
                 config = rman.Types.RtParamList()
                 render_config = rman.Types.RtParamList()
 
@@ -1068,7 +1070,7 @@ class RmanRender(object):
             try:
                 time_start = time.time()
                         
-                bl_view_layer = depsgraph.view_layer         
+                bl_view_layer = depsgraph.view_layer_eval         
                 rfb_log().info("Parsing scene...")
                 self.rman_is_exporting = True             
                 self.rman_scene.export_for_bake_render(depsgraph, self.sg_scene, bl_view_layer, is_external=True)
