@@ -16,7 +16,8 @@ EXT_MAP = {'it': 'it', 'openexr': 'exr',
             'ies': 'ies', 'ptex': 'ptex'
         }
 
-__NODE_NAME_REGEXP__ = r'\s+|\.+|:'        
+# regex to capture whitespace, '.', ':', '[', ']'
+__NODE_NAME_REGEXP__ = r'\s+|\.+|:|\[|\]'        
 
 class SceneStringConverter(object):
     """Class maintaining an up-to-date StringExpression object.
