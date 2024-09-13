@@ -172,11 +172,11 @@ class RmanCameraTranslator(RmanTranslator):
         clip_end = None
 
         prop = rman_sg_camera.sg_camera_node.GetProperties()
-        crop_window = [0.0, 1.0, 0.0, 1.0]
-
+        
         bl_cam_props = deepcopy(rman_sg_camera.bl_cam_props)
         bl_cam_props.res_width = width
-        bl_cam_props.res_height = height   
+        bl_cam_props.res_height = height 
+        bl_cam_props.crop_window = [0.0, 1.0, 0.0, 1.0]  
 
         if region_data:
             bl_cam_props.view_perspective = region_data.view_perspective
@@ -238,7 +238,7 @@ class RmanCameraTranslator(RmanTranslator):
                     min_y = 1.0 - (y0 / height)
                     max_y = 1.0 - (y1 / height)
 
-                    crop_window = [min_x, max_x, min_y, max_y]              
+                    bl_cam_props.crop_window = [min_x, max_x, min_y, max_y]              
 
             elif region_data.view_perspective ==  'PERSP': 
                 if self.rman_scene.is_viewport_render and self.rman_scene.context.space_data.use_render_border:
@@ -247,7 +247,7 @@ class RmanCameraTranslator(RmanTranslator):
                     max_x = space.render_border_max_x
                     min_y = 1.0 - space.render_border_min_y
                     max_y = 1.0 - space.render_border_max_y
-                    crop_window = [min_x, max_x, min_y, max_y]
+                    bl_cam_props.crop_window = [min_x, max_x, min_y, max_y]
 
                 ob = self.rman_scene.context.space_data.camera 
                 cam = None
@@ -394,7 +394,18 @@ class RmanCameraTranslator(RmanTranslator):
                 if crop_handler and crop_handler.crop_windowing:
                     crop_handler.reset()
                     crop_window = [0.0, 1.0, 0.0, 1.0]
-                    
+
+            crop_window = deepcopy(bl_cam_props.crop_window) 
+            if crop_window != [0.0, 1.0, 0.0, 1.0]:     
+                # Make sure the cropwindow isn't out of bounds
+                if crop_window[0] < 0.0 or crop_window[0] > 1.0:
+                    crop_window[0] = 0.0
+                if crop_window[1] < 0.0 or crop_window[1] > 1.0 or crop_window[1] <= crop_window[0]:
+                    crop_window[1] = 1.0
+                if crop_window[3] < 0.0 or crop_window[3] > 1.0:
+                    crop_window[3] = 0.0
+                if crop_window[2] < 0.0 or crop_window[2] > 1.0 or crop_window[2] <= crop_window[3]:
+                    crop_window[2] = 1.0                                                 
             options.SetFloatArray(self.rman_scene.rman.Tokens.Rix.k_Ri_CropWindow, crop_window, 4)
             self.rman_scene.sg_scene.SetOptions(options)
             rman_sg_camera.sg_camera_node.SetProperties(prop)

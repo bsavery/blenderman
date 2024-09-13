@@ -293,6 +293,7 @@ class DrawCropWindowHelper(object):
         if prev_crop != current_crop:
             update = True
 
+        '''
         if update:            
             rman_render = RmanRender.get_rman_render()
             if rman_render.rman_is_viewport_rendering:
@@ -300,11 +301,15 @@ class DrawCropWindowHelper(object):
                     rman_render.rman_scene_sync.update_cropwindow(current_crop)                
                 else:                    
                     rman_render.rman_scene_sync.update_cropwindow([0.0,1.0,0.0,1.0])                
+        '''
 
     def valid_crop_window(self):
         return not (self.cw_c1[0] == -1 and self.cw_c1[0] == -1 and self.cw_c2[0] == -1 and self.cw_c2[0] == -1 and self.cw_c3[0] == -1 and self.cw_c3[0] == -1 and  self.cw_c4[0] == -1 and self.cw_c4[0] == -1 )
 
     def draw(self):
+        return
+        '''
+        
         if not self.edit_cropwindow:
             self.check_render_border()
             if self.use_render_border:
@@ -346,6 +351,7 @@ class DrawCropWindowHelper(object):
         shader.bind()
         shader.uniform_float("color", get_pref('rman_viewport_crop_color', default=(0.0, 0.498, 1.0, 1.0)))
         batch.draw(shader)
+        '''
 
     def is_inside_cropwindow(self, x, y):
         '''

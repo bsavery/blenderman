@@ -20,6 +20,7 @@ class BlCameraProps:
         self.clip_start = -1
         self.clip_end = -1
         self.dof_focal_length = -1
+        self.crop_window = [0.0, 1.0, 0.0, 1.0]
 
     def __eq__(self, other):
         if self.res_width != other.res_width:
@@ -57,7 +58,9 @@ class BlCameraProps:
         if self.rman_fov != other.rman_fov:
             return False
         if self.dof_focal_length != other.dof_focal_length:
-            return False            
+            return False      
+        if self.crop_window != other.crop_window:
+            return False      
         return True                                   
 
 class RmanSgCamera(RmanSgNode):
