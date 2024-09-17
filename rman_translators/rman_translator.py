@@ -143,13 +143,21 @@ class RmanTranslator(object):
         # Check if this is part of a Blender holdout
         if is_instance:
             holdout = ob_inst.parent.holdout_get(view_layer=self.rman_scene.bl_view_layer)
+            indirect = ob_inst.parent.indirect_only_get(view_layer=self.rman_scene.bl_view_layer)
         else:
             holdout = ob_inst.object.holdout_get(view_layer=self.rman_scene.bl_view_layer)
+            indirect = ob_inst.object.indirect_only_get(view_layer=self.rman_scene.bl_view_layer)
 
         if holdout:
             # let Blender's holdout attribute take precedence
             attrs.Remove('trace:holdout')
             attrs.SetInteger('Ri:Matte', 1)
+
+        if indirect:
+            # let Blender's indrect_only attribute take precedence
+            attrs.SetInteger("visibility:camera", 0)
+            attrs.SetInteger("visibility:indirect", 1)
+            attrs.SetInteger("visibility:transmission", 1)
 
         rman_sg_node.sg_node.SetAttributes(attrs)     
 
