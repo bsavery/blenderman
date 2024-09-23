@@ -255,6 +255,13 @@ def _get_primvars_(ob, rman_sg_mesh, geo, rixparams):
         attrs_dict = dict()
         BlAttribute.parse_attributes(attrs_dict, ob, detail_map)
         BlAttribute.set_rman_primvars(rixparams, attrs_dict)
+
+        # vertex group
+        for nm in ob.vertex_groups.keys():
+            weights = _get_mesh_vgroup_(ob, geo, nm)
+            if weights and len(weights) > 0:
+                detail = "facevarying" if facevarying_detail == len(weights) else "vertex"
+                rixparams.SetFloatDetail(nm, weights, detail)        
         
     else:
         # custom prim vars
