@@ -128,8 +128,8 @@ def _get_mesh_vgroup_(ob, mesh, name=""):
         if len(v.groups) == 0:
             weights.append(0.0)
         else:
-            weights.extend([g.weight for g in v.groups
-                            if g.group == vgroup.index])
+            weights.extend([g.weight if g.group == vgroup.index else 0.0 for g in v.groups
+                            ])
 
     return weights
 

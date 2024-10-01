@@ -153,6 +153,7 @@ class RmanScene(object):
         self.rman_translators['GROUP'] = RmanGroupTranslator(rman_scene=self)
         self.rman_translators['EMPTY'] = RmanEmptyTranslator(rman_scene=self)
         self.rman_translators['ARMATURE'] = self.rman_translators['EMPTY']
+        self.rman_translators['LATTICE'] = RmanEmptyTranslator(rman_scene=self)
         self.rman_translators['EMPTY_INSTANCER'] = self.rman_translators['EMPTY']
         self.rman_translators['POINTS'] = RmanPointsTranslator(rman_scene=self)
         self.rman_translators['META'] = RmanBlobbyTranslator(rman_scene=self)
