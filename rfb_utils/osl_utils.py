@@ -28,7 +28,16 @@ def readOSO(filePath):
         prop_meta['renderman_type'] = type
 
         # default
-        if not pdict['isstruct']:
+        if pdict['default'] is None:
+            if prop_meta['type'] == 'float':
+                prop_meta['default'] = 0.0
+            elif prop_meta['type'] == 'int':
+                prop_meta['default'] = 0
+            elif prop_meta['type'] in ['color', 'point', 'normal', 'vector']:
+                prop_meta['default'] = (0.0, 0.0, 0.0)
+            else:
+                prop_meta['default'] = ""
+        elif not pdict['isstruct']:
             prop_meta['default'] = pdict['default']
             if prop_meta['type'] == 'float':
                 prop_meta['default'] = float('%g' % prop_meta['default'])
