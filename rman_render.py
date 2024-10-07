@@ -95,8 +95,8 @@ def __draw_callback__():
         return True
     return False     
 
-DRAWCALLBACK_FUNC = ctypes.CFUNCTYPE(ctypes.c_bool)
-__CALLBACK_FUNC__ = DRAWCALLBACK_FUNC(__draw_callback__) 
+DRAWCALLBACK_FUNC = None 
+__CALLBACK_FUNC__ = None 
 
 class ItHandler(chatserver.ItBaseHandler):
 
@@ -1162,8 +1162,17 @@ class RmanRender(object):
         rendervariant = scene_utils.get_render_variant(self.bl_scene)
         scene_utils.set_render_variant_config(self.bl_scene, config, render_config)
         self.rman_is_xpu = (rendervariant == 'xpu')
+
+        # XPU slow mode refers to our "pull" model for getting pixels to Blender for IPR. 
+        # That is, in the drawing thread we periodically ask the display driver for the latest
+        # pixels. In the non slow mode, the display driver "pushes" the pixels via a python callback
+        # function, that we pass a pointer to to the display driver. 
         if self.rman_is_xpu:
             self.xpu_slow_mode = int(envconfig().getenv('RFB_XPU_SLOW_MODE', default=1))
+        elif sys.platform == 'darwin':
+            # For macOS, always use the "pull" model. For some reason, Blender crashes at the end of
+            # batch renders if ctypes.CFUNCTYPE is ever called (true as of Blender 4.1)
+            self.xpu_slow_mode = True
 
         if not self.create_scene(config, render_config):
             self.bl_engine.report({'ERROR'}, 'Could not connect to the stats server. Aborting...' )
@@ -1193,10 +1202,11 @@ class RmanRender(object):
             if render_into_org != '':
                 rm.render_ipr_into = render_into_org    
             
-            if not self.xpu_slow_mode:
-                self.set_redraw_func()
-            else:
-                rfb_log().debug("XPU slow mode enabled.")
+            if self.rman_render_into == 'blender':
+                if not self.xpu_slow_mode:
+                    self.set_redraw_func()
+                else:
+                    rfb_log().debug("XPU slow mode enabled.")
             # start a thread to periodically call engine.tag_redraw()                
             __DRAW_THREAD__ = threading.Thread(target=draw_threading_func, args=(self, ))
             __DRAW_THREAD__.start()
@@ -1402,7 +1412,14 @@ class RmanRender(object):
         return __BLENDER_DSPY_PLUGIN__
 
     def set_redraw_func(self):
+        global DRAWCALLBACK_FUNC
+        global __CALLBACK_FUNC__
+        
         # pass our callback function to the display driver
+        if __CALLBACK_FUNC__ is None:
+            DRAWCALLBACK_FUNC = ctypes.CFUNCTYPE(ctypes.c_bool)
+            __CALLBACK_FUNC__ = DRAWCALLBACK_FUNC(__draw_callback__)             
+
         dspy_plugin = self.get_blender_dspy_plugin()
         dspy_plugin.SetRedrawCallback(__CALLBACK_FUNC__)
 

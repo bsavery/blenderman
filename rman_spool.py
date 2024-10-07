@@ -424,7 +424,7 @@ class RmanSpool(object):
         self.rman_render.bl_frame_current = cur_frame
         return parent_task
                         
-    def blender_batch_render(self, bl_filename):
+    def blender_batch_render(self, bl_filename, bl_stash_blend_cache=""):
 
         scene = self.bl_scene 
         rm = scene.renderman
@@ -498,6 +498,12 @@ class RmanSpool(object):
         jobFileCleanup.argv = ["TractorBuiltIn", "File", "delete",
                                  "%%D(%s)" % jobfile]
         job.addCleanup(jobFileCleanup)
+
+        if bl_stash_blend_cache != "":
+            blend_cache_clean = author.Command(local=False)
+            blend_cache_clean.argv = ["TractorBuiltIn", "File", "delete",
+                                     "%%D(%s)" % bl_stash_blend_cache]
+            job.addCleanup(blend_cache_clean)
 
 
         try:
