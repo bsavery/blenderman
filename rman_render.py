@@ -1429,6 +1429,9 @@ class RmanRender(object):
         dspy_plugin.SetRedrawCallback(None)        
 
     def has_buffer_updated(self):        
+        if sys.platform == "darwin":
+            # for now, always return True on macOS
+            return True               
         dspy_plugin = self.get_blender_dspy_plugin()
         return dspy_plugin.HasBufferUpdated()      
 
