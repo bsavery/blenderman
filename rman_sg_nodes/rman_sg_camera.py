@@ -22,6 +22,12 @@ class BlCameraProps:
         self.dof_focal_length = -1
         self.crop_window = [0.0, 1.0, 0.0, 1.0]
 
+        self.aperture_ratio = 1.0
+        self.aperture_blades = 0
+        self.aperture_rotation = 0.0
+        self.aperture_roundness = 0.0
+        self.aperture_density = 0.0
+
     def __eq__(self, other):
         if self.res_width != other.res_width:
             return False
@@ -61,6 +67,17 @@ class BlCameraProps:
             return False      
         if self.crop_window != other.crop_window:
             return False      
+        if self.aperture_ratio != other.aperture_ratio:
+            return False
+        if self.aperture_blades != other.aperture_blades:
+            return False
+        if self.aperture_rotation != other.aperture_rotation:
+            return False
+        if self.aperture_roundness != other.aperture_roundness:
+            return False
+        if self.aperture_density != other.aperture_density:
+            return False        
+
         return True                                   
 
 class RmanSgCamera(RmanSgNode):
