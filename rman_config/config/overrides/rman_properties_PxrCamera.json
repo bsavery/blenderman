@@ -15,6 +15,21 @@
             "name": "focalDistance",    
             "slidermin": 0.1,
             "slidermax": 1000
-        }        
+        },
+        {
+            "name": "distortionCtr",
+            "type": "float2",
+            "arraySize": "__REMOVE__"
+        },
+        {
+            "name": "dofPivotCenter",
+            "type": "point",
+            "arraySize": "__REMOVE__"
+        },
+        {
+            "name": "dofSqCtr",
+            "type": "point",
+            "arraySize": "__REMOVE__"
+        }            
     ]
 }

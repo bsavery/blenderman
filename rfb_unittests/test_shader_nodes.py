@@ -46,7 +46,7 @@ class ShaderNodesTest(unittest.TestCase):
 
         self.assertAlmostEqual(unitLength, string_utils.convert_val(n1.unitLength, type_hint='float'))
         self.assertEqual(diffuseDoubleSided, string_utils.convert_val(n1.diffuseDoubleSided, type_hint='int'))
-        self.assertEqual(var_type, string_utils.convert_val(n2.type, type_hint='string'))
+        self.assertEqual(var_type, string_utils.convert_val(n2.rman_type, type_hint='string'))
 
         bpy.data.materials.remove(mat)
 
