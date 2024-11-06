@@ -96,6 +96,11 @@ def update_sg_displays(context):
     rr = rman_render.RmanRender.get_rman_render()
     rr.rman_scene_sync.update_displays(context)    
 
+def update_root_lightlinks(context):
+    from .. import rman_render
+    rr = rman_render.RmanRender.get_rman_render()
+    rr.rman_scene_sync.update_displays(context)       
+
 def export_vol_aggregate(bl_scene, primvar, ob):
     vol_aggregate_group = []
     for i,v in enumerate(bl_scene.renderman.vol_aggregates):
