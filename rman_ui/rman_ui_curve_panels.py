@@ -13,7 +13,7 @@ class CURVE_PT_renderman_curve_attrs(CollectionPanel, Panel):
 
     @classmethod
     def poll(cls, context):
-        if not context.curve:
+        if not context.curve and not context.curves:
             return False
         return CollectionPanel.poll(context)
 
@@ -22,6 +22,8 @@ class CURVE_PT_renderman_curve_attrs(CollectionPanel, Panel):
         self.layout.use_property_split = True
         self.layout.use_property_decorate = False        
         curve = context.curve
+        if curve is None:
+            curve = context.curves
         rm = curve.renderman
 
         _draw_ui_from_rman_config('rman_properties_curve', 'CURVE_PT_renderman_curve_attrs', context, layout, rm)             
@@ -34,6 +36,8 @@ class CURVE_PT_renderman_prim_vars(CollectionPanel, Panel):
         ob = context.object
         if context.curve:
             geo = context.curve
+        elif context.curves:
+            geo = context.curves
         layout.prop(item, "name")
 
         row = layout.row()
@@ -47,7 +51,7 @@ class CURVE_PT_renderman_prim_vars(CollectionPanel, Panel):
 
     @classmethod
     def poll(cls, context):
-        if not context.curve:
+        if not context.curve and not context.curves:
             return False
         return CollectionPanel.poll(context)
 
@@ -56,6 +60,8 @@ class CURVE_PT_renderman_prim_vars(CollectionPanel, Panel):
         self.layout.use_property_split = True
         self.layout.use_property_decorate = False           
         curve = context.curve
+        if curve is None:
+            curve = context.curves
         rm = curve.renderman
 
         self._draw_collection(context, layout, rm, "Primitive Variables:",

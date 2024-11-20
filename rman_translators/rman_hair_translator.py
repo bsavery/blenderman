@@ -75,10 +75,13 @@ class RmanHairTranslator(RmanTranslator):
             curves_sg.SetTransform(ob_inv_mtx) # puts points in object space
             curves_sg.Define(self.rman_scene.rman.Tokens.Rix.k_cubic, "nonperiodic", "catmull-rom", len(bl_curve.vertsArray), len(bl_curve.points))
             primvar = curves_sg.GetPrimVars()            
-            if rman_sg_hair.motion_steps:
+            if rman_sg_hair.motion_steps and psys.settings.renderman.do_velocity_blur:
                 super().set_primvar_times(rman_sg_hair.motion_steps, primvar)            
+            else:
+                print("SET TIMES")
+                primvar.SetTimes([])
 
-            if self.rman_scene.do_motion_blur:
+            if self.rman_scene.do_motion_blur and psys.settings.renderman.do_velocity_blur:
                 primvar.SetPointDetail(self.rman_scene.rman.Tokens.Rix.k_P, bl_curve.points, "vertex", 0)
                 primvar.SetPointDetail(self.rman_scene.rman.Tokens.Rix.k_P, bl_curve.next_points, "vertex", 1)
             else:
