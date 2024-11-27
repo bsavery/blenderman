@@ -78,7 +78,6 @@ class RmanHairTranslator(RmanTranslator):
             if rman_sg_hair.motion_steps and psys.settings.renderman.do_velocity_blur:
                 super().set_primvar_times(rman_sg_hair.motion_steps, primvar)            
             else:
-                print("SET TIMES")
                 primvar.SetTimes([])
 
             if self.rman_scene.do_motion_blur and psys.settings.renderman.do_velocity_blur:
