@@ -1061,8 +1061,8 @@ def portal_inherit_dome_params(portal_node, dome, dome_node, rixparams):
         rixparams.SetFloat('temperature', string_utils.convert_val(prop, type_hint='float'))         
 
     # inherit lightColorMap directly from the dome
-    tx_node_id = texture_utils.generate_node_id(dome_node, 'lightColorMap', ob=dome)
-    tx_val = texture_utils.get_txmanager().get_output_tex_from_id(tx_node_id)
+    prop = getattr(dome_node, 'lightColorMap')
+    tx_val = texture_utils.get_txmanager().get_output_tex_from_path(dome_node, 'lightColorMap', prop, ob=dome)
     rixparams.SetString('domeColorMap', tx_val) 
 
     # inherit exposure directly from dome 

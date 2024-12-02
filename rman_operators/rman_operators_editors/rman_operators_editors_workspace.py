@@ -6,6 +6,18 @@ from ...rman_constants import RFB_MAX_USER_TOKENS
 from ...rman_config import __RFB_CONFIG_DICT__ as rfb_config
 import bpy
 
+class RENDER_OT_Renderman_Reset_Workspace(bpy.types.Operator):
+    bl_idname = "scene.rman_reset_workspace"
+    bl_label = "Reset Workspace"
+    bl_options = {'INTERNAL'}
+    bl_description = "Reset the workspace for the scene to the defaults"
+
+    def execute(self, context):
+        from ...rfb_utils import scene_utils
+        scene_utils.reset_workspace(context.scene)
+
+        return{'FINISHED'}         
+
 class RENDER_OT_Renderman_Open_Workspace(CollectionPanel, bpy.types.Operator):
 
     bl_idname = "scene.rman_open_workspace"
@@ -43,12 +55,14 @@ class RENDER_OT_Renderman_Open_Workspace(CollectionPanel, bpy.types.Operator):
         rm = context.scene.renderman
         is_rman_interactive_running = rm.is_rman_interactive_running
 
-        split = layout.split(factor=0.33)
         col = layout.column()
         col.enabled = not is_rman_interactive_running
 
         _draw_ui_from_rman_config('rman_properties_scene', 'RENDER_PT_renderman_workspace', context, layout, rm) 
+        col = layout.column()
+        col.operator("scene.rman_reset_workspace", text="Reset")
 
+        layout.separator()
         layout.label(text='Scene Tokens')
         col = layout.column()
         row = col.row()
@@ -79,7 +93,8 @@ class RENDER_OT_Renderman_Open_Workspace(CollectionPanel, bpy.types.Operator):
         return wm.invoke_props_dialog(self, width=width)                      
 
 classes = [
-    RENDER_OT_Renderman_Open_Workspace,
+    RENDER_OT_Renderman_Reset_Workspace,
+    RENDER_OT_Renderman_Open_Workspace
 ]
 
 def register():
