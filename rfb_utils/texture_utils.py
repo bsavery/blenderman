@@ -13,6 +13,7 @@ from rman_utils.txmanager.txfile import TxFile
 from .color_manager_blender import color_manager
 
 from bpy.app.handlers import persistent
+from copy import deepcopy
 
 import os
 import bpy
@@ -194,7 +195,12 @@ class RfBTxManager(object):
                 txfile = self.txmanager.get_txfile_from_id(plug_uuid)
                 txmake_all(blocking=False)
                 if txfile:
-                    self.done_callback(plug_uuid, txfile)        
+                    self.done_callback(plug_uuid, txfile)    
+                    if not txfile.source_is_tex():    
+                        param_colorspace = '%s_colorspace'  % param_name
+                        ociconvert = getattr(node, param_colorspace, None)
+                        if ociconvert:
+                            update_txfile_colorspace(txfile, ociconvert)
 
     def is_file_src_tex(self, node, prop_name):
         id = scene_utils.find_node_owner(node)
@@ -284,6 +290,19 @@ def update_texture(node, ob=None, check_exists=False, is_library=False):
 
         category = getattr(node, 'renderman_node_type', 'pattern') 
         get_txmanager().add_texture(node, ob, prop_name, fpath, node_type=node_type, category=category)        
+
+def update_txfile_colorspace(txfile, ociconvert, blocking=False):
+    if ociconvert == '0':
+        return
+    params = txfile.params.as_dict()     
+    if params['ocioconvert'] != ociconvert:
+        params['ocioconvert'] = ociconvert
+        txfile.params.from_dict(params)
+        txfile.set_params(txfile.params)
+        txfile.build_texture_dict()
+        if txfile.check_dirty(force_check=True):
+            txfile.delete_texture_files()            
+            get_txmanager().txmake_all(blocking=blocking)                 
 
 def generate_node_name(node, prop_name, ob=None, nm=None):
     node_name = ''
@@ -416,8 +435,14 @@ def txmanager_load_cb(bl_scene):
         return    
     get_txmanager().txmanager.reset()
     get_txmanager().txmanager.load_state()
-    bpy.ops.rman_txmgr_list.parse_scene('EXEC_DEFAULT')
-    bpy.ops.rman_txmgr_list.clear_unused('EXEC_DEFAULT')
+    scene = bpy.context.scene
+    rm = getattr(scene, 'renderman', None)
+    state = None
+    if rm:
+        state = getattr(rm, 'txmanagerData', state)
+    if state is None:
+        bpy.ops.rman_txmgr_list.parse_scene('EXEC_DEFAULT')
+        bpy.ops.rman_txmgr_list.clear_unused('EXEC_DEFAULT')
 
 @persistent
 def txmanager_pre_save_cb(bl_scene):

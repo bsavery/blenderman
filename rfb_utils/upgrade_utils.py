@@ -1,6 +1,7 @@
 from .. import rman_constants
 from ..rfb_utils import shadergraph_utils, object_utils
 from ..rfb_logger import rfb_log
+from ..rfb_utils.prefs_utils import get_pref
 from collections import OrderedDict
 import bpy
 
@@ -267,6 +268,18 @@ def upgrade_261_0(scene):
         if len(rm.prim_vars) > 0:
             rm.output_all_primvars = False
         
+def upgrade_262_1(scene):        
+    '''
+    In 26.2 and below, the invert light linking attribute was a user preference.
+    Unfortunately, this doesn't help when rendering in the cloud as the cloud provider
+    won't know what the user had selected.
+    So we add the invert_light_linking as a scene property. 
+
+    For older scenes, if the user pref had invert light linking set to on, we also
+    set the scene property as well
+    '''
+    if get_pref('rman_invert_light_linking'):
+        scene.renderman.invert_light_linking = 1
 
 __RMAN_SCENE_UPGRADE_FUNCTIONS__ = OrderedDict()
     
@@ -276,6 +289,7 @@ __RMAN_SCENE_UPGRADE_FUNCTIONS__['25.0'] = upgrade_250
 __RMAN_SCENE_UPGRADE_FUNCTIONS__['25.0.1'] = upgrade_250_1
 __RMAN_SCENE_UPGRADE_FUNCTIONS__['26.0.0'] = upgrade_260_0
 __RMAN_SCENE_UPGRADE_FUNCTIONS__['26.1.0'] = upgrade_261_0
+__RMAN_SCENE_UPGRADE_FUNCTIONS__['26.2.1'] = upgrade_262_1
 
 def upgrade_scene(bl_scene):
     global __RMAN_SCENE_UPGRADE_FUNCTIONS__

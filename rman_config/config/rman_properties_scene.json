@@ -868,7 +868,16 @@
                 "conditionalVisValue": "1"
             },  
             "help": "Controls the speed of the shutter closing. 1 means instantaneous, < 1 is a gradual closing"
-        },               
+        },       
+        {
+            "panel": "RENDER_PT_renderman_advanced_settings",
+            "name": "invert_light_linking",
+            "label": "Invert Light Linking",
+            "type": "int",
+            "default": 0,
+            "widget": "checkbox",
+            "help": "Invert the behavior of light linking (only applies if UI framework is set to Native). Only objects linked to the light in the light linking editor will be illuminated. Changing this requires an IPR restart"
+        },                 
         {
             "panel": "RENDER_PT_renderman_advanced_settings",
             "name": "learnLightSelection",

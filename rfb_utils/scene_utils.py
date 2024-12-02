@@ -651,6 +651,52 @@ def set_lightlinking_properties(ob, light_ob, illuminate, update_light=True):
 
     return changed
 
+def reset_workspace(scene):
+    from .. import rman_config    
+    
+    # Set all output paths to default.
+    # There doesn't seem to be a way to set properties back to default, so do it manually
+    rmcfg = rman_config.__RMAN_CONFIG__.get('rman_properties_scene', None)
+    for param_name, ndp in rmcfg.params.items():
+        if ndp.panel != 'RENDER_PT_renderman_workspace':
+            continue
+        setattr(scene.renderman, param_name, ndp.default)    
+
+def use_renderman_textures(context, force_colorspace=True, blocking=True):
+    '''
+    Change all textures on texture nodes to use the RenderMan .tex file
+
+    Arguments:
+        context (bpy.context) - the current Blender context
+        force_colorspace (bool) - if on, force the use of the node's selection
+        of colorspace, if the node and the texture manager disagree on what colorpsace
+        the texture should be using
+        blocking (bool) - updating the colorspace will trigger a txmake event. Set this to False
+        if you don't want to block while txmake is running
+    '''
+    from . import texture_utils
+
+    for node in shadergraph_utils.get_all_shading_nodes():       
+        for prop_name, meta in node.prop_meta.items():
+            param_type = meta['renderman_type']
+            if param_type != 'string':
+                continue
+            if shadergraph_utils.is_texture_property(prop_name, meta):
+                prop = getattr(node, prop_name)
+                if prop != '':
+                    ob = find_node_owner(node, context)
+                    txfile = texture_utils.get_txmanager().get_txfile(node, prop_name, ob=ob)  
+                    if txfile and not txfile.source_is_tex():
+                        colorspace_nm = '%s_colorspace' % prop_name
+                        colorspace = getattr(node, colorspace_nm, None)
+                        if colorspace:
+                            # check the colorspace
+                            params = txfile.params.as_dict()   
+                            if params['ocioconvert'] != colorspace and force_colorspace:
+                                texture_utils.update_txfile_colorspace(txfile, colorspace, blocking=blocking)
+                        setattr(node, prop_name, txfile.get_output_texture())
+                        continue                  
+
 def is_renderable(scene, ob):
     return (is_visible_layer(scene, ob) and not ob.hide_render) or \
         (ob.type in ['ARMATURE', 'LATTICE', 'EMPTY'] and ob.instance_type not in SUPPORTED_DUPLI_TYPES)
@@ -690,3 +736,4 @@ def _get_subframes_(segs, scene):
         min = 0
 
     return [min + i * shutter_interval / (segs - 1) for i in range(segs)]
+    
