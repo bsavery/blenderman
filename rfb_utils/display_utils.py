@@ -241,8 +241,9 @@ def _add_interactive_denoiser_channels(dspys_dict, dspy_params, rman_scene):
         dspys_dict['displays']['beauty']['params']['displayChannels'].append(output_chan.name)            
 
     dspys_dict['displays']['beauty']['is_variance'] = True
+    dspy_driver = dspys_dict['displays']['beauty']['driverNode']
     
-    if rman_scene.is_viewport_render:
+    if dspy_driver == 'quicklyNoiseless':
         param_list = rman_scene.rman.Types.ParamList()
         rm = rman_scene.bl_scene.renderman
         if rman_scene.ipr_render_into == "blender":
