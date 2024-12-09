@@ -14,7 +14,7 @@ NodeDescParamJSON.keywords = NodeDescParamJSON.keywords + ['panel', 'inheritable
                 'set_function_name', 'set_function',
                 'get_function_name', 'get_function',
                 'readOnly', 'always_write', 'ipr_editable', 'hideInput',
-                'uiStruct', 'bl_prop_options']  
+                'uiStruct', 'bl_prop_options', 'arraySize']  
 
 def blender_finalize(obj):
     """Post-process some parameters for Blender.
