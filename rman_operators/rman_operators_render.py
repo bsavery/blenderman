@@ -4,6 +4,7 @@ from ..rfb_logger import rfb_log
 import bpy
 import os
 import time
+import shutil
 import webbrowser
 
 class PRMAN_OT_Renderman_Use_Renderman(bpy.types.Operator):
@@ -108,7 +109,9 @@ class PRMAN_OT_BatchRendermanBake(bpy.types.Operator):
             scene.renderman.hider_type = 'BAKE'
             scene.renderman.enable_external_rendering = True
             try:
-                bpy.ops.render.render(layer=context.view_layer.name)
+                for view_layer in scene.view_layers:
+                    if view_layer.use:
+                        bpy.ops.render.render(layer=view_layer.name)
             except:
                 pass
             scene.renderman.hider_type = 'RAYTRACE'
@@ -142,8 +145,6 @@ class PRMAN_OT_BatchRender(bpy.types.Operator):
             rr.rman_scene._find_renderman_layer()
             rr.rman_scene.external_render = True
             spooler = rman_spool.RmanSpool(rr, rr.rman_scene, depsgraph)
-            
-            # create a temporary .blend file
 
             bl_scene_file = bpy.data.filepath
             pid = os.getpid()
@@ -151,14 +152,29 @@ class PRMAN_OT_BatchRender(bpy.types.Operator):
             _id = 'pid%s_%d' % (str(pid), timestamp)
             bl_filepath = os.path.dirname(bl_scene_file)
             bl_filename = os.path.splitext(os.path.basename(bl_scene_file))[0]
+            bl_cache_dir = os.path.join(bl_filepath, 'blendcache_%s' % bl_filename)
+
+            # cache out any dynamics
+            bpy.ops.ptcache.bake_all(bake=True)
+            
+            # create a temporary .blend file
+               
+
             # set blend_token to the real filename
             rm.blend_token = bl_filename
-            bl_stash_scene_file = os.path.join(bl_filepath, '_%s%s_.blend' % (bl_filename, _id))
+            bl_stash_name = '_%s%s_' % (bl_filename, _id)
+            bl_stash_scene_file = os.path.join(bl_filepath, '%s.blend' % (bl_stash_name))
+
+            # copy the blend cache to the stash scene name
+            bl_stash_blend_cache = ""
+            if os.path.exists(bl_cache_dir):
+                bl_stash_blend_cache = os.path.join(bl_filepath, 'blendcache_%s' % bl_stash_name)
+                shutil.copytree(bl_cache_dir, bl_stash_blend_cache)
+
             bpy.ops.wm.save_as_mainfile(filepath=bl_stash_scene_file, copy=True)
-            spooler.blender_batch_render(bl_stash_scene_file)
+            spooler.blender_batch_render(bl_stash_scene_file, bl_stash_blend_cache=bl_stash_blend_cache)
             # now reset the token back
             rm.blend_token = ''
-
         else:
             self.report({'ERROR'}, 'Queuing system set to none')       
 
@@ -166,9 +182,14 @@ class PRMAN_OT_BatchRender(bpy.types.Operator):
         scene = context.scene
         rm = scene.renderman
         if not rm.is_rman_interactive_running:
+            # cache out any dynamics
+            bpy.ops.ptcache.bake_all(bake=True)
+            
             scene.renderman.enable_external_rendering = True        
             try:
-                bpy.ops.render.render(layer=context.view_layer.name)
+                for view_layer in scene.view_layers:
+                    if view_layer.use:
+                        bpy.ops.render.render(layer=view_layer.name)
             except:
                 pass
             scene.renderman.enable_external_rendering = False

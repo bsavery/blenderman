@@ -4,7 +4,8 @@ from ..rfb_utils import shadergraph_utils
 from ..rfb_utils import object_utils
 from ..rfb_logger import rfb_log
 from .. import rman_bl_nodes
-from ..rman_constants import RMAN_STYLIZED_FILTERS, RMAN_STYLIZED_PATTERNS, RMAN_UTILITY_PATTERN_NAMES  
+from ..rman_constants import RMAN_STYLIZED_FILTERS, RMAN_STYLIZED_PATTERNS, RMAN_UTILITY_PATTERN_NAMES 
+from ..rman_constants import BLENDER_VERSION_MAJOR, BLENDER_VERSION_MINOR 
 
 class PRMAN_OT_Enable_Sylized_Looks(bpy.types.Operator):
     bl_idname = "scene.rman_enable_stylized_looks"
@@ -129,14 +130,26 @@ class PRMAN_OT_Attach_Stylized_Pattern(bpy.types.Operator):
                 coll_nm = '%s_collection' % prop_name  
                 coll_idx_nm = '%s_collection_index' % prop_name
                 param_array_type = prop_meta['renderman_array_type'] 
-                override = {'node': node}           
-                bpy.ops.renderman.add_remove_array_elem(override,
-                                                        'EXEC_DEFAULT', 
-                                                        action='ADD',
-                                                        param_name=prop_name,
-                                                        collection=coll_nm,
-                                                        collection_index=coll_idx_nm,
-                                                        elem_type=param_array_type)
+                if BLENDER_VERSION_MAJOR <=3 and BLENDER_VERSION_MINOR < 2:
+                    override = {'node': node}           
+                    bpy.ops.renderman.add_remove_array_elem(override,
+                                                            'EXEC_DEFAULT', 
+                                                            action='ADD',
+                                                            param_name=prop_name,
+                                                            collection=coll_nm,
+                                                            collection_index=coll_idx_nm,
+                                                            elem_type=param_array_type)
+                else:
+                    context_override = bpy.context.copy()
+                    context_override["node"] = node
+                    with bpy.context.temp_override(**context_override):
+                        bpy.ops.renderman.add_remove_array_elem(
+                                                                'EXEC_DEFAULT', 
+                                                                action='ADD',
+                                                                param_name=prop_name,
+                                                                collection=coll_nm,
+                                                                collection_index=coll_idx_nm,
+                                                                elem_type=param_array_type)                       
 
                 pattern_node = nt.nodes.new(pattern_node_name)   
 

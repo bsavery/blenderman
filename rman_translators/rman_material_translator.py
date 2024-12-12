@@ -7,6 +7,7 @@ from ..rfb_utils import color_utils
 from ..rfb_utils import gpmaterial_utils
 from ..rfb_utils import filepath_utils
 from ..rfb_utils.shadergraph_utils import RmanConvertNode
+from ..rman_constants import __RESERVED_BLENDER_NAMES__
 
 from ..rfb_logger import rfb_log
 import math
@@ -379,14 +380,17 @@ class RmanMaterialTranslator(RmanTranslator):
             if param_name in node.inputs:
                 continue
             param_type = node_desc_param.type
-            val = get_cycles_value(node, param_name)
-            if val is None:
-                continue
-            val = string_utils.convert_val(val,
-                            type_hint=param_type)
+            if param_name in __RESERVED_BLENDER_NAMES__:
+                val = node_desc_param.default
+            else:
+                val = get_cycles_value(node, param_name)
+                if val is None:
+                    continue
+                val = string_utils.convert_val(val,
+                                type_hint=param_type)
 
-            if param_type == 'string':
-                val = str(val)
+                if param_type == 'string':
+                    val = str(val)
 
             property_utils.set_rix_param(params, param_type, param_name, val, is_reference=False)            
 

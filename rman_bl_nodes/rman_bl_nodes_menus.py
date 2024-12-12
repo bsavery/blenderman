@@ -1,15 +1,11 @@
 from ..rfb_logger import rfb_log
 from ..rfb_utils.osl_utils import readOSO
 from ..rfb_utils import shadergraph_utils
-from ..rfb_utils import rman_socket_utils
 from ..rman_constants import RFB_FLOAT3
-from .. import rman_render
 from .. import rman_bl_nodes
 from .. import rfb_icons
 from bpy.types import Menu
 from bpy.props import EnumProperty, StringProperty, CollectionProperty
-import _cycles
-import bpy
 
 class NODE_MT_renderman_param_presets_menu(Menu):
     bl_label = "Parameter Presets"

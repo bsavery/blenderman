@@ -298,7 +298,9 @@ __ALLOWABLE_ATTR_OVERRIDES__ = [
     'connectable', 
     'widget', 
     'readOnly',
-    'always_write'
+    'always_write',
+    'arraySize',
+    'type'
 ]
 
 def apply_args_overrides(name, node_desc):
@@ -320,6 +322,9 @@ def apply_args_overrides(name, node_desc):
             for attr in __ALLOWABLE_ATTR_OVERRIDES__:
                 val = getattr(ndp, attr, None)
                 if val is not None:
+                    if attr == "arraySize" and val == "__REMOVE__":
+                        setattr(ndp_org, "size", None)
+                        continue
                     setattr(ndp_org, attr, val)
 
     for nm in __OPTIONAL_ATTRS__:

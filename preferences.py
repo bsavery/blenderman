@@ -768,7 +768,7 @@ class RendermanPreferences(AddonPreferences):
         col.prop(self, 'rman_render_nurbs_as_mesh')
         col.prop(self, 'rman_show_cycles_convert')     
         col.prop(self, 'rman_emit_default_params')    
-        col.prop(self, 'rman_invert_light_linking')
+        # col.prop(self, 'rman_invert_light_linking')
         col.prop(self, 'rman_solo_collapse_nodes')
         col.prop(self, 'rman_use_blend_dir_token')
         col.prop(self, 'rman_parent_lightfilter')

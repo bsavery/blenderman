@@ -836,4 +836,7 @@ def register():
 def unregister():
     from ..rfb_utils import register_utils
 
-    register_utils.rman_unregister_classes(classes)
+    # NOTE, for some reason we crash Blender on close if we try to unregister our socket classes
+    # Comment this out for now until we figure out what's going on here.
+
+    # register_utils.rman_unregister_classes(classes)

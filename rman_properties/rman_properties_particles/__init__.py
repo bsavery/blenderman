@@ -111,6 +111,13 @@ class RendermanParticleSettings(bpy.types.PropertyGroup):
         update=update_psys
     )
 
+    do_velocity_blur: BoolProperty(
+        name="Velocity Blur",
+        description="By default, we do velocity based motion blur for particle systems. Uncheck this if you don't want any blur",
+        default=True,
+        update=update_psys
+    )
+
     override_instance_material: BoolProperty(
         name='Override Instance Material',
         description='Override the material that is attached to the instance object',

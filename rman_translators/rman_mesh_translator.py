@@ -128,8 +128,8 @@ def _get_mesh_vgroup_(ob, mesh, name=""):
         if len(v.groups) == 0:
             weights.append(0.0)
         else:
-            weights.extend([g.weight for g in v.groups
-                            if g.group == vgroup.index])
+            weights.extend([g.weight if g.group == vgroup.index else 0.0 for g in v.groups
+                            ])
 
     return weights
 
@@ -247,13 +247,21 @@ def _get_primvars_(ob, rman_sg_mesh, geo, rixparams):
     if hasattr(rm, 'reference_pose'):
         _export_reference_pose(ob, rman_sg_mesh, rm, rixparams)
 
-    if rm.output_all_primvars:
+    output_all_primvars = getattr(rm, 'output_all_primvars', False)
+    if output_all_primvars:
         # export all of the attributes
         detail_map = { facevarying_detail: 'facevarying',
                     rman_sg_mesh.npoints: 'vertex', rman_sg_mesh.npolys: 'uniform'}
         attrs_dict = dict()
         BlAttribute.parse_attributes(attrs_dict, ob, detail_map)
         BlAttribute.set_rman_primvars(rixparams, attrs_dict)
+
+        # vertex group
+        for nm in ob.vertex_groups.keys():
+            weights = _get_mesh_vgroup_(ob, geo, nm)
+            if weights and len(weights) > 0:
+                detail = "facevarying" if facevarying_detail == len(weights) else "vertex"
+                rixparams.SetFloatDetail(nm, weights, detail)        
         
     else:
         # custom prim vars

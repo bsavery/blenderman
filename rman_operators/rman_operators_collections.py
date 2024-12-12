@@ -738,7 +738,7 @@ class PRMAN_OT_add_light_link(bpy.types.Operator):
         else:
             self.add_selected(context)   
         if context.scene.renderman.invert_light_linking:
-            scenegraph_utils.update_sg_root_node(context)                        
+            scenegraph_utils.update_root_lightlinks(context)                        
 
         return {'FINISHED'}
 
@@ -773,7 +773,7 @@ class PRMAN_OT_remove_light_link(bpy.types.Operator):
             rm.light_links_index -= 1
             
         if rm.invert_light_linking:
-            scenegraph_utils.update_sg_root_node(context)              
+            scenegraph_utils.update_root_lightlinks(context)              
 
         return {'FINISHED'}
 
@@ -887,7 +887,7 @@ class PRMAN_OT_light_link_update_objects(bpy.types.Operator):
                     m.ob_pointer = ob
                     light_ob = light_link.light_ob
                 if rm.invert_light_linking:
-                    scenegraph_utils.update_sg_root_node(context)
+                    scenegraph_utils.update_root_lightlinks(context)
                 ob.update_tag(refresh={'OBJECT'})
 
         else:
@@ -909,7 +909,7 @@ class PRMAN_OT_light_link_update_objects(bpy.types.Operator):
                                 ob.renderman.rman_lighting_excludesubset.remove(j)
                                 break      
                     if rm.invert_light_linking:
-                        scenegraph_utils.update_sg_root_node(context)                            
+                        scenegraph_utils.update_root_lightlinks(context)                            
                     ob.update_tag(refresh={'OBJECT'})  
                     light_link.members.remove(idx)
                     light_link.members_index = idx-1

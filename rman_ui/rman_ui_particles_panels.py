@@ -7,7 +7,7 @@ class PARTICLE_PT_renderman_particle(ParticleButtonsPanel, Panel, _RManPanelHead
     bl_space_type = 'PROPERTIES'
     bl_region_type = 'WINDOW'
     bl_context = "particle"
-    bl_label = "Render"
+    bl_label = "Particle Attributes"
 
     def draw(self, context):
         layout = self.layout
@@ -44,6 +44,8 @@ class PARTICLE_PT_renderman_particle(ParticleButtonsPanel, Panel, _RManPanelHead
                 col.prop_search(rm, "mcol_name", mesh, "vertex_colors", text="")
             col.separator()                
             col.prop(rm, 'hair_index_name')
+
+        col.prop(rm, 'do_velocity_blur')
 
 
 class PARTICLE_PT_renderman_prim_vars(CollectionPanel, Panel):

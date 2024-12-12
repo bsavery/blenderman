@@ -5,6 +5,8 @@ from ..rfb_utils import texture_utils
 from ..rfb_utils import filepath_utils
 from ..rfb_utils import object_utils
 from ..rfb_utils import upgrade_utils
+from ..rfb_utils import scene_utils
+from ..rfb_utils.envconfig_utils import envconfig
 from .. import rman_constants
 from bpy.types import Operator
 from bpy.props import StringProperty, FloatProperty, BoolProperty
@@ -12,6 +14,7 @@ import os
 import zipfile
 import bpy
 import shutil
+import time
 
 class PRMAN_OT_Renderman_Upgrade_Scene(Operator):
     """An operator to upgrade the scene to the current version of RenderMan."""
@@ -60,6 +63,12 @@ class PRMAN_OT_Renderman_Package(Operator):
         default="*.zip",
         options={'HIDDEN'},
         )           
+    
+    use_tex: BoolProperty(
+        name="Use RenderMan Textures",
+        default=False,
+        description="Substitute all textures with the .tex version in the paths before packaging"
+    )
 
     @classmethod
     def poll(cls, context):
@@ -124,7 +133,7 @@ class PRMAN_OT_Renderman_Package(Operator):
                     continue                
                 if diskpath not in remove_files:
                     z.write(diskpath, arcname=fpath)
-                    remove_files.append(diskpath)                      
+                    remove_files.append(diskpath)
 
         # textures
         texture_dir = os.path.join(self.directory, 'textures')
@@ -139,7 +148,34 @@ class PRMAN_OT_Renderman_Package(Operator):
         # osl shaders
         shaders_dir = os.path.join(self.directory, 'shaders')
         os.mkdir(os.path.join(shaders_dir))
-        remove_dirs.append(shaders_dir)                                  
+        remove_dirs.append(shaders_dir)     
+
+        # check for OCIO
+        OCIO = envconfig().getenv('OCIO', default=None)
+        if OCIO and envconfig().rmantree not in OCIO:
+            ocio_config_file = os.environ['OCIO']
+            ocio_config_path = os.path.dirname(ocio_config_file)
+            ocio_assets_dir = os.path.join(assets_dir, 'ocio', os.path.basename(ocio_config_path))
+            shutil.copytree(ocio_config_path, ocio_assets_dir)
+            for root, dirnames, files in os.walk(ocio_assets_dir):
+                for d in dirnames:
+                    dst_path = os.path.join(root, d)
+                    if dst_path not in remove_dirs:
+                        remove_dirs.append(dst_path)        
+                for f in files:
+                    fpath = os.path.relpath(os.path.join(root, f), self.directory)
+                    diskpath = os.path.join(root, f)             
+                    if diskpath not in remove_files:
+                        z.write(diskpath, arcname=fpath)
+                        remove_files.append(diskpath)            
+
+        # re-parse the scene and make sure all textures have been txmake'd
+        texture_utils.get_txmanager().txmanager.flush_queue()
+        texture_utils.parse_scene_for_textures(bl_scene=context.scene)
+        texture_utils.get_txmanager().txmake_all(blocking=True)
+        # for some reason, blocking doesn't seem to work? Just loop for now until we're done
+        while not texture_utils.get_txmanager().txmanager.all_textures_available():
+            time.sleep(0.1)
 
         for item in context.scene.rman_txmgr_list:
             txfile = texture_utils.get_txmanager().txmanager.get_txfile_from_id(item.nodeID)
@@ -148,19 +184,22 @@ class PRMAN_OT_Renderman_Package(Operator):
             for fpath, txitem in txfile.tex_dict.items():
                 bfile = os.path.basename(fpath)
                 diskpath = os.path.join(texture_dir, bfile)
-                shutil.copyfile(fpath, diskpath)
-                z.write(diskpath, arcname=os.path.join('textures', bfile))
-                remove_files.append(diskpath)
+                if not os.path.exists(diskpath):
+                    shutil.copy2(fpath, diskpath)
+                    z.write(diskpath, arcname=os.path.join('textures', bfile))
+                    remove_files.append(diskpath)
                 # Check if .tex already copied - agentyRANCH
                 # - when .tex directly specified in texture
                 if fpath == txitem.outfile:
                     continue
                 bfile = os.path.basename(txitem.outfile)
                 diskpath = os.path.join(texture_dir, bfile)
-                shutil.copyfile(txitem.outfile, diskpath)
-                z.write(diskpath, arcname=os.path.join('textures', bfile))
-                remove_files.append(diskpath)
-
+                if not os.path.exists(diskpath):
+                    shutil.copy2(txitem.outfile, diskpath)
+                    z.write(diskpath, arcname=os.path.join('textures', bfile))
+                    remove_files.append(diskpath)
+                  
+        token_dict = {'blender': bl_filename, 'blend_dir': self.directory}
         for node in shadergraph_utils.get_all_shading_nodes():
             if node.bl_label == 'PxrOSL' and getattr(node, "codetypeswitch") == "EXT":
                 osl_path = string_utils.expand_string(getattr(node, 'shadercode'))
@@ -182,8 +221,34 @@ class PRMAN_OT_Renderman_Package(Operator):
                     prop = getattr(node, prop_name)
                     if prop != '':
                         prop = os.path.basename(prop)
-                        setattr(node, prop_name, os.path.join('<blend_dir>', 'textures', prop))
-                        
+                        colorspace_nm = '%s_colorspace' % prop_name
+                        colorspace = getattr(node, colorspace_nm, None)                        
+                        if self.use_tex:
+                            ob = scene_utils.find_node_owner(node, context)
+                            txfile = texture_utils.get_txmanager().get_txfile(node, prop_name, ob=ob)  
+                            if txfile:
+                                if colorspace and not txfile.source_is_tex():
+                                    # check the colorspace
+                                    params = txfile.params.as_dict()   
+                                    texture_utils.update_txfile_colorspace(txfile, colorspace, blocking=True)                           
+                                texpath = txfile.get_output_texture()
+                                texpath = string_utils.expand_string(texpath, asFilePath=None) 
+                                texfile = os.path.basename(texpath)
+                                node[prop_name] = os.path.join('<blend_dir>', 'textures', texfile)
+                                
+                                # double check the tex file has been copied. 
+                                diskpath = os.path.join(texture_dir, texfile)
+                                if not os.path.exists(diskpath):
+                                    shutil.copy2(texpath, diskpath)
+                                    z.write(diskpath, arcname=os.path.join('textures', texfile))
+                                    remove_files.append(diskpath)                                
+
+                                continue
+
+                        node[prop_name] = os.path.join('<blend_dir>', 'textures', prop)
+                        if colorspace:
+                            # we need to set the colorspace again, since we've changed the path to the texture
+                            setattr(node, colorspace_nm, colorspace)                        
                 else:
                     prop = getattr(node, prop_name)
                     val = string_utils.expand_string(prop)
@@ -252,9 +317,11 @@ class PRMAN_OT_Renderman_Package(Operator):
                 shutil.copyfile(bkm_filepath, diskpath)  
                 setattr(rm, 'bkm_filepath', os.path.join('<blend_dir>', 'assets', bfile))
                 z.write(diskpath, arcname=os.path.join('assets', bfile))
-                remove_files.append(diskpath)                                
-                                          
-                            
+                remove_files.append(diskpath)   
+
+        # Set all output paths to default.
+        scene_utils.reset_workspace(context.scene) 
+                                                                      
         # Add  relative_remap=False  to avoid //..\ - agentyRANCH
         bpy.ops.wm.save_as_mainfile(filepath=bl_filepath, copy=True, compress=False, relative_remap=False)
         remove_files.append(bl_filepath)

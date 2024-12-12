@@ -82,6 +82,7 @@ class RmanSceneSync(object):
         self.rman_scene.context = context
         self.rman_scene.depsgraph = depsgraph
         self.rman_scene.bl_scene = depsgraph.scene_eval
+        self.rman_scene.bl_view_layer = depsgraph.view_layer_eval
         rman_sg_camera = self.rman_scene.main_camera
         translator = self.rman_scene.rman_translators['CAMERA']
         with self.rman_scene.rman.SGManager.ScopedEdit(self.rman_scene.sg_scene):
@@ -617,6 +618,7 @@ class RmanSceneSync(object):
 
         self.rman_scene.bl_scene = depsgraph.scene_eval
         self.rman_scene.context = context     
+        self.rman_scene.bl_view_layer = depsgraph.view_layer_eval
 
         # update the frame number
         options = self.rman_scene.sg_scene.GetOptions()
@@ -688,6 +690,7 @@ class RmanSceneSync(object):
         self.rman_scene.depsgraph = depsgraph
         self.rman_scene.bl_scene = depsgraph.scene
         self.rman_scene.context = context       
+        self.rman_scene.bl_view_layer = depsgraph.view_layer_eval
 
         rfb_log().debug("------Start update scene--------")    
        
@@ -1123,6 +1126,18 @@ class RmanSceneSync(object):
             rfb_log().debug("Update root node attribute: %s" % prop_name)
             property_utils.set_riattr_bl_prop(attrs, prop_name, meta, rm, check_inherit=False)
             root_sg.SetAttributes(attrs)
+
+    def update_root_lightlinks(self, context):
+        if not self.rman_render.rman_interactive_running:
+            return     
+        from .rfb_utils import property_utils               
+        self.rman_scene.bl_scene = context.scene
+        rm = self.rman_scene.bl_scene.renderman
+        with self.rman_scene.rman.SGManager.ScopedEdit(self.rman_scene.sg_scene):     
+            root_sg = self.rman_scene.get_root_sg_node()
+            attrs = root_sg.GetAttributes()
+            self.rman_scene.set_root_lightlinks(attrs)
+            root_sg.SetAttributes(attrs)            
 
     def update_sg_node_riattr(self, prop_name, context, bl_object=None):
         if not self.rman_render.rman_interactive_running:

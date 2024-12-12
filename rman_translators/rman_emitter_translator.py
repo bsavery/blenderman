@@ -54,13 +54,15 @@ class RmanEmitterTranslator(RmanTranslator):
         primvar = sg_emitter_node.GetPrimVars()
         primvar.Clear()
             
-        if rman_sg_emitter.motion_steps:
+        if rman_sg_emitter.motion_steps and rm.do_velocity_blur:
             super().set_primvar_times(rman_sg_emitter.motion_steps, primvar)
-        
+        else:
+            primvar.SetTimes([])            
+    
         
         particles_utils.get_primvars_particle(primvar, cur_frame, psys, [cur_frame], 0)      
         
-        if self.rman_scene.do_motion_blur:
+        if self.rman_scene.do_motion_blur and rm.do_velocity_blur:
             primvar.SetPointDetail(self.rman_scene.rman.Tokens.Rix.k_P, P, "vertex", 0) 
             primvar.SetPointDetail(self.rman_scene.rman.Tokens.Rix.k_P, next_P, "vertex", 1)  
         else:

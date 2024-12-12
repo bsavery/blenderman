@@ -40,14 +40,14 @@ BLENDER_PYTHON_VERSION_MINOR = pyver.minor
 BLENDER_PYTHON_VERSION = '%s.%s' % (pyver.major, pyver.minor)
 
 RMAN_SUPPORTED_VERSION_MAJOR = 26
-RMAN_SUPPORTED_VERSION_MINOR = 1
+RMAN_SUPPORTED_VERSION_MINOR = 2
 RMAN_SUPPORTED_VERSION_BETA = ''
 RMAN_SUPPORTED_VERSION = (RMAN_SUPPORTED_VERSION_MAJOR, RMAN_SUPPORTED_VERSION_MINOR, RMAN_SUPPORTED_VERSION_BETA)
 RMAN_SUPPORTED_VERSION_STRING = '%d.%d%s' % (RMAN_SUPPORTED_VERSION_MAJOR, RMAN_SUPPORTED_VERSION_MINOR, RMAN_SUPPORTED_VERSION_BETA)
 
 RFB_SCENE_VERSION_MAJOR = RMAN_SUPPORTED_VERSION_MAJOR
 RFB_SCENE_VERSION_MINOR = RMAN_SUPPORTED_VERSION_MINOR
-RFB_SCENE_VERSION_PATCH = 0
+RFB_SCENE_VERSION_PATCH = 1
 RFB_SCENE_VERSION_STRING = '%d.%d.%d' % (RFB_SCENE_VERSION_MAJOR, RFB_SCENE_VERSION_MINOR, RFB_SCENE_VERSION_PATCH)
 
 RFB_ADDON_DESCRIPTION = 'RenderMan %d.%d integration' % (RMAN_SUPPORTED_VERSION_MAJOR, RMAN_SUPPORTED_VERSION_MINOR)
@@ -107,7 +107,8 @@ __RESERVED_BLENDER_NAMES__ = {
     'inputs': 'rman_inputs',
     'outputs': 'rman_outputs',
     'resolution': 'rman_resolution',
-    'name': 'rman_name'
+    'name': 'rman_name',
+    'type': 'rman_type'
 }
 
 # Map ramp interpolation types between RenderMan and Blender
@@ -170,6 +171,10 @@ CYCLES_NODE_MAP = {
     'ShaderNodeWireframe': 'node_wireframe',
     'ShaderNodeDisplacement': 'node_displacement'
 }
+
+CYCLES_SHADERS_PATH = os.path.join('scripts', 'addons', 'cycles', 'shader')
+if BLENDER_VERSION >= (4, 2, 0):
+    CYCLES_SHADERS_PATH = os.path.join('scripts', 'addons_core', 'cycles', 'shader')    
 
 # map types in args files to socket types
 __RMAN_SOCKET_MAP__ = {

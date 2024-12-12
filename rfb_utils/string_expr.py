@@ -112,7 +112,11 @@ class StringExpression(object):
             self.tokens['OUT'] = root_path    
             
         unsaved = True if not bpy.data.filepath else False
-        if unsaved:
+        scene = self.bl_scene
+        rm = scene.renderman           
+        if rm.blenddir_token != "":
+            self.tokens['blend_dir'] = rm.blenddir_token
+        elif unsaved:
             self.tokens['blend_dir'] = self.tokens['OUT']
         else:
             self.tokens['blend_dir'] = os.path.split(bpy.data.filepath)[0]     

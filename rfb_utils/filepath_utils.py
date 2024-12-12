@@ -7,6 +7,7 @@ import re
 from ..rfb_logger import rfb_log
 from .prefs_utils import get_pref
 from . import string_utils
+from .. import rman_constants
 
 def view_file(file_path):
     
@@ -54,7 +55,7 @@ def get_cycles_shader_path():
     path = ''
     version  = '%d.%d' % (bpy.app.version[0], bpy.app.version[1])
     binary_path = os.path.dirname(bpy.app.binary_path)
-    rel_config_path = os.path.join(version, 'scripts', 'addons', 'cycles', 'shader')
+    rel_config_path = os.path.join(version, rman_constants.CYCLES_SHADERS_PATH)
     if sys.platform == ("win32"):
         path = os.path.join(binary_path, rel_config_path)
     elif sys.platform == ("darwin"):                

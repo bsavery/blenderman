@@ -30,7 +30,7 @@ from .rfb_utils.envconfig_utils import envconfig
 bl_info = {
     "name": "RenderMan For Blender",
     "author": "Pixar",
-    "version": (26, 2, 0),
+    "version": (26, 3, 0),
     "blender": (2, 93, 0),
     "location": "Render Properties > Render Engine > RenderMan",
     "description": "RenderMan 26 integration",
@@ -46,7 +46,15 @@ def load_node_arrange():
     '''
 
     if addon_utils.check('node_arrange')[1] is False:
-        addon_utils.enable('node_arrange')
+        available = False
+        for m in addon_utils.modules():
+            # check if node_arrange is available
+            # it's been removed as of blender 4.0
+            if m.__name__ == 'node_arrange':
+                available = True
+                break
+        if available:
+            addon_utils.enable('node_arrange')
 
 def load_addon():
     global __RMAN_ADDON_LOADED__

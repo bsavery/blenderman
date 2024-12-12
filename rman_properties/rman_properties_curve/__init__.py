@@ -24,10 +24,15 @@ def register():
     bpy.types.Curve.renderman = PointerProperty(
         type=RendermanCurveGeometrySettings,
         name="Renderman Curve Geometry Settings")
+    
+    bpy.types.Curves.renderman = PointerProperty(
+        type=RendermanCurveGeometrySettings,
+        name="Renderman Curve Geometry Settings")    
 
 def unregister():
 
     del bpy.types.Curve.renderman
+    del bpy.types.Curves.renderman
 
     from ...rfb_utils import register_utils
 

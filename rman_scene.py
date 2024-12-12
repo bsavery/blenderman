@@ -153,6 +153,7 @@ class RmanScene(object):
         self.rman_translators['GROUP'] = RmanGroupTranslator(rman_scene=self)
         self.rman_translators['EMPTY'] = RmanEmptyTranslator(rman_scene=self)
         self.rman_translators['ARMATURE'] = self.rman_translators['EMPTY']
+        self.rman_translators['LATTICE'] = RmanEmptyTranslator(rman_scene=self)
         self.rman_translators['EMPTY_INSTANCER'] = self.rman_translators['EMPTY']
         self.rman_translators['POINTS'] = RmanPointsTranslator(rman_scene=self)
         self.rman_translators['META'] = RmanBlobbyTranslator(rman_scene=self)
@@ -241,7 +242,7 @@ class RmanScene(object):
     def export_for_interactive_render(self, context, depsgraph, sg_scene):
         self.sg_scene = sg_scene
         self.context = context
-        self.bl_view_layer = context.view_layer
+        self.bl_view_layer = depsgraph.view_layer_eval
         self.bl_scene = depsgraph.scene_eval
         self._find_renderman_layer()
         self.depsgraph = depsgraph
@@ -263,14 +264,14 @@ class RmanScene(object):
         self.bl_frame_current = self.bl_scene.frame_current
         self.sg_scene = sg_scene
         self.context = context
-        self.bl_view_layer = context.view_layer
+        self.depsgraph = context.evaluated_depsgraph_get()
+        self.bl_view_layer = self.depsgraph.view_layer_eval
         self._find_renderman_layer()
         self.rman_bake = False
         self.external_render = False
         self.is_interactive = False
         self.is_viewport_render = False
 
-        self.depsgraph = context.evaluated_depsgraph_get()
         self.export_root_sg_node()
         self.export_materials([m for m in self.depsgraph.ids if isinstance(m, bpy.types.Material)])
         self.export_data_blocks(selected_objects=True)
@@ -676,6 +677,18 @@ class RmanScene(object):
             rman_parent_node.sg_attributes.AddChild(rman_sg_group.sg_node)
         else:
             rman_sg_node.sg_attributes.AddChild(rman_sg_group.sg_node)
+
+        # check if instance has transform motion
+        if self.do_motion_blur and object_utils.is_transforming(ob_eval):
+            mb_segs = self.bl_scene.renderman.motion_segments
+            if ob_eval.renderman.motion_segments_override:
+                mb_segs = ob_eval.renderman.motion_segments
+            if mb_segs > 1:
+                subframes = scene_utils._get_subframes_(mb_segs, self.bl_scene)
+                rman_sg_group.motion_steps = subframes
+                rman_sg_group.is_transforming = True
+                self.motion_steps.update(subframes)            
+                self.moving_objects[ob_inst.object.name_full] = ob_inst.object
             
         if rman_type == "META":
             # meta/blobbies are already in world space. Their instances don't need to
@@ -756,6 +769,9 @@ class RmanScene(object):
         # motion blur
         # we set motion steps for this object, even if it's not moving
         # it could be moving as part of a particle system
+        #
+        # FIXME: remove the checking of transform motion here, this should
+        # and is already being done in export_instance.
         mb_segs = -1
         mb_deform_segs = -1
         if self.do_motion_blur:
@@ -923,20 +939,22 @@ class RmanScene(object):
                 if not rman_sg_node:
                     continue
 
+                rman_sg_group = self.get_rman_sg_instance(ob_inst, rman_sg_node, instance_parent, psys)
+                if not rman_sg_group:
+                    continue
+
                 # transformation blur
-                if seg in rman_sg_node.motion_steps:
+                if seg in rman_sg_group.motion_steps:
                     idx = 0
-                    for i, s in enumerate(rman_sg_node.motion_steps):
+                    for i, s in enumerate(rman_sg_group.motion_steps):
                         if s == seg:
                             idx = i
                             break
 
-                    if rman_sg_node.is_transforming or psys:
-                        rman_sg_group = self.get_rman_sg_instance(ob_inst, rman_sg_node, instance_parent, psys)
-                        if rman_sg_group:
-                            if first_sample:
-                                rman_group_translator.update_transform_num_samples(rman_sg_group, rman_sg_node.motion_steps ) 
-                            rman_group_translator.update_transform_sample( ob_inst, rman_sg_group, idx, time_samp)
+                    if rman_sg_group.is_transforming or psys:
+                        if first_sample:
+                            rman_group_translator.update_transform_num_samples(rman_sg_group, rman_sg_group.motion_steps ) 
+                        rman_group_translator.update_transform_sample( ob_inst, rman_sg_group, idx, time_samp)
 
                 # deformation blur
                 if rman_sg_node.is_deforming and seg in rman_sg_node.deform_motion_steps:
