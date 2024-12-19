@@ -47,16 +47,13 @@ class SceneStringConverter(object):
             self.expr.bl_scene = bpy.context.scene
             self.expr.update_out_token()    
 
-        if token_dict:
-            self.update_tokens(token_dict)
-
         if frame is not None:
             self.expr.set_frame_context(frame)
 
         if display:
             self.set_display(display)
 
-        return self.expr.expand(string, asFilePath=asFilePath)
+        return self.expr.expand(string, objTokens=token_dict, asFilePath=asFilePath)
 
     def update(self, bl_scene=None):
         """Create a new StringExpression and configures it for the current state

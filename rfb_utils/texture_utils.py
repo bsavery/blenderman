@@ -97,7 +97,8 @@ class RfBTxManager(object):
         return ext_list
 
     def host_token_resolver_func(self, outpath):
-        outpath = string_utils.expand_string(outpath, asFilePath=True)
+        token_dict = {'expr': '*'} # substitue any <expr..> tokens to *
+        outpath = string_utils.expand_string(outpath, token_dict=token_dict, asFilePath=True)
         return outpath
 
     def done_callback(self, nodeID, txfile):

@@ -8,11 +8,22 @@ class StringExprTest(unittest.TestCase):
 
     @classmethod
     def add_tests(self, suite):
+        suite.addTest(StringExprTest('test_expr_token'))
         suite.addTest(StringExprTest('test_get_var'))
         suite.addTest(StringExprTest('test_set_var'))
         suite.addTest(StringExprTest('test_expand_string'))
         suite.addTest(StringExprTest('test_frame_sensitive'))
         suite.addTest(StringExprTest('test_filepath'))
+
+    # test expr token
+    def test_expr_token(self):
+        compare = "0001"
+        s = "<expr[<f> % 10]: %04d>"
+        expanded_str = string_utils.expand_string(s, frame=1)
+        self.assertEqual(expanded_str, compare)
+        token_dict = {'expr': '*'}
+        expanded_str = string_utils.expand_string(s, frame=1, token_dict=token_dict)
+        self.assertEqual(expanded_str, '*')
 
     # test getvar 
     def test_get_var(self):

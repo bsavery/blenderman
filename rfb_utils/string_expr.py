@@ -36,17 +36,23 @@ def time_this(f):
 
 PAD_FMT = ['%d', '%01d', '%02d', '%03d', '%04d']
 
-# split the token into 3 groups:
-#   1 - the main token
-#   2 - the token formatting string
-#   3 - an environment variable
+# split the token into 5 groups:
+#   1 - <expr> token
+#   2 - formatting for the <expr> token
+#   3 - other main token
+#   4 - the token formatting string
+#   5 - an environment variable
 #
 # Examples:
-#   '<shape.fogColor>'  ->  ('shape.fogColor', None, None)
-#   '<shape.fogColor:%g %g %g>'  ->  ('shape.fogColor', ':%g %g %g', None)
-#   '$RMANTREE/bin' ->  (None, None, '$RMANTREE')
+#   '<expr[<f> % 10]>' -> ('<f> % 10', None, None, None, None)
+#   '<expr[<f> % 10]: %04d>' -> ('<f> % 10', ': %04d', None, None, None)
+#   '<shape.fogColor>'  ->  (None, None, 'shape.fogColor', None, None)
+#   '<shape.fogColor:%g %g %g>'  ->  (None, None, 'shape.fogColor', ':%g %g %g', None)
+#   '$RMANTREE/bin' ->  (None, None, None, None, '$RMANTREE')
 #
-PARSING_EXPR = re.compile(r'<([\w\:]*[\w\.]+)(\?[\w\d\._-]+)*'  # token
+PARSING_EXPR = re.compile(r'<expr\[(.*)\]' # <expr> token
+                          r'(:[^>]+)*>|' # formatter
+                          r'<([\w\:]*[\w\.]+)(\?[\w\d\._-]+)*'  # token
                           r'(:[^>]+)*>|'                        # formatter
                           r'\$\{?([A-Z0-9_]{3,})\}?')           # env var
 
@@ -190,12 +196,34 @@ class StringExpression(object):
         pos = 0
         result = ''
         for m in re.finditer(PARSING_EXPR, expr):
-            # print 'GROUPS: %s' % str(m.groups())
+            # print('GROUPS: %s' % str(m.groups()))
             if m.group(1):
+                # this is an <expr> token
+                # we need to eval() it
+                tok_expr = m.group(1)
+                tok_expr = self.expand(tok_expr)
+                if 'expr' in objTokens:
+                    # check if expr is in our objTokens
+                    tok_val = objTokens['expr']
+                    result += '%s%s' % (expr[pos:m.start()], tok_val)
+                else:
+                    # this is a regular eval()
+                    try:
+                        ans = eval(tok_expr)
+                        if m.group(2):
+                            # check for formatting
+                            # remove the : and strip any whitespace
+                            fmt = m.group(2)[1:].strip()
+                            result += expr[pos:m.start()] + fmt % ans
+                        else:
+                            result += expr[pos:m.start()] + '%s' % str(ans)
+                    except SyntaxError:
+                        result += expr[pos: m.start()] + m.group(0)
+            elif m.group(3):
                 # Token case
-                tok = m.group(1)
+                tok = m.group(3)
                 tok_val = None
-                # print '  |__ TOKEN: %02d-%02d: %s' % (m.start(), m.end(), tok)
+                # print('  |__ TOKEN: %02d-%02d: %s' % (m.start(), m.end(), tok))
                 try:
                     tok_val = toks[tok]
                     # result += expr[pos:m.start()] + toks[tok]
@@ -208,7 +236,7 @@ class StringExpression(object):
                         tok_val = '<%s>' % tok
 
                 # optional formating
-                if m.group(3):
+                if m.group(5):
                     if isinstance(tok_val, str) and tok_val:
                         try:
                             tok_val = eval(tok_val)
@@ -216,15 +244,15 @@ class StringExpression(object):
                             rfb_log().debug('Eval failed: %s  -> %r', err, tok_val)
                             result += expr[pos:m.start()] +  tok_val
                         else:
-                            result += expr[pos:m.start()] +  m.group(3)[1:] % tok_val
+                            result += expr[pos:m.start()] +  m.group(5)[1:] % tok_val
                     else:
-                        result += expr[pos:m.start()] +  m.group(3)[1:] % tok_val
+                        result += expr[pos:m.start()] +  m.group(5)[1:] % tok_val
                 else:
                     result += '%s%s' % (expr[pos:m.start()], tok_val)
             else:
                 # Environment variable case
-                tok = m.group(4)
-                # print '  |__ ENV VAR: %02d-%02d: %s' % (m.start(), m.end(), tok)
+                tok = m.group(6)
+                # print('  |__ ENV VAR: %02d-%02d: %s' % (m.start(), m.end(), tok))
                 try:
                     result += expr[pos: m.start()] + os.environ[tok]
                 except KeyError:
