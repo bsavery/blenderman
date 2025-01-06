@@ -234,8 +234,6 @@ def get_socket_type(node, socket):
 
 def get_node_name(node, prefix=""):
     nm = node.name
-    if node.label != "":
-        nm = node.label
     if prefix != "":
         return string_utils.sanitize_node_name('%s_%s' % (prefix, nm))
     return string_utils.sanitize_node_name('%s' % nm)

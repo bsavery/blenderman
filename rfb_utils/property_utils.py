@@ -182,6 +182,8 @@ def get_linked_val(bl_prop_info, rman_sg_node, mat_name=None, group_node=None):
     return bl_prop_val 
 
 def get_vstruct_linked_val(node, rman_sg_node, bl_prop_info, mat_name=None):
+    from . import shadergraph_utils
+
     bl_prop_val = BlPropVal( 
         name=bl_prop_info.renderman_name,
         param_type=bl_prop_info.renderman_type,
@@ -190,8 +192,9 @@ def get_vstruct_linked_val(node, rman_sg_node, bl_prop_info, mat_name=None):
     vstruct_name, vstruct_member = bl_prop_info.vstructmember.split('.')
     from_socket = node.inputs[
         vstruct_name].links[0].from_socket
+    from_socket_node = from_socket.node
 
-    if from_socket.node.bl_idname == 'ShaderNodeGroup':
+    if from_socket_node.bl_idname == 'ShaderNodeGroup':
         ng = from_socket.node.node_tree
         group_output = next((n for n in ng.nodes if n.bl_idname == 'NodeGroupOutput'),
                             None)
@@ -201,11 +204,14 @@ def get_vstruct_linked_val(node, rman_sg_node, bl_prop_info, mat_name=None):
         in_sock = group_output.inputs[from_socket.name]
         if len(in_sock.links):
             from_socket = in_sock.links[0].from_socket
+            from_socket_node = from_socket.node
+    elif from_socket_node.bl_idname == 'NodeReroute':
+        from_socket_node, from_socket = shadergraph_utils.get_rerouted_node(from_socket_node)            
             
     vstruct_from_param = "%s_%s" % (
         from_socket.identifier, vstruct_member)
-    if vstruct_from_param in from_socket.node.output_meta:
-        actual_socket = from_socket.node.output_meta[
+    if vstruct_from_param in from_socket_node.output_meta:
+        actual_socket = from_socket_node.output_meta[
             vstruct_from_param]
 
         node_meta = getattr(
@@ -213,7 +219,7 @@ def get_vstruct_linked_val(node, rman_sg_node, bl_prop_info, mat_name=None):
         node_meta = node_meta.get(vstruct_from_param)
         is_reference = True
         val = get_output_param_str(rman_sg_node,
-                from_socket.node, mat_name, actual_socket, to_socket=None, param_type=param_type)
+                from_socket_node, mat_name, actual_socket, to_socket=None, param_type=param_type)
         if node_meta:
             expr = node_meta.get('vstructConditionalExpr')
             # check if we should connect or just set a value
@@ -227,7 +233,7 @@ def get_vstruct_linked_val(node, rman_sg_node, bl_prop_info, mat_name=None):
             bl_prop_val.set_value(val)
     else:
         rfb_log().warning('Warning! %s not found on %s' %
-                (vstruct_from_param, from_socket.node.name))       
+                (vstruct_from_param, from_socket_node.name))       
         
     return bl_prop_val
 
@@ -575,6 +581,8 @@ def is_vstruct_or_linked(node, param):
 # tells if this param has a vstuct connection that is linked and
 # conditional met
 def is_vstruct_and_linked(node, param):
+    from . import shadergraph_utils
+
     if param not in node.prop_meta:
         return True    
     meta = node.prop_meta[param]
@@ -585,8 +593,9 @@ def is_vstruct_and_linked(node, param):
     vstruct_name, vstruct_member = meta['vstructmember'].split('.')
     if node.inputs[vstruct_name].is_linked:
         from_socket = node.inputs[vstruct_name].links[0].from_socket
+        from_socket_node = from_socket.node
         # if coming from a shader group hookup across that
-        if from_socket.node.bl_idname == 'ShaderNodeGroup':
+        if from_socket_node.bl_idname == 'ShaderNodeGroup':
             ng = from_socket.node.node_tree
             group_output = next((n for n in ng.nodes if n.bl_idname == 'NodeGroupOutput'),
                                 None)
@@ -596,9 +605,12 @@ def is_vstruct_and_linked(node, param):
             in_sock = group_output.inputs[from_socket.name]
             if len(in_sock.links):
                 from_socket = in_sock.links[0].from_socket
+                from_socket_node = from_socket.node
+        elif from_socket_node.bl_idname == 'NodeReroute':
+            from_socket_node, from_socket = shadergraph_utils.get_rerouted_node(from_socket_node)
         vstruct_from_param = "%s_%s" % (
             from_socket.identifier, vstruct_member)          
-        return vstruct_conditional(from_socket.node, vstruct_from_param)
+        return vstruct_conditional(from_socket_node, vstruct_from_param)
 
     return False
 
