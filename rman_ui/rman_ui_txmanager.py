@@ -647,7 +647,7 @@ class PRMAN_PT_Renderman_txmanager_list(_RManPanelHeader, Panel):
         row = layout.row()
         txmanager = texture_utils.get_txmanager().txmanager
         row.operator('rman_txmgr_list.parse_scene', text='Parse Scene')
-        row.operator("rman_txmgr_list.clear_unused", icon='GPBRUSH_ERASE_HARD')
+        row.operator("rman_txmgr_list.clear_unused")
         row.operator('rman_txmgr_list.reset_state', text='Reset', icon='FILE_REFRESH')         
         row.operator('rman_txmgr_list.pick_images', text='Pick Images', icon='FILE_FOLDER')        
         row.operator('rman_txmgr_list.reconvert_all', text='Reconvert All')         
