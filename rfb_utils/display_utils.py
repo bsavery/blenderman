@@ -51,16 +51,20 @@ OPTIX_DENOISE_CHANNELS = [
     DENOISER_NORMAL
 ]
 
-def get_beauty_filepath(bl_scene, use_blender_frame=False, expand_tokens=False, no_ext=False):
+def get_beauty_filepath(bl_scene, use_blender_frame=False, expand_tokens=False, no_ext=False, view_layer=None):
     dspy_info = dict()
-    view_layer = bpy.context.view_layer
+    if view_layer is None:
+        view_layer = bpy.context.view_layer
     rm_rl = None
     if view_layer.renderman.use_renderman:
         rm_rl = view_layer.renderman      
     rm = bl_scene.renderman
 
+    org_scene = string_utils.get_var('scene')
+    org_layer = string_utils.get_var('layer')
+
     string_utils.set_var('scene', bl_scene.name.replace(' ', '_'))
-    string_utils.set_var('layer', view_layer.name.replace(' ', '_'))    
+    string_utils.set_var('layer', view_layer.name.replace(' ', '_'))
 
     filePath = rm.path_beauty_image_output
     if use_blender_frame:
@@ -75,11 +79,18 @@ def get_beauty_filepath(bl_scene, use_blender_frame=False, expand_tokens=False, 
         display_driver = __BLENDER_TO_RMAN_DSPY__.get(file_format, 'openexr')
 
     if expand_tokens:
+        token_dict = {'aov': 'beauty'}
         filePath = string_utils.expand_string(filePath,
                                             display=display_driver, 
+                                            token_dict=token_dict,
                                             asFilePath=True)
     dspy_info['filePath'] = filePath
     dspy_info['display_driver'] = display_driver
+
+    # reset tokens
+    string_utils.set_var('scene', org_scene)
+    string_utils.set_var('layer', org_layer)
+
     return dspy_info
 
 def using_rman_displays():
@@ -173,8 +184,10 @@ def _add_stylized_channels(dspys_dict, dspy_drv, rman_scene, expandTokens):
         f, ext = os.path.splitext(filePath)
         filePath = f + '_rman_stylized' + ext      
         if expandTokens:      
+            token_dict = {'aov': 'beauty'}
             filePath = string_utils.expand_string(filePath,
                                                 display=display_driver, 
+                                                token_dict=token_dict,
                                                 asFilePath=True)            
 
         dspys_dict['displays'][dspy_name] = {
@@ -318,8 +331,10 @@ def _set_blender_dspy_dict(layer, dspys_dict, dspy_drv, rman_scene, expandTokens
     dspy_params['displayChannels'].append('a')
     filePath = rm.path_beauty_image_output
     if expandTokens:
+        token_dict = {'aov': 'beauty'}
         filePath = string_utils.expand_string(filePath,
-                                            display=display_driver, 
+                                            display=display_driver,
+                                            token_dict=token_dict,
                                             asFilePath=True)
     dspys_dict['displays']['beauty'] = {
         'driverNode': display_driver,
@@ -530,8 +545,10 @@ def _set_rman_dspy_dict(rm_rl, dspys_dict, dspy_drv, rman_scene, expandTokens, d
             if aov.name == 'beauty':
                 filePath = rm.path_beauty_image_output
                 if expandTokens:
+                    token_dict = {'aov': 'beauty'}
                     filePath = string_utils.expand_string(filePath,
                                                     display=display_driver, 
+                                                    token_dict=token_dict,
                                                     asFilePath=True)
             else:
                 filePath = rm.path_aov_image_output
@@ -671,8 +688,10 @@ def _set_rman_holdouts_dspy_dict(dspys_dict, dspy_drv, rman_scene, expandTokens,
         f, ext = os.path.splitext(filePath)
         filePath = f + '_holdoutMatte' + ext      
         if expandTokens:      
+            token_dict = {'aov': 'beauty'}
             filePath = string_utils.expand_string(filePath,
                                                 display=display_driver, 
+                                                token_dict=token_dict,
                                                 asFilePath=True)
 
         dspys_dict['displays']['holdoutMatte'] = {
